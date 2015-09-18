@@ -1,0 +1,84 @@
+// file describes corelation between mossco-output-netcdf variable names and
+// baw-format variable names
+//
+// format: "filename", "mossco variable name" >>> "corresponding baw format variable name"
+// format: "filename", "mossco variable name" >>> NOT_INCLUDED
+// spaces and tabs may be used freely for readability. Comments may follow after "//"
+//
+// Displaying Davit-friendly variables found in MOSSCO output netcdf file
+// Let Davit-friendly variables be those, which have dimensions:
+// 1D: (tdim)
+// 2D: (ydim, xdim)
+// 3D: (tdim, ydim, xdim)
+// 4D: (tdim, zdim, ydim, xdim)
+// ----------------------------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+//	1D
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"time"                                                                 >>> NOT_INCLUDED
+//	2D
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"pet_getmGrid2D_getm"                                                  >>> NOT_INCLUDED
+//	3D
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"Effect_of_MPB_on_critical_bed_shearstress_at_soil_surface"            >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"Effect_of_MPB_on_sediment_erodibility_at_soil_surface"                >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"Effect_of_Mbalthica_on_critical_bed_shearstress_at_soil_surface"      >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"Effect_of_Mbalthica_on_sediment_erodibility_at_soil_surface"          >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_upward_flux_at_soil_surface_001"                 >>> "Mesh2_face_SedimentFluxAtSoil_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_upward_flux_at_soil_surface_002"                 >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"depth_averaged_x_velocity_in_water"                                   >>> "Mesh2_face_Stroemungsgeschwindigkeit_x_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"depth_averaged_y_velocity_in_water"                                   >>> "Mesh2_face_Stroemungsgeschwindigkeit_y_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"detritus-P_upward_flux_at_soil_surface"                               >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"dissolved_oxygen_upward_flux_at_soil_surface"                         >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"dissolved_reduced_substances_upward_flux_at_soil_surface"             >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"fast_detritus_C_upward_flux_at_soil_surface"                          >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"layer_height_at_soil_surface"                                         >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"mole_concentration_of_ammonium_upward_flux_at_soil_surface"           >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"mole_concentration_of_nitrate_upward_flux_at_soil_surface"            >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"mole_concentration_of_phosphate_upward_flux_at_soil_surface"          >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"slow_detritus_C_upward_flux_at_soil_surface"                          >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"surface_downwelling_photosynthetic_radiative_flux"                    >>> "Mesh2_face_RadiactiveFluxAtSurface_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"temperature_at_soil_surface"                                          >>> "Mesh2_face_TemperatureAtSoil_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"turbulent_diffusivity_of_momentum_at_soil_surface"                    >>> "Mesh2_face_TurbulentMomentumDiffusivityAtSoil_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"water_depth_at_soil_surface"                                          >>> "Mesh2_face_Gesamtwassertiefe_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"wave_direction"                                                       >>> "Mesh2_face_WaveSpreadingDirection_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"wave_height"                                                          >>> "Mesh2_face_WaveHeight_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"wave_number"                                                          >>> "Mesh2_face_WaveNumber_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"wave_period"                                                          >>> "Mesh2_face_MeanWavePeriod_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"wind_x_velocity_at_10m"                                               >>> "Mesh2_face_WindVelocityAt10m_x_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"wind_y_velocity_at_10m"                                               >>> "Mesh2_face_WindVelocityAt10m_y_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"x_velocity_at_soil_surface"                                           >>> "Mesh2_face_WaterVelocityAtSoil_x_2d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"y_velocity_at_soil_surface"                                           >>> "Mesh2_face_WaterVelocityAtSoil_y_2d"
+//	4D
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_in_water_001"                                    >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_in_water_002"                                    >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_sources-sinks_in_water"                          >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_z_velocity_in_water_001"                         >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"concentration_of_SPM_z_velocity_in_water_002"                         >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"detritus_in_water"                                                    >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"detritus_sources-sinks_in_water"                                      >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"detritus_z_velocity_in_water"                                         >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"gross_primary_production_in_water"                                    >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"gross_primary_production_rate_in_water"                               >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"net_community_production_in_water"                                    >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"net_community_production_rate_in_water"                               >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"nutrients_in_water"                                                   >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"nutrients_sources-sinks_in_water"                                     >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"nutrients_z_velocity_in_water"                                        >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"photosynthetically_active_radiation_in_water"                         >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"phytoplankton_in_water"                                               >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"phytoplankton_sources-sinks_in_water"                                 >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"phytoplankton_z_velocity_in_water"                                    >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"result_in_water"                                                      >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"temperature_in_water"                                                 >>> "Mesh2_face_Temperatur_3d"
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"total_custom_light_extinction_in_water"                               >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"total_dissolved_inorganic_carbon_sources-sinks_in_water"              >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"zooplankton_in_water"                                                 >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"zooplankton_sources-sinks_in_water"                                   >>> NOT_INCLUDED
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\netcdf_reference_3d.nc",	"zooplankton_z_velocity_in_water"                                      >>> NOT_INCLUDED
+
+// ----------------------------------------------------------------------------------------------------
+//	1D
+//	2D
+   "\\Widar\home\ak2stud\Nick\python_scripts\dev\uGrid\data\NSBS\topo.nc",	"bathymetry"                                                           >>> "Mesh2_face_depth_2d"
+//	3D
+//	4D
