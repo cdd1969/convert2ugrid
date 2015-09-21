@@ -11,10 +11,6 @@
 import os
 import sys
 import inspect
-import getopt
-import numpy as np
-import netCDF4
-import inspect
 
 # use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
@@ -24,9 +20,9 @@ if cmd_subfolder not in sys.path:
 
 import make_grid
 import process_davit_ncdf
-import process_mossco_netcdf 
+import process_mossco_netcdf
 import process_cdl
-
+import process_mixed_data
 
 
 def step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=False):
@@ -44,8 +40,13 @@ def step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=False):
     OUTPUT
         dictionary_2          - string, path to ASCII file after scanning variables
     '''
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*10+'  STEP 1  '+'+'*10
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*30
     if log: print 'Script is going to scan following NC files:\n{0}\n'.format(list_with_synoptic_nc)
-    process_cdl.create_txt_mossco_baw(list_with_synoptic_nc, dictionary_2, dictionary_1)
+    process_cdl.create_txt_mossco_baw(list_with_synoptic_nc, dictionary_2, dictionary_1, log=log)
     if log: print 'Following file has been created:\n{0}\nIt shows the relation between MOSSCO and DAVIT variable names.'.format(dictionary_2)
     
 
@@ -61,6 +62,11 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     OUTPUT
         dictionary_4          - string, path to CDL file to be created
     '''
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*10+'  STEP 2  '+'+'*10
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*30
     process_cdl.create_cdl_file(dictionary_3, dictionary_2, dictionary_4)
     if log: print 'Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4)
 
@@ -69,7 +75,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     '''
     INPUT
         topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
-        list_with_synoptic_nc   - list of strings, paths to netcdf with synoptic data
+        list_with_synoptic_nc   - list of strings, paths to netcdf with synoptic data. At first position should be the main data-file
         dictionary_1            - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
         dictionary_2            - string, path to txt file after scanning variables
         dictionary_3            - string, path to cdl file with standard variables
@@ -78,8 +84,11 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     OUTPUT
         nc_out                  - string, path to netcdf to be created
     '''
-    filenameINPUT1 = list_with_synoptic_nc[0]
-
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*10+'  STEP 3  '+'+'*10
+    if log: print ' '*20+'+'*30
+    if log: print ' '*20+'+'*30
     # --------------------------------------------------
     # 1) Read, x any y vectors from the netcdf
     # --------------------------------------------------
@@ -132,19 +141,10 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     Mesh2_face_x_bnd = bounds[2]
     Mesh2_face_y_bnd = bounds[3]
 
-
-
     # --------------------------------------------------
     # 4) Get bumber of vertical layers, dimensions from MOSSCO
     # --------------------------------------------------
-
-    for nc_file in list_with_synoptic_nc:
-        try:
-            nLayers = process_mossco_netcdf.get_number_of_depth_layer_from_mossco(nc_file, dimname='getmGrid3D_getm_3')
-        except KeyError:  # if dimension is not found in cuurent file > skip to next file
-            pass
-    print 'found Z-layers:', nLayers
-    
+    nLayers = process_mossco_netcdf.get_number_of_depth_layer_from_mossco(list_with_synoptic_nc, dimname='getmGrid3D_getm_3')
 
     # --------------------------------------------------
     # 5) Create netcdf
@@ -173,7 +173,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         try:
             process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, nc_file, time_var_name='time')
             print 'added "nMesh2_data_time" from file ', nc_file
-        except KeyError:  # if var is not found in current file > skip to next file
+        except KeyError:  # if var is not found in current file => skip to next file
             pass
 
 
@@ -208,7 +208,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         # -----------------------------------------------------------------------------------------------
         var_to_add = dict()
         var_to_add['vname'] = VN
-        if VV[0] == 'float': VV[0] = 'f4'
+        if VV[0] == 'float' : VV[0] = 'f4'
+        if VV[0] == 'double': VV[0] = 'f8'
         var_to_add['dtype'] = VV[0]  # here there might be a problem, cause datatypes are specified in CDL format (i.e. "double", "float", "int", etc.)
         var_to_add['dims'] = tuple(VV[1])
 
@@ -241,39 +242,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
             # Create auto variables
             # -----------------------------------------------------------------------------------------------
             if '_auto_creation' in VV[2].keys():
-                print 'Autocreation-variable'
-                _fnx = VARS[ VV[2]['_auto_creation'].split(',')[0].strip() ] [2]['_mossco_filename']
-                _fny = VARS[ VV[2]['_auto_creation'].split(',')[1].strip() ] [2]['_mossco_filename']
-                _vnx = VARS[ VV[2]['_auto_creation'].split(',')[0].strip() ] [2]['_mossco_varname']
-                _vny = VARS[ VV[2]['_auto_creation'].split(',')[1].strip() ] [2]['_mossco_varname']
-
-                # -----------------------------------------------------------------------------------------------
-                # now check which function (read_mossco_nc_3d, read_mossco_nc_4d) to use to get data....
-                # -----------------------------------------------------------------------------------------------
-                if VN.endswith('_2d'):
-                    x, _ = process_mossco_netcdf.read_mossco_nc_3d(_fnx, _vnx, mask=m)
-                    y, _ = process_mossco_netcdf.read_mossco_nc_3d(_fny, _vny, mask=m)
-                    magnitude = np.zeros(x.shape)
-                    for t in xrange(x.shape[0]):
-                        for f in xrange(x.shape[-1]):
-                            _x = x[t, ..., f]
-                            _y = y[t, ..., f]
-                            _magnitude = (_x**2 + _y**2)**(1./2.)
-                            magnitude[t, ..., f] = _magnitude
-
-                elif VN.endswith('_3d'):
-                    x, _ = process_mossco_netcdf.read_mossco_nc_4d(_fnx, _vnx, mask=m)
-                    y, _ = process_mossco_netcdf.read_mossco_nc_4d(_fny, _vny, mask=m)
-                    magnitude = np.zeros(x.shape)
-                    for t in xrange(x.shape[0]):
-                        for z in xrange(x.shape[1]):
-                            for f in xrange(x.shape[-1]):
-                                _x = x[t, z, ..., f]
-                                _y = y[t, z, ..., f]
-                                _magnitude = (_x**2 + _y**2)**(1./2.)
-                                magnitude[t, ..., f] = _magnitude
-                
-                var_to_add['data'] = magnitude
+                var_to_add['data'] = process_mixed_data.create_magnitude_variable_from_x_y_component(VARS,
+                                        VN, VV, mask=m, log=True)
 
         # -----------------------------------------------------------------------------------------------
         # 8.2.5) add data
@@ -284,29 +254,30 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 var_to_add['data'] = None
             
             # if 1D
-            elif var_to_add['dims'] == tuple(['nMesh2_data_time']):
+            elif var_to_add['dims'] in [tuple(['nMesh2_data_time'])
+                                        ]:
                 var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_1d(fname, varname)
             
             # if 2D
-            elif var_to_add['dims'] == tuple(['nMesh2_time', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_time', 'nMesh2_layer_2d', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face'])  \
-                 :
+            elif var_to_add['dims'] in [tuple(['nMesh2_time', 'nMesh2_face']),
+                                        tuple(['nMesh2_time', 'nMesh2_layer_2d', 'nMesh2_face']),
+                                        tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face'])
+                                        ]:
                 var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_2d(fname, varname, mask=m)
             
             # if 3D
-            elif var_to_add['dims'] == tuple(['nMesh2_data_time', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_data_time', 'nMesh2_layer_2d', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_time', 'nMesh2_layer_3d', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face']) \
-                 :
+            elif var_to_add['dims'] in [tuple(['nMesh2_data_time', 'nMesh2_face']),
+                                        tuple(['nMesh2_data_time', 'nMesh2_layer_2d', 'nMesh2_face']),
+                                        tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face']),
+                                        tuple(['nMesh2_time', 'nMesh2_layer_3d', 'nMesh2_face']),
+                                        tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face'])
+                                        ]:
                 var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_3d(fname, varname, mask=m)
 
             # if 4D
-            elif var_to_add['dims'] == tuple(['nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face']) or \
-                 var_to_add['dims'] == tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face']) \
-                 :
+            elif var_to_add['dims'] in [tuple(['nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face']),
+                                        tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face'])
+                                        ]:
                 var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_4d(fname, varname, mask=m)
 
             else:
@@ -361,7 +332,7 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
         else:
             raise ValueError('Fill missing inputs...')
     else:
-        raise ValueError('Invalid "start_from_step" passed. Choose from [1, 2, 3]')
+        raise ValueError('Invalid "start_from_step" passed. Choose integer [1, 2, 3]')
 
 
 
@@ -380,19 +351,18 @@ if __name__ == '__main__':
     dict1 = os.path.join(currentPath, 'user_input/dictionary1.txt')  # see description of dictionaries in documentation
     dict3 = os.path.join(currentPath, 'user_input/dictionary3.cdl')  # see description of dictionaries in documentation
     
-    setup_path = '//widar/home/ak2stud/Nick/python_scripts/dev/uGrid/data/NSBS'
+    setup_path = '/net/widar/home/ak2stud/Nick/python_scripts/dev/uGrid/data/NSBS'
     
-    topo_nc     = os.path.join(currentPath, setup_path, 'topo.nc')                 #topo-file with bathymetry and grid
-    synoptic_nc = os.path.join(currentPath, setup_path, 'netcdf_reference_3d.nc')  #netcdf with simulation data (may be more than one, join them in a list below)
+    topo_nc     = os.path.join(setup_path, 'topo.nc')                 #topo-file with bathymetry and grid
+    synoptic_nc = os.path.join(setup_path, 'netcdf_reference_3d.nc')  #netcdf with simulation data (may be more than one, join them in a list below)
     list_with_synoptic_nc = [synoptic_nc, topo_nc]                                 #join files in a list
 
     # setting paths: OUTPUT FILES....
-    dict2  = os.path.join(currentPath, 'example_NSBS/', 'dictionary2.txt')  # see description of dictionaries in documentation
-    dict4  = os.path.join(currentPath, 'example_NSBS/', 'dictionary4.cdl')  # see description of dictionaries in documentation
-    nc_out = os.path.join(currentPath, 'example_NSBS/', 'nsbs_davit.nc')    # file to be created
+    dict2  = os.path.join(currentPath, '../data/NSBS/out/tmp', 'dictionary2.txt')  # see description of dictionaries in documentation
+    dict4  = os.path.join(currentPath, '../data/NSBS/out/tmp', 'dictionary4.cdl')  # see description of dictionaries in documentation
+    nc_out = os.path.join(currentPath, '../data/NSBS/out/tmp', 'nsbs_davit.nc')    # file to be created
 
     # running script...
     create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
                     dictionary_1=dict1, dictionary_2=dict2, dictionary_3=dict3, dictionary_4=dict4,
-                    start_from_step=3, create_davit_netcdf=False, log=True)
-
+                    start_from_step=1, create_davit_netcdf=True, log=True)

@@ -192,18 +192,24 @@ def print_nicely_variables(vars_dict):
 
 
 
-def read_baw_mossco_varname_dictionary(fname):
+def read_baw_mossco_varname_dictionary(fname, log=False):
     f = read_file_delete_comments(fname, comments='//')
     BAW_MOSSCO_VARNAMES = dict()
     for l in f:
-        baw_vn = l.split('>>>')[0].strip()
-        baw_vn = re.sub('[\"\']', '', baw_vn)
+        try:
+            baw_vn = l.split('>>>')[0].strip()
+            baw_vn = re.sub('[\"\']', '', baw_vn)
+            
+            mossco_vn = l.split('>>>')[1].strip()
+            mossco_vn = re.sub('[\"\']', '', mossco_vn)
         
-        mossco_vn = l.split('>>>')[1].strip()
-        mossco_vn = re.sub('[\"\']', '', mossco_vn)
-    
-        BAW_MOSSCO_VARNAMES[baw_vn] = [mossco_vn]
+            BAW_MOSSCO_VARNAMES[baw_vn] = [mossco_vn]
+        except:
+            if log:
+                print 'read_baw_mossco_varname_dictionary(): Skipping line "{0}"'.format(l)
+            pass
     return BAW_MOSSCO_VARNAMES
+
 
 def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_dictionary, log=False):
     """
@@ -217,7 +223,7 @@ def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_d
     BAW_MOSSCO_VARNAMES['nMesh2_data_time'] = ['time']
     """
 
-    BAW_MOSSCO_VARNAMES = read_baw_mossco_varname_dictionary(baw_mossco_varname_dictionary)
+    BAW_MOSSCO_VARNAMES = read_baw_mossco_varname_dictionary(baw_mossco_varname_dictionary, log=log)
     
     if log:
         print '-'*50

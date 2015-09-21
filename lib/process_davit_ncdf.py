@@ -67,7 +67,7 @@ def create_uGrid_ncdf(filename,
                         coord_mode='geographic',
                         dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=1, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1):
     '''
-    Function creates a NETCDF4 file (fully compatibile with NETCDF3). Data is stored in accordance with
+    Function creates a NETCDF4 file. Data is stored in accordance with
     BAW convention for 2D Unstructured Grid (http://www.baw.de/methoden/index.php5/NetCDF_Unstrukturiertes_Gitter)
     
     input:
@@ -99,7 +99,7 @@ def create_uGrid_ncdf(filename,
     # --------------------------------------------------
     #                   Creating ncdf
     # --------------------------------------------------
-    root_grp = Dataset(fullname, mode='w', format='NETCDF4_CLASSIC')
+    root_grp = Dataset(fullname, mode='w', format='NETCDF4')
 
     root_grp.title = 'mossco >>> uGrid conversion'
     root_grp.history = 'Createded on ' + time.ctime(time.time())

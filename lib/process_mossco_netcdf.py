@@ -26,8 +26,6 @@ from pylab import *
 
 def read_mossco_nc_1d(filename, varname):
 
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
     fullname = filename
 
 
@@ -49,8 +47,6 @@ def read_mossco_nc_1d(filename, varname):
 
 def read_mossco_nc_2d(filename, varname, mask=None):
 
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
     fullname = filename
 
     root_grp = Dataset(fullname, mode='r')
@@ -85,8 +81,6 @@ def read_mossco_nc_2d(filename, varname, mask=None):
 
 def read_mossco_nc_3d(filename, varname, mask=None):
 
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
     fullname = filename
 
     root_grp = Dataset(fullname, mode='r')
@@ -175,10 +169,6 @@ def read_mossco_nc_3d(filename, varname, mask=None):
 def read_mossco_nc_4d(filename, varname, mask=None):
     # this will work only for 4d variables which have dimensions (time, z, y, x)
     #
-    #
-
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
     fullname = filename
 
     root_grp = Dataset(fullname, mode='r')
@@ -290,16 +280,21 @@ def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillv
     return msk
 
 
-def get_number_of_depth_layer_from_mossco(filename, dimname='getmGrid3D_getm_3'):
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
-    d_nc = root_grp.dimensions[dimname]
-    d_s = d_nc.__len__()
-    root_grp.close()
-    return d_s
+def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid3D_getm_3'):
+    nLayers = False
+    for nc_file in list_with_filenames:
+        try:
+            root_grp = Dataset(nc_file, mode='r')
+            d_nc = root_grp.dimensions[dimname]
+            nLayers = d_nc.__len__()
+            root_grp.close()
+        except KeyError:  # if dimension is not found in cuurent file > skip to next file
+            pass
+    if nLayers:
+        print 'found vertical-layers:', nLayers, '\t(from variable <{0}>)'.format(dimname)
+        return nLayers
+    else:
+        raise ValueError('Vertical layers not found. Variable <{0}> not found in files: {1}'.format(dimname, list_with_synoptic_nc))
 
 
 def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm_3'],
