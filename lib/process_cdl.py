@@ -4,8 +4,7 @@
 # This file is part of "convert2ugrid" tool
 #
 # Author: Nikolai Chernikov, nikolai.chernikov.ru@gmail.com
-#
-# version = 0.1
+
 
 '''
 This module contains functions relevant for processing CDL format file, which is being used

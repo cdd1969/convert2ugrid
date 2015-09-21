@@ -1,3 +1,11 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# This file is part of "convert2ugrid" tool
+#
+# Author: Nikolai Chernikov, nikolai.chernikov.ru@gmail.com
+
+
 import process_mossco_netcdf
 import numpy as np
 
