@@ -16,10 +16,10 @@ The convertor-script has been tested with following configuration:
 
 
 A) Documentation can be found under:
-        ./info/documentation.docx
+        ./info/convert2ugrid_documentation.pdf
 
-B) Example of the output can be found under:
-        ./example_NSBS/
+B) A tutorial is described in HOWTO section of documentation
+
 
 C) To use the convertor do the following steps:
         1) open file ./convert2ugrid.py

@@ -1,2 +1,4 @@
 *.pyc
 *.nc
+./info/tutorial/data
+./info/tutorial/output
