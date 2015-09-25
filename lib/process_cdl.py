@@ -138,7 +138,7 @@ def read_file_with_only_variables(content_in_lines, log=False):
                         except:
                             pass
 
-                        if '.' in item:
+                        if ('.' in item) or ('e' in item):
                             item = float(item)
                         else:
                             item = int(item)
@@ -266,6 +266,12 @@ def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_d
 
 
 def read_txt_mossco_baw(txt_mossco_baw):
+    '''
+    in:
+        txt_mossco_baw - string, path to dictionary 2 (see documentation)
+    out:
+        dictionary {'baw_variable_name': ['path_to_mossco_netcdf', 'mossco_variable_name']}
+    '''
     VARS = dict()
     f = read_file_delete_comments(txt_mossco_baw, comments='//')
     for l in f:
@@ -343,25 +349,55 @@ def create_cdl_file(cdl_baw, txt_mossco_baw, output_fname):
                 # write out all standart attributes specified in baw cdl
                 if BAW_VARS_DESCRIPTION[vn][2]:
                     for an, av in BAW_VARS_DESCRIPTION[vn][2].iteritems():
-                        if isinstance(av, unicode) or isinstance(av, str):
-                            f.write('\t{0}: {1} = "{2}" ;\n'.format(vn, an, av) )
-                        elif isinstance(av, list):
-                            if isinstance(av[0], float):
-                                string = '\t{0}: {1} = '.format(vn, an)
-                                for item in av:
-                                    item_str = '{:g}'.format(item)
-                                    if 'e' in item_str:
-                                        item_str = re.sub('e', '.e', item_str)
-                                    elif '.' not in item_str:
-                                        item_str += '.'
-                                    string += '{0}, '.format(item_str)
-                                string = string[0:-2]+' ;'
+                        # specially treat _FillValue...
+                        if an == '_FillValue':
+                            # if we have autovariable, it is not existing... so we have to use <try>
+                            try:
+                                nc = Dataset(vv[0], mode='r')
+                                av = nc.variables[vv[1]]._FillValue
+                                nc.close()
+                                f.write('\t{0}: {1} = {2} ;\n'.format(vn, an, av) )
+                            except:
+                                if isinstance(av, list):
+                                    if isinstance(av[0], float):
+                                        string = '\t{0}: {1} = '.format(vn, an)
+                                        for item in av:
+                                            item_str = '{:g}'.format(item)
+                                            if 'e' in item_str:
+                                                item_str = re.sub('e', '.e', item_str)
+                                            elif '.' not in item_str:
+                                                item_str += '.'
+                                            string += '{0}, '.format(item_str)
+                                        string = string[0:-2]+' ;'
 
-                            else:
-                                string = '\t{0}: {1} = {2} ;'.format(vn, an, av)
-                            f.write( re.sub(r'[\[\]]', '', string)+'\n' )
+                                    else:
+                                        string = '\t{0}: {1} = {2} ;'.format(vn, an, av)
+                                    f.write( re.sub(r'[\[\]]', '', string)+'\n' )
+                                else:
+                                    f.write(  '\t{0}: {1} = {2} ;\n'.format(vn, an, av) )
+
+
+                        # if the current attribute is not _FillValue    
                         else:
-                            f.write(  '\t{0}: {1} = {2} ;\n'.format(vn, an, av) )
+                            if isinstance(av, unicode) or isinstance(av, str):
+                                f.write('\t{0}: {1} = "{2}" ;\n'.format(vn, an, av) )
+                            elif isinstance(av, list):
+                                if isinstance(av[0], float):
+                                    string = '\t{0}: {1} = '.format(vn, an)
+                                    for item in av:
+                                        item_str = '{:g}'.format(item)
+                                        if 'e' in item_str:
+                                            item_str = re.sub('e', '.e', item_str)
+                                        elif '.' not in item_str:
+                                            item_str += '.'
+                                        string += '{0}, '.format(item_str)
+                                    string = string[0:-2]+' ;'
+
+                                else:
+                                    string = '\t{0}: {1} = {2} ;'.format(vn, an, av)
+                                f.write( re.sub(r'[\[\]]', '', string)+'\n' )
+                            else:
+                                f.write(  '\t{0}: {1} = {2} ;\n'.format(vn, an, av) )
 
             else:
                 # (nMesh2_data_time)

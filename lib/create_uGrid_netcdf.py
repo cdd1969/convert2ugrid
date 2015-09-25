@@ -10,6 +10,7 @@
 import os
 import sys
 import inspect
+import re
 
 # use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
@@ -286,7 +287,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         # -----------------------------------------------------------------------------------------------
         # 8.2.6) append data variable to nc_out...
         # -----------------------------------------------------------------------------------------------
-        process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var_to_add)
+        process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var_to_add, log=True)
         print '-'*100
     
     if create_davit_netcdf and log:
@@ -311,6 +312,16 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
 
         start_from_step         - integer, (1,2,3) to indicate from which step to start
     """
+    # first check if files for outputs are already existing
+    # It can happen that the user will specify as output parameter an input dictionary
+    # In order to protect it (it may be owerwritten), we rename the files...
+    nc_out = rename_existing_file(nc_out, log=False)                                    
+    dictionary_2 = rename_existing_file(dictionary_2, log=False)
+    dictionary_4 = rename_existing_file(dictionary_4, log=False)
+
+
+
+    # now start program
     if start_from_step == 1:
         if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_1, dictionary_2, dictionary_3, dictionary_4]):
             step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=log)
@@ -339,29 +350,91 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
 
 
 
+def rename_existing_file(filename, log=False):
+    '''
+    Input:
+        filename - string, path to file (fullpath)
+    Output:
+        new_filename - string with filename to be saved (fullpath)
+    ----------------------------------------------------------------------
+
+    the function check whether the passed argument is an existing
+    file. If yes, it promts user to confirm overwriting or ...
+    generates a new name a new name:
+        <oldfilename>(Copy_1).extension
+    If copy already existits it will create a new copy (see examples below)
+    
+    Example 1:
+        Lets imagine we have following directory with file test.txt
+                ../
+                ./
+                test.txt
+        After running scripts passing fullpath to the file <text.txt>, function 
+        will return
+                path/to/file/test(Copy_1).txt
+
+    Example 2:
+        Lets imagine we have following directory with 3 file test.txt
+                ../
+                ./
+                test.txt
+                test(Copy_1).txt
+                test(Copy_2).txt
+        After running scripts passing fullpath to the file <text.txt>, function 
+        will return
+                path/to/file/test(Copy_3).txt
+    ------------------------------------------------------------------------
+    '''
+    new_filename = filename
+
+    while os.path.isfile(new_filename):
+        # WARNING! raw_input() may not work properly in SublimeText texteditor
+        answer = raw_input('\nWARNING! File already exists: {0}.    Overwrite? [Y/N]'.format(new_filename)) 
+
+        if answer in ['y', 'Y', 'yes', 'YES']:
+            print '\nWARNING! Overwriting file: <{0}>\n'.format(filename)
+            break
+        else:
+            dirname = os.path.dirname(new_filename)
+            basename = os.path.basename(new_filename)
+            raw_name, extension = os.path.splitext(basename)
+            if log: print 'filename  :', new_filename
+            if log: print 'dirname   :', dirname
+            if log: print 'basename  :', basename
+            if log: print 'raw_name  :', raw_name
+            if log: print 'extension :', extension
+
+            # we dont care about overwriting NetCDF files
+            # UPD: since we can overwrite existing data file.... let us always create new names
+            #if extension.endswith('nc'):
+            #    break
+
+            # check if it is already a copy
+            copy_str = re.findall('.*\(Copy\_(\d+)\).*', raw_name)
+            
+            if copy_str:  # if something was found...
+                copy_n = int(copy_str[0])+1  #new number is one more than the old one
+                new_raw_name = re.sub('\(Copy\_\d+\)', '(Copy_{0})'.format(copy_n), raw_name)
+                new_fname = '{0}{1}'.format(new_raw_name, extension)
+            else:  # if no copy exists
+                new_fname = '{0}(Copy_1){1}'.format(raw_name, extension)
+            
+            new_filename = os.path.join(dirname, new_fname)
+
+    if new_filename != filename:
+        print '\n!Attempt to overwrite file!\nFile <{0}> is already existing, will work with newfile <{1}>\n'.format(filename, new_filename)
+    return new_filename
+
+
+
 
 
 
 
 if __name__ == '__main__':
 
-    # setting paths: INPUT FILES...
-    currentPath = os.path.dirname(sys.argv[0])
-    dict1 = os.path.join(currentPath, 'user_input/dictionary1.txt')  # see description of dictionaries in documentation
-    dict3 = os.path.join(currentPath, 'user_input/dictionary3.cdl')  # see description of dictionaries in documentation
+    fname = '/net/widar/home/ak2stud/Nick/python_scripts/dev/uGrid/code/readme.txt'
+    print rename_existing_file(fname)
     
-    setup_path = '/net/widar/home/ak2stud/Nick/python_scripts/dev/uGrid/data/NSBS'
-    
-    topo_nc     = os.path.join(setup_path, 'topo.nc')                 #topo-file with bathymetry and grid
-    synoptic_nc = os.path.join(setup_path, 'netcdf_reference_3d.nc')  #netcdf with simulation data (may be more than one, join them in a list below)
-    list_with_synoptic_nc = [synoptic_nc, topo_nc]                                 #join files in a list
 
-    # setting paths: OUTPUT FILES....
-    dict2  = os.path.join(currentPath, '../data/NSBS/out/tmp', 'dictionary2.txt')  # see description of dictionaries in documentation
-    dict4  = os.path.join(currentPath, '../data/NSBS/out/tmp', 'dictionary4.cdl')  # see description of dictionaries in documentation
-    nc_out = os.path.join(currentPath, '../data/NSBS/out/tmp', 'nsbs_davit.nc')    # file to be created
 
-    # running script...
-    create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
-                    dictionary_1=dict1, dictionary_2=dict2, dictionary_3=dict3, dictionary_4=dict4,
-                    start_from_step=1, create_davit_netcdf=True, log=True)

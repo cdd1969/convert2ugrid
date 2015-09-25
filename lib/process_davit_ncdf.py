@@ -14,14 +14,8 @@ from __future__ import division
 from netCDF4 import Dataset
 import numpy as np
 import time
-import sys
-import os
 import process_mossco_netcdf
 
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from pylab import squeeze
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from pylab import *
 
@@ -461,13 +455,14 @@ def create_uGrid_ncdf(filename,
 
 def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossco, mask=None, log=False):
     '''
+                    DUMMY VALUES!!!
     Function appends to DAVIT netcdf following variables:
         Mesh2_face_z_face_3d
         Mesh2_face_z_face_bnd_3d
         Mesh2_edge_z_edge_3d
         Mesh2_edge_z_edge_bnd_3d
 
-    The data stored is artificial:
+    The data stored is artificial (!!!):
         - layers are in down-positiv order (maximal layer is the very bottom)
         - each layer has height of 1m, with middlevalues of every halfmeter
         - layer center elevation is 0.5m for very top, NLAYERS-0.5m for very bottom
@@ -721,7 +716,7 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
 
 
 
-    if log: print 'appending variable: ', variable['vname']
+    if log: print 'append_VariableData_to_netcdf(): appending variable: ', variable['vname']
     #path = os.path.dirname(sys.argv[0])
     #fullname = os.path.join(path, filename)
     fullname = filename
@@ -773,12 +768,21 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
                     for t in xrange(nrec):
                         for layer in xrange(nlay):
                             ncVar_data[t, layer, ...] = variable['data'][t, layer, ...]
+                
+                elif variable['dims'][1] in ['nMesh2_layer_2d']:  # if we have fake 3D variable here (time, 1, face)
+                    nrec = variable['data'].shape[0]  # number of records in unlimited dimension
+                    nlay = ncVar_data.shape[1]  # number of layers. Should be 1
+                    if nlay != 1:  # since it is 2D, nlay should be always nlay=1
+                        print '\n\n'+'ERROR\n'+'*'*50+'\n'+'declared 2D variable appeared to be 3D. Skipping...'+'\n'+'*'*50+'\n'
+                        return
+                    for t in xrange(nrec):
+                        ncVar_data[t, 0, ...] = variable['data'][t,  ...]
         
 
         elif len (variable['dims']) == 4:
             if variable['dims'][0] in ['nMesh2_data_time']:
                 if variable['dims'][1] in ['nMesh2_layer_3d']:
-                    if variable['dims'][3] in ['two']:  # we have a 4D-bound variable (time, layer, face, 2)
+                    if variable['dims'][3] in ['two']:    # we have a 4D-bound variable (time, layer, face, 2)
                         nrec = variable['data'].shape[0]  # number of records in unlimited dimension
                         nlay = variable['data'].shape[1]  # number of layers
                         two  = variable['data'].shape[3]  # should be 2
@@ -793,8 +797,11 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
         elif len (variable['dims']) == 5:
             pass
 
-    #print 'NC  after', ncVar_data.shape
-    #print 'DAT after', variable['data'].shape
+
+    if log: print 'append_VariableData_to_netcdf(): input     datashape:', variable['data'].shape
+    if log: print 'append_VariableData_to_netcdf(): output    datashape:', ncVar_data.shape
+    if log: print 'append_VariableData_to_netcdf(): input    data-array:', variable['data']
+    if log: print 'append_VariableData_to_netcdf(): output   data-array:', ncVar_data[...]
     root_grp.close()
     print 'Variable appended succesfully: %s' % (variable['vname'])
 

@@ -14,7 +14,7 @@
 // ----------------------------------------------------------------------------------------------------
 
 float Mesh2_face_Gesamtwassertiefe_2d (nMesh2_data_time, nMesh2_face) ;
-	Mesh2_face_Gesamtwassertiefe_2d: _FillValue = 1.e+31 ;
+	Mesh2_face_Gesamtwassertiefe_2d: _FillValue = -1e+30 ;
 	Mesh2_face_Gesamtwassertiefe_2d: grid_mapping = "Mesh2_crs" ;
 	Mesh2_face_Gesamtwassertiefe_2d: coordinates = "Mesh2_face_lon Mesh2_face_lat Mesh2_face_x Mesh2_face_y" ;
 	Mesh2_face_Gesamtwassertiefe_2d: long_name = "Gesamtwassertiefe [ face ]" ;
@@ -24,12 +24,12 @@ float Mesh2_face_Gesamtwassertiefe_2d (nMesh2_data_time, nMesh2_face) ;
 	Mesh2_face_Gesamtwassertiefe_2d: location = "face" ;
 	Mesh2_face_Gesamtwassertiefe_2d: units = "m" ;
 	Mesh2_face_Gesamtwassertiefe_2d: mesh = "Mesh2" ;
-	Mesh2_face_Gesamtwassertiefe_2d: _mossco_filename = "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc" ;
+	Mesh2_face_Gesamtwassertiefe_2d: _mossco_filename = "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc" ;
 	Mesh2_face_Gesamtwassertiefe_2d: _mossco_varname = "water_depth_at_soil_surface" ;
 
 
 float Mesh2_face_Stroemungsgeschwindigkeit_x_2d (nMesh2_data_time, nMesh2_layer_2d, nMesh2_face) ;
-	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: _FillValue = 1.e+31 ;
+	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: _FillValue = -1e+30 ;
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: grid_mapping = "Mesh2_crs" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: coordinates = "Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat Mesh2_face_z_face_2d" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: long_name = "Stroemungsgeschwindigkeit (x-Komponente), Face (Polygon)" ;
@@ -39,12 +39,12 @@ float Mesh2_face_Stroemungsgeschwindigkeit_x_2d (nMesh2_data_time, nMesh2_layer_
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: location = "face" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: units = "m s-1" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: mesh = "Mesh2" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: _mossco_filename = "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: _mossco_filename = "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_x_2d: _mossco_varname = "depth_averaged_x_velocity_in_water" ;
 
 
 float Mesh2_face_Stroemungsgeschwindigkeit_y_2d (nMesh2_data_time, nMesh2_layer_2d, nMesh2_face) ;
-	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: _FillValue = 1.e+31 ;
+	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: _FillValue = -1e+30 ;
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: grid_mapping = "Mesh2_crs" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: coordinates = "Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat Mesh2_face_z_face_2d" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: long_name = "Stroemungsgeschwindigkeit (y-Komponente), Face (Polygon)" ;
@@ -54,22 +54,8 @@ float Mesh2_face_Stroemungsgeschwindigkeit_y_2d (nMesh2_data_time, nMesh2_layer_
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: location = "face" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: units = "m s-1" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: mesh = "Mesh2" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: _mossco_filename = "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: _mossco_filename = "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc" ;
 	Mesh2_face_Stroemungsgeschwindigkeit_y_2d: _mossco_varname = "depth_averaged_y_velocity_in_water" ;
-
-
-float Mesh2_face_Stroemungsgeschwindigkeit_m_2d (nMesh2_data_time, nMesh2_layer_2d, nMesh2_face) ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: _FillValue = 1.e+31 ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: grid_mapping = "Mesh2_crs" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: coordinates = "Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat Mesh2_face_z_face_2d" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: long_name = "Stroemungsgeschwindigkeit (Betrag), Face (Polygon)" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: standard_name = "magnitude_of_sea_water_velocity" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: cell_methods = "nMesh2_data_time: point nMesh2_layer_2d: mean area: point" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: name_id = 2 ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: location = "face" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: units = "m s-1" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: mesh = "Mesh2" ;
-	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: _auto_creation = "Mesh2_face_Stroemungsgeschwindigkeit_x_2d, Mesh2_face_Stroemungsgeschwindigkeit_y_2d" ;
 
 
 double Mesh2_face_depth_2d (nMesh2_time, nMesh2_face) ;
@@ -85,12 +71,12 @@ double Mesh2_face_depth_2d (nMesh2_time, nMesh2_face) ;
 	Mesh2_face_depth_2d: cell_measures = "area: Mesh2_face_area" ;
 	Mesh2_face_depth_2d: units = "m" ;
 	Mesh2_face_depth_2d: mesh = "Mesh2" ;
-	Mesh2_face_depth_2d: _mossco_filename = "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/topo.nc" ;
+	Mesh2_face_depth_2d: _mossco_filename = "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/topo.nc" ;
 	Mesh2_face_depth_2d: _mossco_varname = "bathymetry" ;
 
 
 float Mesh2_face_Temperatur_3d (nMesh2_data_time, nMesh2_layer_3d, nMesh2_face) ;
-	Mesh2_face_Temperatur_3d: _FillValue = 1.e+31 ;
+	Mesh2_face_Temperatur_3d: _FillValue = -1e+30 ;
 	Mesh2_face_Temperatur_3d: grid_mapping = "Mesh2_crs" ;
 	Mesh2_face_Temperatur_3d: location = "face" ;
 	Mesh2_face_Temperatur_3d: coordinates = "Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat Mesh2_face_z_face_3d" ;
@@ -101,9 +87,21 @@ float Mesh2_face_Temperatur_3d (nMesh2_data_time, nMesh2_layer_3d, nMesh2_face) 
 	Mesh2_face_Temperatur_3d: cell_measures = "area: Mesh2_face_wet_area" ;
 	Mesh2_face_Temperatur_3d: units = "degC" ;
 	Mesh2_face_Temperatur_3d: mesh = "Mesh2" ;
-	Mesh2_face_Temperatur_3d: _mossco_filename = "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc" ;
+	Mesh2_face_Temperatur_3d: _mossco_filename = "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc" ;
 	Mesh2_face_Temperatur_3d: _mossco_varname = "temperature_in_water" ;
 
 
+float Mesh2_face_Stroemungsgeschwindigkeit_m_2d (nMesh2_data_time, nMesh2_layer_2d, nMesh2_face) ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: _FillValue = 1.e+31 ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: grid_mapping = "Mesh2_crs" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: coordinates = "Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat Mesh2_face_z_face_2d" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: long_name = "Stroemungsgeschwindigkeit (Betrag), Face (Polygon)" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: standard_name = "magnitude_of_sea_water_velocity" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: cell_methods = "nMesh2_data_time: point nMesh2_layer_2d: mean area: point" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: name_id = 2 ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: location = "face" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: units = "m s-1" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: mesh = "Mesh2" ;
+	Mesh2_face_Stroemungsgeschwindigkeit_m_2d: _auto_creation = "Mesh2_face_Stroemungsgeschwindigkeit_x_2d, Mesh2_face_Stroemungsgeschwindigkeit_y_2d" ;
 
 

@@ -15,70 +15,70 @@
 
 // ----------------------------------------------------------------------------------------------------
 //	1D
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"time"                                                                 >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"time"                                                                 >>> NOT_INCLUDED
 //	2D
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"pet_getmGrid2D_getm"                                                  >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"pet_getmGrid2D_getm"                                                  >>> NOT_INCLUDED
 //	3D
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_MPB_on_critical_bed_shearstress_at_soil_surface"            >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_MPB_on_sediment_erodibility_at_soil_surface"                >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_Mbalthica_on_critical_bed_shearstress_at_soil_surface"      >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_Mbalthica_on_sediment_erodibility_at_soil_surface"          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_upward_flux_at_soil_surface_001"                 >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_upward_flux_at_soil_surface_002"                 >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"depth_averaged_x_velocity_in_water"                                   >>> "Mesh2_face_Stroemungsgeschwindigkeit_x_2d"
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"depth_averaged_y_velocity_in_water"                                   >>> "Mesh2_face_Stroemungsgeschwindigkeit_y_2d"
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"detritus-P_upward_flux_at_soil_surface"                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"dissolved_oxygen_upward_flux_at_soil_surface"                         >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"dissolved_reduced_substances_upward_flux_at_soil_surface"             >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"fast_detritus_C_upward_flux_at_soil_surface"                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"layer_height_at_soil_surface"                                         >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"mole_concentration_of_ammonium_upward_flux_at_soil_surface"           >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"mole_concentration_of_nitrate_upward_flux_at_soil_surface"            >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"mole_concentration_of_phosphate_upward_flux_at_soil_surface"          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"slow_detritus_C_upward_flux_at_soil_surface"                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"surface_downwelling_photosynthetic_radiative_flux"                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"temperature_at_soil_surface"                                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"turbulent_diffusivity_of_momentum_at_soil_surface"                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"water_depth_at_soil_surface"                                          >>> "Mesh2_face_Gesamtwassertiefe_2d"
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"wave_direction"                                                       >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"wave_height"                                                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"wave_number"                                                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"wave_period"                                                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"wind_x_velocity_at_10m"                                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"wind_y_velocity_at_10m"                                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"x_velocity_at_soil_surface"                                           >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"y_velocity_at_soil_surface"                                           >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_MPB_on_critical_bed_shearstress_at_soil_surface"            >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_MPB_on_sediment_erodibility_at_soil_surface"                >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_Mbalthica_on_critical_bed_shearstress_at_soil_surface"      >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"Effect_of_Mbalthica_on_sediment_erodibility_at_soil_surface"          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_upward_flux_at_soil_surface_001"                 >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_upward_flux_at_soil_surface_002"                 >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"depth_averaged_x_velocity_in_water"                                   >>> "Mesh2_face_Stroemungsgeschwindigkeit_x_2d"
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"depth_averaged_y_velocity_in_water"                                   >>> "Mesh2_face_Stroemungsgeschwindigkeit_y_2d"
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"detritus-P_upward_flux_at_soil_surface"                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"dissolved_oxygen_upward_flux_at_soil_surface"                         >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"dissolved_reduced_substances_upward_flux_at_soil_surface"             >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"fast_detritus_C_upward_flux_at_soil_surface"                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"layer_height_at_soil_surface"                                         >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"mole_concentration_of_ammonium_upward_flux_at_soil_surface"           >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"mole_concentration_of_nitrate_upward_flux_at_soil_surface"            >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"mole_concentration_of_phosphate_upward_flux_at_soil_surface"          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"slow_detritus_C_upward_flux_at_soil_surface"                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"surface_downwelling_photosynthetic_radiative_flux"                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"temperature_at_soil_surface"                                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"turbulent_diffusivity_of_momentum_at_soil_surface"                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"water_depth_at_soil_surface"                                          >>> "Mesh2_face_Gesamtwassertiefe_2d"
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"wave_direction"                                                       >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"wave_height"                                                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"wave_number"                                                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"wave_period"                                                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"wind_x_velocity_at_10m"                                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"wind_y_velocity_at_10m"                                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"x_velocity_at_soil_surface"                                           >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"y_velocity_at_soil_surface"                                           >>> NOT_INCLUDED
 //	4D
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_in_water_001"                                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_in_water_002"                                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_sources-sinks_in_water"                          >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_z_velocity_in_water_001"                         >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_z_velocity_in_water_002"                         >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"detritus_in_water"                                                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"detritus_sources-sinks_in_water"                                      >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"detritus_z_velocity_in_water"                                         >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"gross_primary_production_in_water"                                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"gross_primary_production_rate_in_water"                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"net_community_production_in_water"                                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"net_community_production_rate_in_water"                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"nutrients_in_water"                                                   >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"nutrients_sources-sinks_in_water"                                     >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"nutrients_z_velocity_in_water"                                        >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"photosynthetically_active_radiation_in_water"                         >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"phytoplankton_in_water"                                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"phytoplankton_sources-sinks_in_water"                                 >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"phytoplankton_z_velocity_in_water"                                    >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"result_in_water"                                                      >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"temperature_in_water"                                                 >>> "Mesh2_face_Temperatur_3d"
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"total_custom_light_extinction_in_water"                               >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"total_dissolved_inorganic_carbon_sources-sinks_in_water"              >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"zooplankton_in_water"                                                 >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"zooplankton_sources-sinks_in_water"                                   >>> NOT_INCLUDED
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/netcdf_reference_3d.nc",	"zooplankton_z_velocity_in_water"                                      >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_in_water_001"                                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_in_water_002"                                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_sources-sinks_in_water"                          >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_z_velocity_in_water_001"                         >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"concentration_of_SPM_z_velocity_in_water_002"                         >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"detritus_in_water"                                                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"detritus_sources-sinks_in_water"                                      >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"detritus_z_velocity_in_water"                                         >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"gross_primary_production_in_water"                                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"gross_primary_production_rate_in_water"                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"net_community_production_in_water"                                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"net_community_production_rate_in_water"                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"nutrients_in_water"                                                   >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"nutrients_sources-sinks_in_water"                                     >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"nutrients_z_velocity_in_water"                                        >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"photosynthetically_active_radiation_in_water"                         >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"phytoplankton_in_water"                                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"phytoplankton_sources-sinks_in_water"                                 >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"phytoplankton_z_velocity_in_water"                                    >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"result_in_water"                                                      >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"temperature_in_water"                                                 >>> "Mesh2_face_Temperatur_3d"
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"total_custom_light_extinction_in_water"                               >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"total_dissolved_inorganic_carbon_sources-sinks_in_water"              >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"zooplankton_in_water"                                                 >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"zooplankton_sources-sinks_in_water"                                   >>> NOT_INCLUDED
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/netcdf_reference_3d.nc",	"zooplankton_z_velocity_in_water"                                      >>> NOT_INCLUDED
 
 // ----------------------------------------------------------------------------------------------------
 //	1D
 //	2D
-   "/net/themis/system/akprog/python/qad/convert2ugrid/info/tutorial/data/topo.nc",	"bathymetry"                                                           >>> "Mesh2_face_depth_2d"
+   "/home/ak2stud/Nick/python_scripts/dev/uGrid/code/info/tutorial/data/topo.nc",	"bathymetry"                                                           >>> "Mesh2_face_depth_2d"
 //	3D
 //	4D
