@@ -22,6 +22,23 @@ import create_uGrid_netcdf
 
 
 if __name__ == '__main__':
+    """
+        topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
+        nc_out                  - string, path to netcdf to be created
+        dict1                   - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
+        dict2                   - string, path to txt file after scanning variables
+        dict3                   - string, path to cdl file with standard variables
+        dict4                   - string, path to cdl file to be created
+
+
+        parameter in function create_davit_friendly_netcdf():
+        start_from_step         - integer, (1,2,3) to indicate from which step to start (refer to documentation)
+                                # start_from_step=1   => start from the very beginning, will create dict2, dict4 and nc_out
+                                # start_from_step=2   => start from the second step, will create dict4 and nc_out. Dict2 should be given
+                                # start_from_step=3   => start from the third step, will create only nc_out. Dict2 and dict4 should be given
+    """
+    
+
     setup_path = './info/tutorial'
     dict1 = os.path.join(setup_path, 'user_input/dictionary1.txt')
     dict3 = os.path.join(setup_path, 'user_input/dictionary3.cdl')
