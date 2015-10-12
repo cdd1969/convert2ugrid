@@ -17,7 +17,7 @@ import time
 import process_mossco_netcdf
 
 
-from pylab import *
+#from pylab import *
 
 
 def my_compressed(masked_array, order='C'):

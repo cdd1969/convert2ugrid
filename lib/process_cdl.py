@@ -18,7 +18,7 @@ import sys
 import os
 import re
 import process_mossco_netcdf
-from pylab import *
+#from pylab import *
 import copy
 
 
