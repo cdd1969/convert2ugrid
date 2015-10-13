@@ -39,13 +39,14 @@ if __name__ == '__main__':
     """
     
 
-    setup_path = './info/tutorial'
+    setup_path = '//net/widar/data/nick/to_do/031_MOSSCO_sediment_testes/mossco-setups/shallow_lake'
     dict1 = os.path.join(setup_path, 'user_input/dictionary1.txt')
     dict3 = os.path.join(setup_path, 'user_input/dictionary3.cdl')
         
-    topo_nc     = os.path.join(setup_path, 'data/topo.nc')
-    synoptic_nc = os.path.join(setup_path, 'data/netcdf_reference_3d.nc')
-    list_with_synoptic_nc = [synoptic_nc, topo_nc]
+    topo_nc     = os.path.join(setup_path, 'topo.nc')
+    synoptic_nc = os.path.join(setup_path, 'mossco_gfsen.nc')
+    synoptic_nc1 = os.path.join(setup_path, 'shallow_lake-1x1-erosion.3d.0000.nc')
+    list_with_synoptic_nc = [synoptic_nc, topo_nc, synoptic_nc1]
 
     # setting paths: OUTPUT FILES....
     dict2  = os.path.join(setup_path,  'output/dictionary2.txt')
@@ -55,5 +56,5 @@ if __name__ == '__main__':
     # running script...
     create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
                     dictionary_1=dict1, dictionary_2=dict2, dictionary_3=dict3, dictionary_4=dict4,
-                    start_from_step=1, create_davit_netcdf=True, log=True)
+                    start_from_step=2, create_davit_netcdf=True, log=True)
 

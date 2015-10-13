@@ -219,6 +219,15 @@ def read_mossco_nc_4d(filename, varname, mask=None):
     return a, dims_v
 
 
+
+
+def read_mossco_nc_rawvar(filename, varname, mask=None):
+    root_grp = Dataset(filename, mode='r')
+    a = root_grp.variables[varname][:]
+    root_grp.close()
+    return a
+
+
 def read_mossco_lon_vector(filename, varname='lonc'):
 
     #path = os.path.dirname(sys.argv[0])
@@ -290,10 +299,10 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
         except KeyError:  # if dimension is not found in cuurent file > skip to next file
             pass
     if nLayers:
-        print 'found vertical-layers:', nLayers, '\t(from variable <{0}>)'.format(dimname)
+        print 'found vertical-layers:', nLayers, '\t(from dimension <{0}>)'.format(dimname)
         return nLayers
     else:
-        raise ValueError('Vertical layers not found. Variable <{0}> not found in files: {1}'.format(dimname, list_with_synoptic_nc))
+        raise ValueError('Vertical layers not found. Variable <{0}> not found in files: {1}'.format(dimname, list_with_filenames))
 
 
 def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm_3'],
@@ -355,3 +364,110 @@ def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm
                 print i, ')\t', typ, ':', v
                 i += 1
     return FRIENDLY_VAR_DICT
+
+
+def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=False):
+    '''
+    get sigma coordinates information. Information is read from the given variable,
+    and compared first to the number of layers.
+
+    Output is a 1D array of length <nLayers> or <nLayers+1>
+        if the length is <nLayers> then the values represent the sigma coords of the layer centers
+        if the length is <nLayers+1> then the values represent the sigma coords of the layer borders
+        
+
+    Example: sigma = [-1., -0.75, -0.5, -0.25, 0.], with nLayers=4 it means that we have 4 layers 25% each,
+                    and the values describes the border coords. In this case output will look like...
+    Output:
+        [[-1., -0.75, -0.5, -0.25, 0.], 'border']
+
+    '''
+    
+    sigma_found = False
+    sigma_type = None
+    
+    for nc_file in list_with_filenames:
+        root_grp = Dataset(nc_file, mode='r')
+        if varname in root_grp.variables.keys():
+            var_nc = root_grp.variables[varname]
+            if nLayers == (var_nc.__len__()-1):  # we have sigma coordinates of the layer borders (N_borders = N_layers+1)
+                sigma_found = True
+                sigma_type = 'border'
+                sigma = var_nc[:]
+                root_grp.close()
+                break
+            
+            elif nLayers == (var_nc.__len__()):  # we have sigma coordinates of the layer center (N_centers = N_layers)
+                sigma_found = True
+                sigma_type = 'center'
+                sigma = var_nc[:]
+                root_grp.close()
+                break
+
+        root_grp.close()
+
+        
+    if sigma_found:
+        print 'get_sigma_coordinates(): Found sigma-coords:', sigma, '\n From variable <{0}>)'.format(varname)
+        print 'get_sigma_coordinates(): Values represent coordinates of layer <{0}>'.format(sigma_type)
+        print 'get_sigma_coordinates(): Number of layers <{0}>; Number of sigma coords found <{1}>'.format(nLayers, sigma.__len__())
+        return [sigma, sigma_type]
+    else:
+        raise ValueError('Sigma coordinates not found. Variable <{0}> not found in files: {1}'.format(varname, list_with_filenames))
+
+
+
+def get_water_level(list_with_filenames, varname='water_level', water_depth_at_soil_surface=None, bathymetry=None, log=False):
+    '''
+    get water_level information from variable, or generate it from....
+        <water_level> = <water_depth_at_soil_surface> - <bathymetry>
+    here we assume that <bathymetry> and <water_level> are with respect to the Mean Sea Level, and
+    <water_depth_at_soil_surface> is always positive distance between sea bed and water surface
+
+    flatten - if True, x,y dimensions of the array will be compressed into one single
+    mask    - boolean 2d mask to ignore elements during flattening. see <process_mossco_netcdf.make_mask_array_from_mossco_bathymetry()>
+
+    '''
+    
+    water_level = None
+    
+    for nc_file in list_with_filenames:
+        root_grp = Dataset(nc_file, mode='r')
+        if varname in root_grp.variables.keys():
+            nc_file_found = nc_file
+            water_level = root_grp.variables[varname][:]
+            root_grp.close()
+            break
+    
+
+    if not water_level:  # if <water_level> has not been found... generate it!
+        if water_depth_at_soil_surface is None or bathymetry is None:  # check inputs
+            msg = 'get_water_level(): Searching for water_level data. Variable <{0}> not found in none of the following files:'.format(varname)
+            for nc_file in list_with_filenames:
+                msg = msg+'\n\t'+nc_file
+            msg = msg+'\n Therefore function tried to calculate water_level as <water_level(t,y,x)> = <water_depth_at_soil_surface(t,y,x)> - <bathymetry(y,x)>'
+            msg = msg+'\n but inputs <water_depth_at_soil_surface(t,y,x)>, <bathymetry(y,x)> were not specified correctly. Pass proper arrays and restart the script'
+            raise ValueError(msg)
+
+        # inputs are correct, generate waterlevel!
+        water_level = np.zeros(water_depth_at_soil_surface.shape)
+        for t in xrange(water_depth_at_soil_surface.shape[0]):
+            water_level[t, ...] = water_depth_at_soil_surface[t, ...] - bathymetry
+
+
+            if log:
+                msg = 'get_water_level(): Searching for water_level data. Variable <{0}> not found in none of the following files:'.format(varname)
+                for nc_file in list_with_filenames:
+                    msg = msg+'\nget_water_level():\t'+nc_file
+                msg = msg+'\nget_water_level(): Therefore function calculated water_level as <water_level(t,y,x)> = <water_depth_at_soil_surface(t,y,x)> - <bathymetry(y,x)>'
+                msg = msg+'\nget_water_level(): Returning array of shape {0}'.format(water_level.shape)
+                print msg
+
+    else:
+        if log:
+            print 'get_water_level(): Found <water_level> of shape {0}, from variable <{1}>)'.format(water_level.shape, varname)
+            print 'get_water_level(): From file <{0}>'.format(nc_file_found)
+        pass
+  
+    return water_level
+    

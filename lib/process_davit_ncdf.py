@@ -15,38 +15,7 @@ from netCDF4 import Dataset
 import numpy as np
 import time
 import process_mossco_netcdf
-
-
-#from pylab import *
-
-
-def my_compressed(masked_array, order='C'):
-    """
-    REIMPLEMENTATION of built-in maskedArray method
-
-
-    Return all the non-masked data as a 1-D array.
-    Returns
-    -------
-    data : ndarray
-    A new `ndarray` holding the non-masked data is returned.
-    Notes
-    -----
-    The result is **not** a MaskedArray!
-    Examples
-    --------
-    >>> x = np.ma.array(np.arange(5), mask=[0]*2 + [1]*3)
-    >>> x.compressed()
-    array([0, 1])
-    >>> type(x.compressed())
-    <type 'numpy.ndarray'>
-    """
-    MaskType = np.bool_
-    nomask = MaskType(0)
-    data = np.ndarray.ravel(masked_array.data, order=order)
-    if masked_array.mask is not nomask:
-        data = data.compress(np.logical_not(np.ndarray.ravel(masked_array.mask, order=order)))
-    return data
+import process_mixed_data
 
 
 def create_uGrid_ncdf(filename,
@@ -78,21 +47,11 @@ def create_uGrid_ncdf(filename,
                 'local' <> 'geographic'
     '''
 
-    # --------------------------------------------------
-    #                   User Input
-    # --------------------------------------------------
-    fname = filename
-    # --------------------------------------------------
-    #                       Paths
-    # --------------------------------------------------
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, fname)
-    fullname = fname
 
     # --------------------------------------------------
     #                   Creating ncdf
     # --------------------------------------------------
-    root_grp = Dataset(fullname, mode='w', format='NETCDF4')
+    root_grp = Dataset(filename, mode='w', format='NETCDF4')
 
     root_grp.title = 'mossco >>> uGrid conversion'
     root_grp.history = 'Createded on ' + time.ctime(time.time())
@@ -423,7 +382,7 @@ def create_uGrid_ncdf(filename,
     # --------------------------------------------------
     root_grp.close()
 
-    print 'File created succesfully: %s' % (fullname)
+    print 'File created succesfully: %s' % (filename)
     
 
 
@@ -717,15 +676,22 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
 
 
     if log: print 'append_VariableData_to_netcdf(): appending variable: ', variable['vname']
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
-    fullname = filename
+    if log: print 'append_VariableData_to_netcdf(): input     datashape:', variable['data'].shape
+    if log: print 'append_VariableData_to_netcdf(): input    data-array:', variable['data']
 
     # --------------------------------------------------
     #                   Appending ncdf
     # --------------------------------------------------
-    root_grp = Dataset(fullname, mode='a')
-    #root_grp.history = root_grp.history+'\n\tAppended on ' + time.ctime(time.time())
+    root_grp = Dataset(filename, mode='a')
+
+    # check if this variable already exists!
+    if variable['vname'] in root_grp.variables.keys():
+        root_grp.close()
+        if log:
+            print 'append_VariableData_to_netcdf(): Variable <%s> skipped. Already exising' % (variable['vname'])
+        return
+
+
 
     # now create Variable
     ncVar_data = root_grp.createVariable(variable['vname'], variable['dtype'], dimensions=variable['dims'], fill_value=variable['_FillValue'])
@@ -761,7 +727,7 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
         
 
         elif len (variable['dims']) == 3:
-            if variable['dims'][0] in ['nMesh2_data_time']:
+            if variable['dims'][0] in ['nMesh2_data_time']:  # todo: implement for "nMesh2_time"
                 if variable['dims'][1] in ['nMesh2_layer_3d']:  # we have a 3D variable here (time, layer, face)
                     nrec = variable['data'].shape[0]  # number of records in unlimited dimension
                     nlay = variable['data'].shape[1]  # number of layers
@@ -798,12 +764,20 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
             pass
 
 
-    if log: print 'append_VariableData_to_netcdf(): input     datashape:', variable['data'].shape
     if log: print 'append_VariableData_to_netcdf(): output    datashape:', ncVar_data.shape
-    if log: print 'append_VariableData_to_netcdf(): input    data-array:', variable['data']
     if log: print 'append_VariableData_to_netcdf(): output   data-array:', ncVar_data[...]
     root_grp.close()
     print 'Variable appended succesfully: %s' % (variable['vname'])
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -855,3 +829,173 @@ def fill_bound_variable(Mesh2_var_x_bnd, Mesh2_var_y_bnd, Mesh2_face_nodes=None,
             Mesh2_var_y_bnd[i, :] = lat_elements_i
     print 'bounds have been filled'
 
+
+
+
+
+
+
+
+
+
+
+
+
+def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add_eta=False, add_depth=False, mask=None, log=False):
+    '''
+        function will append following variables to passed file...
+            - Mesh2_sigma_layers
+            - Mesh2_face_Wasserstand_2d (optional)  - added if <add_eta>=True
+            - Mesh2_face_depth_2d (optional)  - added if <add_depth>=True
+        
+
+        add_eta, add_depth = False , it means that these vars won't be created
+        why?
+        because, most likely they are already appended or will be appended to file based on DICTIONARY4
+    '''
+    if log:
+        print '-'*25+'\n appending sigma_vertical coordinates ...'
+    # ----------------------------------------
+    # ----------------------------------------
+    # ---------------  SIGMA   ---------------
+    # ----------------------------------------
+    # ----------------------------------------
+    var = dict()
+    var['vname'] = 'Mesh2_sigma_layers'
+    var['dtype'] = 'f8'
+    var['dims'] = ('nMesh2_layer_3d', )
+    var['_FillValue'] = False
+
+    ATTRS = dict()
+    ATTRS['standard_name'] = 'ocean_sigma_coordinate'
+    ATTRS['long_name'] = "sigma at layer midpoints"
+    ATTRS['positive'] = 'up'
+    ATTRS['formula_terms'] = 'sigma: Mesh2_sigma_layers eta: Mesh2_face_Wasserstand_2d depth: Mesh2_face_depth_2d'
+
+    var['attributes'] = ATTRS
+    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname='level')
+    if sigma_type == 'center':
+        pass
+    elif sigma_type == 'border':
+        sigma = process_mixed_data.create_sigma_coords_of_layer_center(sigma)
+
+    var['data'] = sigma
+    append_VariableData_to_netcdf(filename, var, log=log)
+    del var
+
+    # ----------------------------------------
+    # ----------------------------------------
+    # ---------------  ETA   -----------------
+    # ----------------------------------------
+    # ----------------------------------------
+
+    var = dict()
+    var['vname'] = 'Mesh2_face_Wasserstand_2d'
+    var['dtype'] = 'f4'
+    var['dims'] = ('nMesh2_data_time', 'nMesh2_face')
+    var['_FillValue'] = False
+
+    ATTRS = dict()
+    ATTRS['long_name']        = "Wasserstand, Face (Polygon)"
+    ATTRS['standard_name']    = 'sea_surface_height'
+    ATTRS['units']            = 'm'
+    ATTRS['name_id']          = 3
+    ATTRS['cell_measures']    = 'area: Mesh2_face_wet_area'
+    ATTRS['cell_measures']    = 'nMesh2_data_time: point area: mean'
+    ATTRS['coordinates']      = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
+    ATTRS['grid_mapping']     = 'Mesh2_crs'
+    ATTRS['mesh']             = 'Mesh2'
+    ATTRS['location']         = 'face'
+
+    var['attributes'] = ATTRS
+
+
+
+
+    water_depth_at_soil_surface = None
+    water_depth_at_soil_surface_vname = 'water_depth_at_soil_surface'
+    bathymetry = None
+    bathymetry_vname = 'bathymetry'
+
+    for nc_file in list_with_filenames:
+        root_grp = Dataset(nc_file, mode='r')
+        if water_depth_at_soil_surface_vname in root_grp.variables.keys() and not water_depth_at_soil_surface:
+            water_depth_at_soil_surface = process_mossco_netcdf.read_mossco_nc_rawvar(nc_file, water_depth_at_soil_surface_vname)
+        
+        if bathymetry_vname in root_grp.variables.keys() and not bathymetry:
+            bathymetry = process_mossco_netcdf.read_mossco_nc_rawvar(nc_file, bathymetry_vname)
+
+        root_grp.close()
+        
+        if water_depth_at_soil_surface is not None and bathymetry is not None:
+            break
+
+
+    water_level = process_mossco_netcdf.get_water_level(list_with_filenames, varname='water_level',
+                        water_depth_at_soil_surface=water_depth_at_soil_surface, bathymetry=bathymetry,
+                        log=log)
+    if add_eta:  # actually append
+        var['data'] = process_mixed_data.flatten_xy_data(water_level, mask=mask)
+        append_VariableData_to_netcdf(filename, var, log=log)
+    del var
+
+    # ----------------------------------------
+    # ----------------------------------------
+    # --------------  DEPTH   ----------------
+    # ----------------------------------------
+    # ----------------------------------------
+
+    var = dict()
+    var['vname'] = 'Mesh2_face_depth_2d'
+    var['dtype'] = 'f4'
+    var['dims'] = ('nMesh2_time', 'nMesh2_face')
+    var['_FillValue'] = False
+
+    ATTRS = dict()
+    ATTRS['long_name']        = "Topographie"
+    ATTRS['standard_name']    = 'sea_floor_depth_below_geoid'
+    ATTRS['units']            = 'm'
+    ATTRS['name_id']          = 17
+    ATTRS['cell_measures']    = 'area: Mesh2_face_area'
+    ATTRS['cell_measures']    = 'nMesh2_time: mean area: mean'
+    ATTRS['coordinates']      = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
+    ATTRS['grid_mapping']     = 'Mesh2_crs'
+    ATTRS['mesh']             = 'Mesh2'
+    ATTRS['location']         = 'face'
+
+    var['attributes'] = ATTRS
+
+
+    if add_depth:  # actually append
+        var['data'] = process_mixed_data.flatten_xy_data(bathymetry, mask=mask)
+        append_VariableData_to_netcdf(filename, var, log=log)
+    del var
+    # ----------------------------------------
+    # ----------------------------------------
+    # ------------  ELEVATION   --------------
+    # ----------------------------------------
+    # ----------------------------------------
+    # FACE middle values.....
+    # ----------------------------------------------------------------------------
+    var = dict()
+    var['vname'] = 'Mesh2_face_z_face_3d'
+    var['dtype'] = 'f4'
+    var['dims'] = ('nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face')
+    var['_FillValue'] = None
+    
+    ATTRS = dict()
+    ATTRS['long_name']     = 'z_face [ face ]'
+    ATTRS['units']         = 'm'
+    ATTRS['positive']      = 'down'
+    ATTRS['name_id']       = 1702
+    ATTRS['bounds']        = 'Mesh2_face_z_face_bnd_3d'
+    ATTRS['standard_name'] = 'depth'
+    var['attributes'] = ATTRS
+
+    elev = process_mixed_data.create_layer_elevation_from_sigma_coords(water_level, sigma, bathymetry, log=log)
+    var['data'] = process_mixed_data.flatten_xy_data(elev, mask=mask)
+    append_VariableData_to_netcdf(filename, var, log=log)
+    del var
+    
+    if log:
+        print '-'*25+'\n'

@@ -68,3 +68,99 @@ def create_magnitude_variable_from_x_y_component(VARS, varname, varval, mask=Non
                         magnitude[t, ..., f] = _magnitude
 
     return magnitude
+
+
+def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, mask=None, log=False):
+    '''
+    create elevations <z> with respect to MSL of passed sigma-coordinates.
+
+    Calculations are performed in accordance with CF-conventions (CF 1.6)
+    for variable "Ocean Sigma Coordinate" as...
+        z(n,k,j,i) = eta(n,j,i) + sigma(k)*(depth(j,i)+eta(n,j,i))
+
+        where:
+            z, eta, sigma, depth - numpy arrays
+            n   - integer, timesteps
+            k   - integer, layers
+            j,i - integer, y,x indices
+
+    flatten - if True, x,y dimensions of the array will be compressed into one single
+    mask    - boolean 2d mask to ignore elements during flattening. see <process_mossco_netcdf.make_mask_array_from_mossco_bathymetry()>
+    '''
+    if log:
+        _name = 'create_layer_elevation_from_sigma_coords():'
+        print _name, 'Shapes of the inputs...'
+        print _name, 'eta: <{0}>, sigma: <{1}>, depth: <{2}>'.format(eta.shape, sigma.shape, depth.shape)
+    elev = np.zeros((eta.shape[0], len(sigma), eta.shape[1], eta.shape[2]))
+
+    for t in xrange(elev.shape[0]):
+        for z in xrange(elev.shape[1]):
+            elev[t, z, ...] = eta[t, ...] + sigma[z]*(depth + eta[t, ...])
+
+    if log: print _name, 'Elevation array created of shape <{0}>'.format(elev.shape)
+    return elev
+
+
+
+def create_sigma_coords_of_layer_center(sigma_border):
+    '''
+        creates arrays of sigma-coordinates for layer centers, when a
+        corresponding array is given for the layer borders
+    '''
+
+    sigma_center = np.zeros(len(sigma_border)-1)
+
+    for z in xrange(sigma_center.__len__()):
+        sigma_center[z] = .5*(sigma_border[z] + sigma_border[z+1])
+    return sigma_center
+
+
+
+
+
+
+def flatten_xy_data(data, mask=None):
+    if mask is None:
+        
+        dims = list(data.shape[:-2])
+        dims.append(data.shape[-1]*data.shape[-2])
+
+        a = np.zeros(dims)
+        if len(dims) == 3:
+            for t in xrange(data.shape[0]):
+                for z in xrange(data.shape[1]):
+                    a[t, z, :] = data[t, z, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+        elif len(dims) == 2:
+            for t in xrange(data.shape[0]):
+                a[t, :] = data[t, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+        elif len(dims) == 1:
+            a[:] = data[...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+        else:
+            raise ValueError('Number of array dimensions <{0}> is not supported.'.format(len(dims)))
+    else:
+        n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d part. invert - because True is an invalid element
+        
+        dims = list(data.shape[:-2])
+        dims.append(n_valid_2d)
+
+        a = np.zeros(dims)
+
+        if len(dims) == 3:
+            for t in xrange(data.shape[0]):
+                for z in xrange(data.shape[1]):
+                    var_masked = np.ma.array(data[t, z, ...], mask=mask.T).T
+                    var_masked = var_masked.flatten(order='F').compressed()
+                    a[t, z, :] = var_masked
+        elif len(dims) == 2:
+            for t in xrange(data.shape[0]):
+                var_masked = np.ma.array(data[t, ...], mask=mask.T).T
+                var_masked = var_masked.flatten(order='F').compressed()
+                a[t, :] = var_masked
+        elif len(dims) == 2:
+            var_masked = np.ma.array(data[...], mask=mask.T).T
+            var_masked = var_masked.flatten(order='F').compressed()
+            a[:] = var_masked
+        else:
+            raise ValueError('Number of array dimensions <{0}> is not supported.'.format(len(dims)))
+
+    return a

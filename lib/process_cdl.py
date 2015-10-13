@@ -18,8 +18,30 @@ import sys
 import os
 import re
 import process_mossco_netcdf
-#from pylab import *
 import copy
+
+
+def remove_comments(string):
+    pattern = r"(\".*?\"|\'.*?\')|(//[^\n]*$)"
+    # first group captures quoted strings (double or single)
+    # second group captures comments (//single-line)
+    regex = re.compile(pattern, re.DOTALL)
+    def _replacer(match):
+        print match
+        print match.group(0)
+        print match.group(1)
+        print match.group(2)
+        # if the 2nd group (capturing comments) is not None,
+        # it means we have captured a non-quoted (real) comment string.
+        if match.group(2) is not None:
+            return ""  # so we will return empty to remove the comment
+        else:  # otherwise, we will return the 1st group
+            return match.group(1)  # captured quoted-string
+    string_fixed = regex.sub(_replacer, string)
+    print '<', string
+    print '>', string_fixed
+    print '-'*5
+    return string_fixed
 
 
 def read_file_delete_comments(path, comments=None):
@@ -32,21 +54,15 @@ def read_file_delete_comments(path, comments=None):
     out:
         file_content_str [list with strings]
     '''
-    import re
+
     with open(path, 'r') as f:
         file_content = f.readlines()
         f.close()
-    if comments is not None:  # remove comment lines that start with "//"
-        file_content = [line for line in file_content if not re.sub('\s*?'+comments, comments, line).startswith(comments)]
-    
-        file_content_str = ''.join(file_content)  # join list of strings into single string
-        # delete inline comments
-        file_content_str = re.sub(comments+'.*?\n', '\n', file_content_str)
-        file_content_str = file_content_str.split("\n")
-        file_content_str = [f.strip() for f in file_content_str if f != '']
-        return file_content_str
+    if comments in [u'//', '//']:  # remove comment lines that start with "//"
+        file_content = [remove_comments(line).strip() for line in file_content if remove_comments(line).strip() not in ['', '\n', '\r']]
+        return file_content
     else:
-        return [f.strip() for f in file_content if f != '']
+        raise KeyError('Unsupported comment character <{0}>. Should be <//>'.format(comments))
 
 
 def read_file_with_only_variables(content_in_lines, log=False):
@@ -74,6 +90,7 @@ def read_file_with_only_variables(content_in_lines, log=False):
     var_name_str = '_default_dummy_name_that_has_to_be_overwritten'
 
     for line in content_in_lines:
+        print line
         datatype_found = False
         
         for dt in dtype_list:
@@ -274,14 +291,19 @@ def read_txt_mossco_baw(txt_mossco_baw):
     '''
     VARS = dict()
     f = read_file_delete_comments(txt_mossco_baw, comments='//')
-    for l in f:
-        #print l
-        baw_vn = l.split('>>>')[1].strip()
-        if baw_vn != 'NOT_INCLUDED':
-            baw_vn = re.sub('[\"\']', '', baw_vn)
-            mossco_vn = re.sub('[\"\']', '', l.split(',')[1].split(">>>")[0].strip())
-            mossco_nc = re.sub('[\"\']', '', l.split(',')[0].strip())
-            VARS[baw_vn] = [mossco_nc, mossco_vn]
+    for i, l in enumerate(f):
+        print l
+        try:
+            baw_vn = l.split('>>>')[1].strip()
+            if baw_vn != 'NOT_INCLUDED':
+                baw_vn = re.sub('[\"\']', '', baw_vn)
+                mossco_vn = re.sub('[\"\']', '', l.split(',')[1].split(">>>")[0].strip())
+                mossco_nc = re.sub('[\"\']', '', l.split(',')[0].strip())
+                VARS[baw_vn] = [mossco_nc, mossco_vn]
+        except Exception, err:
+            print 'Error reading line <{0}>: {1}'.format(i, l)
+            print(sys.exc_info())
+            raise err
     return VARS
 
 
