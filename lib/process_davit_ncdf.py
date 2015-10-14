@@ -970,6 +970,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
         var['data'] = process_mixed_data.flatten_xy_data(bathymetry, mask=mask)
         append_VariableData_to_netcdf(filename, var, log=log)
     del var
+    
     # ----------------------------------------
     # ----------------------------------------
     # ------------  ELEVATION   --------------
@@ -986,7 +987,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
     ATTRS = dict()
     ATTRS['long_name']     = 'z_face [ face ]'
     ATTRS['units']         = 'm'
-    ATTRS['positive']      = 'down'
+    ATTRS['positive']      = 'up'
     ATTRS['name_id']       = 1702
     ATTRS['bounds']        = 'Mesh2_face_z_face_bnd_3d'
     ATTRS['standard_name'] = 'depth'
