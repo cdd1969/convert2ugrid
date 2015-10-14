@@ -888,115 +888,85 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
     # ---------------  ETA   -----------------
     # ----------------------------------------
     # ----------------------------------------
-
-    var = dict()
-    var['vname'] = 'Mesh2_face_Wasserstand_2d'
-    var['dtype'] = 'f4'
-    var['dims'] = ('nMesh2_data_time', 'nMesh2_face')
-    var['_FillValue'] = False
-
-    ATTRS = dict()
-    ATTRS['long_name']        = "Wasserstand, Face (Polygon)"
-    ATTRS['standard_name']    = 'sea_surface_height'
-    ATTRS['units']            = 'm'
-    ATTRS['name_id']          = 3
-    ATTRS['cell_measures']    = 'area: Mesh2_face_wet_area'
-    ATTRS['cell_measures']    = 'nMesh2_data_time: point area: mean'
-    ATTRS['coordinates']      = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
-    ATTRS['grid_mapping']     = 'Mesh2_crs'
-    ATTRS['mesh']             = 'Mesh2'
-    ATTRS['location']         = 'face'
-
-    var['attributes'] = ATTRS
-
-
-
-
-    water_depth_at_soil_surface = None
-    water_depth_at_soil_surface_vname = 'water_depth_at_soil_surface'
-    bathymetry = None
-    bathymetry_vname = 'bathymetry'
-
-    for nc_file in list_with_filenames:
-        root_grp = Dataset(nc_file, mode='r')
-        if water_depth_at_soil_surface_vname in root_grp.variables.keys() and not water_depth_at_soil_surface:
-            water_depth_at_soil_surface = process_mossco_netcdf.read_mossco_nc_rawvar(nc_file, water_depth_at_soil_surface_vname)
-        
-        if bathymetry_vname in root_grp.variables.keys() and not bathymetry:
-            bathymetry = process_mossco_netcdf.read_mossco_nc_rawvar(nc_file, bathymetry_vname)
-
-        root_grp.close()
-        
-        if water_depth_at_soil_surface is not None and bathymetry is not None:
-            break
-
-
-    water_level = process_mossco_netcdf.get_water_level(list_with_filenames, varname='water_level',
-                        water_depth_at_soil_surface=water_depth_at_soil_surface, bathymetry=bathymetry,
-                        log=log)
     if add_eta:  # actually append
+
+        var = dict()
+        var['vname'] = 'Mesh2_face_Wasserstand_2d'
+        var['dtype'] = 'f4'
+        var['dims'] = ('nMesh2_data_time', 'nMesh2_face')
+        var['_FillValue'] = False
+
+        ATTRS = dict()
+        ATTRS['long_name']        = "Wasserstand, Face (Polygon)"
+        ATTRS['standard_name']    = 'sea_surface_height'
+        ATTRS['units']            = 'm'
+        ATTRS['name_id']          = 3
+        ATTRS['cell_measures']    = 'area: Mesh2_face_wet_area'
+        ATTRS['cell_measures']    = 'nMesh2_data_time: point area: mean'
+        ATTRS['coordinates']      = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
+        ATTRS['grid_mapping']     = 'Mesh2_crs'
+        ATTRS['mesh']             = 'Mesh2'
+        ATTRS['location']         = 'face'
+        
+        var['attributes'] = ATTRS
+
+
+        water_depth_at_soil_surface = None
+        water_depth_at_soil_surface_vname = 'water_depth_at_soil_surface'
+        bathymetry = None
+        bathymetry_vname = 'bathymetry'
+
+        for nc_file in list_with_filenames:
+            root_grp = Dataset(nc_file, mode='r')
+            if water_depth_at_soil_surface_vname in root_grp.variables.keys() and not water_depth_at_soil_surface:
+                water_depth_at_soil_surface = process_mossco_netcdf.read_mossco_nc_rawvar(nc_file, water_depth_at_soil_surface_vname)
+            
+            if bathymetry_vname in root_grp.variables.keys() and not bathymetry:
+                bathymetry = process_mossco_netcdf.read_mossco_nc_rawvar(nc_file, bathymetry_vname)
+
+            root_grp.close()
+            
+            if water_depth_at_soil_surface is not None and bathymetry is not None:
+                break
+
+
+        water_level = process_mossco_netcdf.get_water_level(list_with_filenames, varname='water_level',
+                            water_depth_at_soil_surface=water_depth_at_soil_surface, bathymetry=bathymetry,
+                            log=log)
         var['data'] = process_mixed_data.flatten_xy_data(water_level, mask=mask)
         append_VariableData_to_netcdf(filename, var, log=log)
-    del var
+        del var
 
     # ----------------------------------------
     # ----------------------------------------
     # --------------  DEPTH   ----------------
     # ----------------------------------------
     # ----------------------------------------
+    if add_depth:
 
-    var = dict()
-    var['vname'] = 'Mesh2_face_depth_2d'
-    var['dtype'] = 'f4'
-    var['dims'] = ('nMesh2_time', 'nMesh2_face')
-    var['_FillValue'] = False
+        var = dict()
+        var['vname'] = 'Mesh2_face_depth_2d'
+        var['dtype'] = 'f4'
+        var['dims'] = ('nMesh2_time', 'nMesh2_face')
+        var['_FillValue'] = False
 
-    ATTRS = dict()
-    ATTRS['long_name']        = "Topographie"
-    ATTRS['standard_name']    = 'sea_floor_depth_below_geoid'
-    ATTRS['units']            = 'm'
-    ATTRS['name_id']          = 17
-    ATTRS['cell_measures']    = 'area: Mesh2_face_area'
-    ATTRS['cell_measures']    = 'nMesh2_time: mean area: mean'
-    ATTRS['coordinates']      = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
-    ATTRS['grid_mapping']     = 'Mesh2_crs'
-    ATTRS['mesh']             = 'Mesh2'
-    ATTRS['location']         = 'face'
+        ATTRS = dict()
+        ATTRS['long_name']        = "Topographie"
+        ATTRS['standard_name']    = 'sea_floor_depth_below_geoid'
+        ATTRS['units']            = 'm'
+        ATTRS['name_id']          = 17
+        ATTRS['cell_measures']    = 'area: Mesh2_face_area'
+        ATTRS['cell_measures']    = 'nMesh2_time: mean area: mean'
+        ATTRS['coordinates']      = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
+        ATTRS['grid_mapping']     = 'Mesh2_crs'
+        ATTRS['mesh']             = 'Mesh2'
+        ATTRS['location']         = 'face'
 
-    var['attributes'] = ATTRS
+        var['attributes'] = ATTRS
 
-
-    if add_depth:  # actually append
         var['data'] = process_mixed_data.flatten_xy_data(bathymetry, mask=mask)
         append_VariableData_to_netcdf(filename, var, log=log)
-    del var
-    
-    # ----------------------------------------
-    # ----------------------------------------
-    # ------------  ELEVATION   --------------
-    # ----------------------------------------
-    # ----------------------------------------
-    # FACE middle values.....
-    # ----------------------------------------------------------------------------
-    var = dict()
-    var['vname'] = 'Mesh2_face_z_face_3d'
-    var['dtype'] = 'f4'
-    var['dims'] = ('nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face')
-    var['_FillValue'] = None
-    
-    ATTRS = dict()
-    ATTRS['long_name']     = 'z_face [ face ]'
-    ATTRS['units']         = 'm'
-    ATTRS['positive']      = 'up'
-    ATTRS['name_id']       = 1702
-    ATTRS['bounds']        = 'Mesh2_face_z_face_bnd_3d'
-    ATTRS['standard_name'] = 'depth'
-    var['attributes'] = ATTRS
+        del var
 
-    elev = process_mixed_data.create_layer_elevation_from_sigma_coords(water_level, sigma, bathymetry, log=log)
-    var['data'] = process_mixed_data.flatten_xy_data(elev, mask=mask)
-    append_VariableData_to_netcdf(filename, var, log=log)
-    del var
-    
     if log:
         print '-'*25+'\n'
