@@ -350,15 +350,16 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
     # first check if files for outputs are already existing
     # It can happen that the user will specify as output parameter an input dictionary
     # In order to protect it (it may be owerwritten), we rename the files...
-    nc_out = rename_existing_file(nc_out, log=False)                                    
+    nc_out = rename_existing_file(nc_out, log=False)
 
 
 
     # now start program
     if start_from_step == 1:
-        dictionary_2 = rename_existing_file(dictionary_2, log=False)
-        dictionary_4 = rename_existing_file(dictionary_4, log=False)
         if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_1, dictionary_2, dictionary_3, dictionary_4]):
+            dictionary_2 = rename_existing_file(dictionary_2, log=False)
+            dictionary_4 = rename_existing_file(dictionary_4, log=False)
+            
             step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=log)
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
             step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
@@ -366,8 +367,9 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
             raise ValueError('Fill missing inputs...')
     
     elif start_from_step == 2:
-        dictionary_4 = rename_existing_file(dictionary_4, log=False)
         if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_2, dictionary_3, dictionary_4]):
+            dictionary_4 = rename_existing_file(dictionary_4, log=False)
+            
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
             step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
         else:

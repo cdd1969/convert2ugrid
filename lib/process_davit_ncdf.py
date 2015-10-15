@@ -861,7 +861,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
     # ----------------------------------------
     # ----------------------------------------
     var = dict()
-    var['vname'] = 'Mesh2_sigma_layers'
+    var['vname'] = 'nMesh2_layer_3d'
     var['dtype'] = 'f8'
     var['dims'] = ('nMesh2_layer_3d', )
     var['_FillValue'] = False
@@ -870,7 +870,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
     ATTRS['standard_name'] = 'ocean_sigma_coordinate'
     ATTRS['long_name'] = "sigma at layer midpoints"
     ATTRS['positive'] = 'up'
-    ATTRS['formula_terms'] = 'sigma: Mesh2_sigma_layers eta: Mesh2_face_Wasserstand_2d depth: Mesh2_face_depth_2d'
+    ATTRS['formula_terms'] = 'sigma: nMesh2_layer_3d eta: Mesh2_face_Wasserstand_2d depth: Mesh2_face_depth_2d'
 
     var['attributes'] = ATTRS
     sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname='level')
@@ -946,7 +946,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
 
         var = dict()
         var['vname'] = 'Mesh2_face_depth_2d'
-        var['dtype'] = 'f4'
+        var['dtype'] = 'f8'
         var['dims'] = ('nMesh2_time', 'nMesh2_face')
         var['_FillValue'] = False
 
@@ -967,6 +967,61 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
         var['data'] = process_mixed_data.flatten_xy_data(bathymetry, mask=mask)
         append_VariableData_to_netcdf(filename, var, log=log)
         del var
+
+
+
+
+    # ----------------------------------------
+    # ----------------------------------------
+    # ------------  ELEVATION   --------------
+    # ----------------------------------------
+    
+    # ----------------------------------------
+    # FACE middle values.....
+    # ----------------------------------------
+    var = dict()
+    var['vname'] = 'Mesh2_face_z_face_3d'
+    var['dtype'] = 'f4'
+    var['dims']  = ('nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face')
+    var['_FillValue'] = None
+    
+    ATTRS = dict()
+    ATTRS['long_name']     = 'z_face [ face ]'
+    ATTRS['units']         = 'm'
+    ATTRS['positive']      = 'up'
+    ATTRS['name_id']       = 1702
+    ATTRS['bounds']        = 'Mesh2_face_z_face_bnd_3d'
+    ATTRS['standard_name'] = 'depth'
+    var['attributes']      = ATTRS
+   
+
+    var1 = dict()
+    var1['vname'] = 'Mesh2_face_z_face_bnd_3d'
+    var1['dtype'] = 'f4'
+    var1['dims']  = ('nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face', 'two')
+    var1['_FillValue'] = None
+    
+    ATTRS = dict()
+    ATTRS['long_name'] = 'elevations of lower and upper layer-boundaries'
+    ATTRS['units']     = 'm'
+    var1['attributes'] = ATTRS
+
+
+
+
+
+    elev, elev_borders = process_mixed_data.create_layer_elevation_from_sigma_coords(water_level, sigma, bathymetry, log=log)
+    
+
+    var['data']  = process_mixed_data.flatten_xy_data(elev, mask=mask)
+    var1['data'] = process_mixed_data.flatten_xy_data(elev_borders, mask=mask)
+    
+    append_VariableData_to_netcdf(filename, var,  log=log)
+    append_VariableData_to_netcdf(filename, var1, log=log)
+    del var, var1
+    
+
+
 
     if log:
         print '-'*25+'\n'

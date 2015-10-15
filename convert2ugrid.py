@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # setting paths: OUTPUT FILES....
     dict2  = os.path.join(setup_path,  'output/dictionary2.txt')
     dict4  = os.path.join(setup_path, 'output/dictionary4.cdl')
-    nc_out = os.path.join(setup_path, 'output/nsbs_davit_1.nc')
+    nc_out = os.path.join(setup_path, 'output/shallow_lake_davit.nc')
 
     # running script...
     create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,

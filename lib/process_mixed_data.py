@@ -91,14 +91,44 @@ def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, m
         _name = 'create_layer_elevation_from_sigma_coords():'
         print _name, 'Shapes of the inputs...'
         print _name, 'eta: <{0}>, sigma: <{1}>, depth: <{2}>'.format(eta.shape, sigma.shape, depth.shape)
-    elev = np.zeros((eta.shape[0], len(sigma), eta.shape[1], eta.shape[2]))
+    
+    elev         = np.zeros((eta.shape[0], len(sigma), eta.shape[1], eta.shape[2]))
+    elev_borders = np.zeros((2, eta.shape[0], len(sigma), eta.shape[1], eta.shape[2]))
+
+    # create sigma coordinates of the borders
+    sigma_borders = np.zeros(len(sigma)+1)
+    sigma_borders[0] = -1.  # coordinate of the very bottom
+    for z in xrange(len(sigma)):
+        sigma_borders[z+1] = sigma_borders[z] - (sigma_borders[z] - sigma[z])*2
+    
+
+    if abs(sigma_borders[-1]) > 0.005:
+        print _name, 'sigma layer centers', sigma
+        print _name, 'sigma layer borders', sigma_borders
+        raise ValueError('Sigma values for layer-borders calculated not correctly')
+    else:
+        sigma_borders[-1] = 0.  # corrdinate of the very top
+
+    if log: print _name, 'sigma layer centers', sigma
+    if log: print _name, 'sigma layer borders', sigma_borders
+    
+
 
     for t in xrange(elev.shape[0]):
         for z in xrange(elev.shape[1]):
             elev[t, z, ...] = eta[t, ...] + sigma[z]*(depth + eta[t, ...])
+            for border in xrange(2):
+                elev_borders[border, t, z, ...] = eta[t, ...] + sigma_borders[z+border]*(depth + eta[t, ...])
+            #if log: print 't=', t, 'z=', z, 'elev:', elev[t, z, 12, 12]
+            #if log: print 't=', t, 'z=', z, 'elev_bnb [0]:', elev_borders[0, t, z, 12, 12]
+            #if log: print 't=', t, 'z=', z, 'elev_bnb [1]:', elev_borders[1, t, z, 12, 12]
+    
+
+
 
     if log: print _name, 'Elevation array created of shape <{0}>'.format(elev.shape)
-    return elev
+    if log: print _name, 'Elevation border array created of shape <{0}>'.format(elev_borders.shape)
+    return elev, elev_borders
 
 
 
@@ -135,6 +165,16 @@ def flatten_xy_data(data, mask=None):
                 a[t, :] = data[t, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
         elif len(dims) == 1:
             a[:] = data[...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+
+        elif len(dims) == 4 and dims[0] == 2:  # if we have boundary var (i.e. Mesh2_face_bnd(two, t, z, face))
+            del a
+            dims.append(2)
+            a = np.zeros(dims[1::])  # make the dimension two appear at the end... (two, t, z, face) => (t, z, face, two)
+
+            for t in xrange(data.shape[1]):
+                for z in xrange(data.shape[2]):
+                    for bnd in xrange(data.shape[0]):
+                        a[t, z, :, bnd] = data[bnd, t, z, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
         else:
             raise ValueError('Number of array dimensions <{0}> is not supported.'.format(len(dims)))
     else:
@@ -160,6 +200,16 @@ def flatten_xy_data(data, mask=None):
             var_masked = np.ma.array(data[...], mask=mask.T).T
             var_masked = var_masked.flatten(order='F').compressed()
             a[:] = var_masked
+        elif len(dims) == 4 and dims[0] == 2:  # if we have boundary var (i.e. Mesh2_face_bnd(two, t, z, face))
+            del a
+            dims.append(2)
+            a = np.zeros(dims[1::])  # make the dimension two appear at the end... (two, t, z, face) => (t, z, face, two)
+            for t in xrange(data.shape[1]):
+                for z in xrange(data.shape[2]):
+                    for bnd in xrange(data.shape[0]):
+                        var_masked = np.ma.array(data[bnd, t, z, ...], mask=mask.T).T
+                        var_masked = var_masked.flatten(order='F').compressed()
+                        a[t, z, :, bnd] = var_masked
         else:
             raise ValueError('Number of array dimensions <{0}> is not supported.'.format(len(dims)))
 
