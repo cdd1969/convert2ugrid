@@ -484,6 +484,7 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
     ATTRS['name_id']       = 1702
     ATTRS['bounds']        = 'Mesh2_face_z_face_bnd_3d'
     ATTRS['standard_name'] = 'depth'
+    ATTRS['comment']       = "warning: dummy values are used"
     variable['attributes'] = ATTRS
 
     davit_dummy = np.zeros((nt, nz, nFaces))
@@ -512,6 +513,7 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
     ATTRS = dict()
     ATTRS['name_id']       = 1703
     #ATTRS['units']         = 'm'
+    ATTRS['comment']       = "warning: dummy values are used"
     variable['attributes'] = ATTRS
 
     davit_dummy = np.zeros((nt, nz, nFaces, 2))
@@ -546,6 +548,7 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
     ATTRS['name_id']       = 1707
     ATTRS['bounds']        = 'Mesh2_edge_z_edge_bnd_3d'
     ATTRS['standard_name'] = 'depth'
+    ATTRS['comment']       = "warning: dummy values are used"
     variable['attributes'] = ATTRS
 
 
@@ -575,6 +578,7 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
     ATTRS = dict()
     ATTRS['name_id']       = 1708
     #ATTRS['units']         = 'm'
+    ATTRS['comment']       = "warning: dummy values are used"
     variable['attributes'] = ATTRS
     
     davit_dummy = np.zeros((nt, nz, nEdges, 2))
