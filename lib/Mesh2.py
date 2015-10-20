@@ -215,8 +215,45 @@ class Mesh2_face(object):
                                 'formed from element nodes are not orthogonal.\nPolygon is not a rectangle'.format(
                                 edge1, edge2, self.get_index(), [edge1.get_node1(), edge1.get_node2()], [edge2.get_node1(), edge2.get_node2()],
                                 product )
-                    raise ValueError(err_msg)
-        
+                    #raise ValueError(err_msg)
+                    #print err_msg
+    
+    def polygonArea(self, X=None, Y=None):
+        '''
+        X, Y        Arrays of the x and y coordinates of the vertices, traced in a clockwise direction, starting at any vertex.
+                    If you trace them counterclockwise, the result will be correct but have a negative sign.
+        Returns     the area of the polygon
+        '''
+        # if user has not forced his own X,Y array work with those, we have...
+        if X is None or Y is None:
+            X = [n.get_node_x() for n in self.__nodelist]
+            Y = [n.get_node_y() for n in self.__nodelist]
+
+
+        area = 0.         # Accumulates area in the loop
+        ox, oy = X[0], Y[0]
+        for x, y in zip(X[1:], Y[1:]):
+            area  += (x*oy-y*ox)
+            ox, oy = x, y
+        return abs(area*0.5)
+    
+    def polygonCentroid(self, X=None, Y=None):
+        '''
+        X, Y        Arrays of the x and y coordinates of the vertices, traced in a clockwise direction, starting at any vertex.
+                    If you trace them counterclockwise, the result will be correct but have a negative sign.
+        Returns     the centroid coords of the polygon [x, y]
+        '''
+        # if user has not forced his own X,Y array work with those, we have...
+        if X is None or Y is None:
+            X = [n.get_node_x() for n in self.__nodelist]
+            Y = [n.get_node_y() for n in self.__nodelist]
+        sum_x = 0.
+        sum_y = 0.
+        for x, y in zip(X, Y):
+            sum_x += x
+            sum_y += y
+        return [sum_x/float(len(X)), sum_y/float(len(Y))]
+
     def calculateGeometry(self):
         # for rectangular select nodes 1, 2 and 4 , which are create orthogonal vectors
         if self.__nNodes == 3:
@@ -230,12 +267,15 @@ class Mesh2_face(object):
         
         # calculating polygon area
         # ------------------------
-        self.__area = (self.__nNodes-2)/2.*abs(np.cross(vector1, vector2))
+        #self.__area = (self.__nNodes-2)/2.*abs(np.cross(vector1, vector2))
+        self.__area = self.polygonArea()
         
         # calculating polygon centroid
         # ----------------------------
-        centroid_center = (self.__nNodes-1)/3.*(0.5*(vector1+vector2))  # works for triangles and rectangles (n-1)*1/6*(vector1+vector2)
-        centroid_center += n1.get_vector()  # adding coords of first vertex
+        #centroid_center = (self.__nNodes-1)/3.*(0.5*(vector1+vector2))  # works for triangles and rectangles (n-1)*1/6*(vector1+vector2)
+        #centroid_center += n1.get_vector()  # adding coords of first vertex
+
+        centroid_center = self.polygonCentroid()
 
         # works for triangles and rectangles (n-1)*1/6*SUM(vector_i), where n - number of nodes
         #summ = np.zeros(2)
@@ -364,47 +404,95 @@ class Mesh2_face(object):
 
 
 class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
-    '''
-    a rectangular NX per NY 2D grid
-    '''
 
-    def __init__(self, x_vector, y_vector, mask=None):
-        # x_vector, y_vector - numpy arrays shwing coordinates of cell centers in x and y directions
+    def __init__(self, x_coord, y_coord, mask=None, data_location='T_points'):
+        '''
+        -----------------------------------------------
+        Function creates unstructured grid of size.
+        -----------------------------------------------
+        Currently two input possibilities are accepted (1) and (5):
+
+                1) Rectengular uniform grid. (all cells have equal size), data_location='T_points'
+                    inputs:
+                        x_coord - 1d array of length nx
+                        y_coord - 1d array of length ny
+                    Bathymetry is specified on grid (ny, nx)
+
+         !TODO! 2) Rectengular uniform grid. (all cells have equal size), data_location='X_points'
+                    inputs:
+                        x_coord - 1d array of length nx
+                        y_coord - 1d array of length ny
+                    Bathymetry is specified on grid (nx-1, ny-1)
+         
+         !TODO! 3) Rectengular grid. (cells may have non-qual size), data_location='X_points'
+         !TODO! 4) Rectengular grid. (cells may have non-qual size), data_location='T_points'
+                
+                5) Curvilinear grid. data_location='X_points'
+                    inputs:
+                        x_coord - 2d array of shape (ny, nx)
+                        y_coord - 2d array of shape (ny, nx)
+                    Bathymetry is specified on grid (ny-1, nx-1)
+         
+         !TODO! 6) Curvilinear grid. data_location='T_points'
+
+        -----------------------------------------------
+        Inputs:
+        -----------------------------------------------
+        x_coord - numpy array, x-coordinates of T or X points. Can be 1d or 2d
+        y_coord - numpy array, y-coordinates of T or X points. Can be 1d or 2d
+
+
+        mask - is an 2D array of shape
+                - (len(x_coord), len(y_coord)), if x and y are 1D
+                - shape(x_coord)=shape(y_coord), if x and y are 2D
+            filled with True, False (True - for masked cell, False - for non-masked)
+        '''
+        # x_coord, y_coord - numpy arrays shwing coordinates of cell centers in x and y directions
         # assuming that input is a regular grid with cells of equal dimensions
-        # mask - is an 2D array of size (x_vector, y_vector), filled with True, False, representing active cells
+        # mask - is an 2D array of size (x_coord, y_coord), filled with True, False, representing active cells
+        # data_location - 'T_points' or 'X_points', defines where do the arrays x_coord and y_coord show the values
         
-        self._nx = len(x_vector)
-        self._ny = len(y_vector)
-        self._x_vector = x_vector
-        self._y_vector = y_vector
-        self._dx = abs(x_vector[0]-x_vector[1])/2.  # x- projection of distance from cell center to its left/right border
-        self._dy = abs(y_vector[0]-y_vector[1])/2.  # y- projection of distance from cell center to its top/bottom border
+
+        if data_location == 'T_points':
+            self._nx = len(x_coord)
+            self._ny = len(y_coord)
+            self._x_coord = x_coord
+            self._y_coord = y_coord
+            self._dx = abs(x_coord[0]-x_coord[1])/2.  # x- projection of distance from cell center to its left/right border
+            self._dy = abs(y_coord[0]-y_coord[1])/2.  # y- projection of distance from cell center to its top/bottom border
+            
+        elif data_location == 'X_points':
+            if len(x_coord.shape) == 2 and len(y_coord.shape) == 2:
+                self._x2D = x_coord
+                self._y2D = y_coord
+                self._nx = self._x2D.shape[1]-1
+                self._ny = self._x2D.shape[0]-1
+            else:
+                raise ValueError('currently X_points works only for 2d arrays, pass x_coord and y_coord as (y,x) arrays')
         
-        #self._nodeMap = np.zeros((self._nx, self._ny))
-        #self._nodeMap[:] = -1  # -1 is a missingValue indicator
+
         self._faceMap = np.zeros((self._nx, self._ny))
         self._faceMap[:] = -999  # -999 is a missingValue indicator
-        
+    
         if mask is not None:
             if self._faceMap.shape != np.array(mask).shape:
                 print 'faceMap shape :{0}\nmask shape: {1}'.format(self._faceMap.shape, np.array(mask).shape)
                 raise ValueError('Masked array has invalid shape')
             else:
                 self._faceMap = ma.array(self._faceMap, mask=mask)
-
         self._nNodes  = 0
         self._nEdges  = 0
         self._nFaces  = 0
-
         self._nodes   = []
         self._edges   = []
         self._faces   = []
         self._nMaxMesh2_face_nodes = 4  # HARDCODE for mossco ( rectangular elements)
+        self.update_mossco_grid(data_location=data_location)
 
-        self.update_mossco_grid()
+
     
 
-    def update_mossco_grid(self):
+    def update_mossco_grid(self, data_location='T_points'):
         # coordinates (0,0) is located at top left
         # y axis from top left to bottom left
         # x axis from top left to top right
@@ -418,8 +506,21 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                     #a valid cell center is found
                     self._nFaces += 1
                     self._faceMap[i, j] = int(self._nFaces)
-                    x = self._x_vector[i]  # x- center coord
-                    y = self._y_vector[j]  # y- center coord
+
+                    # now get coordinates of the face center and nodes
+                    if data_location == 'T_points':
+                        x, y = self._x_coord[i], self._y_coord[j]  # x,y center coord
+                        lt_x, lt_y = x-self._dx, y-self._dy  # left top node
+                        lb_x, lb_y = x-self._dx, y+self._dy  # left bottom node
+                        rb_x, rb_y = x+self._dx, y+self._dy  # right bottom node
+                        rt_x, rt_y = x+self._dx, y-self._dy  # right top node
+                    elif data_location == 'X_points':
+                        #x, y = self._x_coord[i], self._y_coord[j]  # x,y center coord
+                        lt_x, lt_y = self._x2D[j  , i  ], self._y2D[j,   i  ]  # left top node
+                        lb_x, lb_y = self._x2D[j+1, i  ], self._y2D[j+1, i  ]  # left bottom node
+                        rb_x, rb_y = self._x2D[j+1, i+1], self._y2D[j+1, i+1]  # right bottom node
+                        rt_x, rt_y = self._x2D[j  , i+1], self._y2D[j  , i+1]  # right top node
+
 
                     tr = False  # flag indicating, that there is a neighbour cell on top-right (diagonally)
                     t  = False  # flag indicating, that there is a neighbour cell on top
@@ -496,19 +597,18 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
 
                         #create nodes and append them
                         if not (t or tl or l):
-                            node_lt = Mesh2_node(x-self._dx, y-self._dy, self._nNodes-nNodes+1)  # left top node
+                            node_lt = Mesh2_node(lt_x, lt_y, self._nNodes-nNodes+1)  # left top node
                             self._nodes.append(node_lt)
                             nNodes += -1
                         if not l:
-                            node_lb = Mesh2_node(x-self._dx, y+self._dy, self._nNodes-nNodes+1)  # left bottom node
+                            node_lb = Mesh2_node(lb_x, lb_y, self._nNodes-nNodes+1)  # left bottom node
                             self._nodes.append(node_lb)
                             nNodes += -1
-                        
-                        node_rb = Mesh2_node(x+self._dx, y+self._dy, self._nNodes-nNodes+1)  # right bottom node
+                        node_rb = Mesh2_node(rb_x, rb_y, self._nNodes-nNodes+1)  # right bottom node
                         self._nodes.append(node_rb)
                         nNodes += -1
                         if not (tr or t):
-                            node_rt = Mesh2_node(x+self._dx, y-self._dy, self._nNodes-nNodes+1)  # right top node
+                            node_rt = Mesh2_node(rt_x, rt_y, self._nNodes-nNodes+1)  # right top node
                             self._nodes.append(node_rt)
                             nNodes += -1
                         
@@ -551,13 +651,13 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         nEdges = 4
                         self._nNodes += nNodes
                         self._nEdges += nEdges
-                        node_lt = Mesh2_node(x-self._dx, y-self._dy, self._nNodes-nNodes+1)  # left top node
+                        node_lt = Mesh2_node(lt_x, lt_y, self._nNodes-nNodes+1)  # left top node
                         nNodes += -1
-                        node_lb = Mesh2_node(x-self._dx, y+self._dy, self._nNodes-nNodes+1)  # left bottom node
+                        node_lb = Mesh2_node(lb_x, lb_y, self._nNodes-nNodes+1)  # left bottom node
                         nNodes += -1
-                        node_rb = Mesh2_node(x+self._dx, y+self._dy, self._nNodes-nNodes+1)  # right bottom node
+                        node_rb = Mesh2_node(rb_x, rb_y, self._nNodes-nNodes+1)  # right bottom node
                         nNodes += -1
-                        node_rt = Mesh2_node(x+self._dx, y-self._dy, self._nNodes-nNodes+1)  # right top node
+                        node_rt = Mesh2_node(rt_x, rt_y, self._nNodes-nNodes+1)  # right top node
                         for node in [node_lt, node_lb, node_rb, node_rt]:
                             self._nodes.append(node)
                         face = Mesh2_face([node_lt, node_lb, node_rb, node_rt], faceIndex)
@@ -609,17 +709,17 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
 
                         #create nodes and append them
                         if not t:
-                            node_lt = Mesh2_node(x-self._dx, y-self._dy, self._nNodes-nNodes+1)  # left top node
+                            node_lt = Mesh2_node(lt_x, lt_y, self._nNodes-nNodes+1)  # left top node
                             self._nodes.append(node_lt)
                             nNodes += -1
-                        node_lb = Mesh2_node(x-self._dx, y+self._dy, self._nNodes-nNodes+1)  # left bottom node
+                        node_lb = Mesh2_node(lb_x, lb_y, self._nNodes-nNodes+1)  # left bottom node
                         nNodes += -1
                         self._nodes.append(node_lb)
-                        node_rb = Mesh2_node(x+self._dx, y+self._dy, self._nNodes-nNodes+1)  # right bottom node
+                        node_rb = Mesh2_node(rb_x, rb_y, self._nNodes-nNodes+1)  # right bottom node
                         self._nodes.append(node_rb)
                         nNodes += -1
                         if not tr:
-                            node_rt = Mesh2_node(x+self._dx, y-self._dy, self._nNodes-nNodes+1)  # right top node
+                            node_rt = Mesh2_node(rt_x, rt_y, self._nNodes-nNodes+1)  # right top node
                             self._nodes.append(node_rt)
                             nNodes += -1
                         
@@ -671,16 +771,16 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
 
                         #create nodes and append them
                         if not l:
-                            node_lt = Mesh2_node(x-self._dx, y-self._dy, self._nNodes-nNodes+1)  # left top node
+                            node_lt = Mesh2_node(lt_x, lt_y, self._nNodes-nNodes+1)  # left top node
                             nNodes += -1
                             self._nodes.append(node_lt)
-                            node_lb = Mesh2_node(x-self._dx, y+self._dy, self._nNodes-nNodes+1)  # left bottom node
+                            node_lb = Mesh2_node(lb_x, lb_y, self._nNodes-nNodes+1)  # left bottom node
                             nNodes += -1
                             self._nodes.append(node_lb)
 
-                        node_rb = Mesh2_node(x+self._dx, y+self._dy, self._nNodes-nNodes+1)  # right bottom node
+                        node_rb = Mesh2_node(rb_x, rb_y, self._nNodes-nNodes+1)  # right bottom node
                         nNodes += -1
-                        node_rt = Mesh2_node(x+self._dx, y-self._dy, self._nNodes-nNodes+1)  # right top node
+                        node_rt = Mesh2_node(rt_x, rt_y, self._nNodes-nNodes+1)  # right top node
                         
                         for node in [node_rb, node_rt]:
                             self._nodes.append(node)
@@ -755,19 +855,19 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
 
                         #create nodes and append them
                         if not (t or tl or l):
-                            node_lt = Mesh2_node(x-self._dx, y-self._dy, self._nNodes-nNodes+1)  # left top node
+                            node_lt = Mesh2_node(lt_x, lt_y, self._nNodes-nNodes+1)  # left top node
                             self._nodes.append(node_lt)
                             nNodes += -1
                         if not l:
-                            node_lb = Mesh2_node(x-self._dx, y+self._dy, self._nNodes-nNodes+1)  # left bottom node
+                            node_lb = Mesh2_node(lb_x, lb_y, self._nNodes-nNodes+1)  # left bottom node
                             self._nodes.append(node_lb)
                             nNodes += -1
                         
-                        node_rb = Mesh2_node(x+self._dx, y+self._dy, self._nNodes-nNodes+1)  # right bottom node
+                        node_rb = Mesh2_node(rb_x, rb_y, self._nNodes-nNodes+1)  # right bottom node
                         self._nodes.append(node_rb)
                         nNodes += -1
                         if not t:
-                            node_rt = Mesh2_node(x+self._dx, y-self._dy, self._nNodes-nNodes+1)  # right top node
+                            node_rt = Mesh2_node(rt_x, rt_y, self._nNodes-nNodes+1)  # right top node
                             self._nodes.append(node_rt)
                             nNodes += -1
                         
@@ -804,6 +904,8 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         #
                         #
         print self._faceMap.T
+
+
 
     def get_face_by_index(self, index):
         """

@@ -12,6 +12,7 @@ import sys
 import inspect
 import re
 
+
 # use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
                     inspect.getfile( inspect.currentframe() ))[0], "lib")))
@@ -94,15 +95,17 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # 1) Read, x any y vectors from the netcdf
     # --------------------------------------------------
     print 'searching x,y vector...'
-    try:
-        coord_mode = 'local'
-        x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'x')
-        y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'y')
-    except KeyError:
-        coord_mode = 'geographic'
-        x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'lon')
-        y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'lat')
-    print 'working with... {0} coordinates'.format(coord_mode)
+    #try:
+    #    coord_mode = 'local'
+    #    x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'x')
+    #    y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'y')
+    #except KeyError:
+    #    coord_mode = 'geographic'
+    #    x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'lon')
+    #    y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'lat')
+    #print 'working with... {0} coordinates'.format(coord_mode)
+    coords = process_mossco_netcdf.find_coordinate_vars(topo_nc)
+
 
     # --------------------------------------------------
     # 2) Create mask
@@ -113,7 +116,9 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 3) Create grid, and unpack values
     # --------------------------------------------------
-    dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_rectangular_grid(x_vector, y_vector, mask=m, log=True, startingindex=0)
+    print 'creating grid... (be patient, this may take a while)'
+    dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_qudratic_grid_or_curvilinear(coords['x'], coords['y'],
+                                                data_location=coords['data_location'], mask=m, log=True, startingindex=0)
 
     nMesh2_node = dims[0]
     nMesh2_edge = dims[1]
@@ -162,7 +167,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                         Mesh2_face_area=Mesh2_face_area,
                         Mesh2_edge_x_bnd=Mesh2_edge_x_bnd, Mesh2_edge_y_bnd=Mesh2_edge_y_bnd,
                         Mesh2_face_x_bnd=Mesh2_face_x_bnd, Mesh2_face_y_bnd=Mesh2_face_y_bnd,
-                        coord_mode=coord_mode,
+                        coord_mode=coords['coord_mode'],
                         dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=nLayers, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1)
     print 'grid created', '\n', '-'*100, '\n', 'Now adding data', '\n', '-'*100
 
@@ -170,14 +175,21 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 6) fill netcdf with time variables (TIME and DATATIME)
     # --------------------------------------------------
+    print '-'*100
+    time_added = False
     for nc_file in list_with_synoptic_nc:
         try:
             process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, nc_file, time_var_name='time')
             print 'added "nMesh2_data_time" from file ', nc_file
+            time_added = True
         except KeyError:  # if var is not found in current file => skip to next file
             pass
+    if not time_added:
+        print 'WARNING! added dummy "nMesh2_data_time"', nc_file
+        process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, dummy_values=True)
 
 
+    print '-'*100
     # ---------------------------------------------------------------------------
     # 7) Layer thicness
     # ---------------------------------------------------------------------------
@@ -220,17 +232,9 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         else:
             var_to_add['_FillValue'] = False
         
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.3) adding attributes
-        # -----------------------------------------------------------------------------------------------
-        attrs = dict()
-        for ATR_N, ATR_V in VV[2].iteritems():
-            if not ATR_N.startswith('_'):
-                attrs[ATR_N] = ATR_V
-        var_to_add['attributes'] = attrs
 
         # -----------------------------------------------------------------------------------------------
-        # -- 8.2.4) check if we have data to add...
+        # -- 8.2.3) check if we have data to add...
         # -----------------------------------------------------------------------------------------------
         if '_mossco_filename' in VV[2].keys():
             fname = VV[2]['_mossco_filename']
@@ -245,7 +249,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                                         VN, VV, mask=m, log=True)
 
         # -----------------------------------------------------------------------------------------------
-        # 8.2.5) add data
+        # 8.2.4) add data
         # -----------------------------------------------------------------------------------------------
         if fname:
             # if 0D
@@ -283,6 +287,16 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 raise KeyError('Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN) )
                 print 'Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN)
                 break
+
+        # -----------------------------------------------------------------------------------------------
+        # -- 8.2.5) adding attributes
+        # -----------------------------------------------------------------------------------------------
+        attrs = dict()
+        for ATR_N, ATR_V in VV[2].iteritems():
+            attrs[ATR_N] = ATR_V
+        var_to_add['attributes'] = attrs
+
+
         # -----------------------------------------------------------------------------------------------
         # 8.2.6) append data variable to nc_out...
         # -----------------------------------------------------------------------------------------------
@@ -294,6 +308,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -----------------------------------------------------------------------------------------------
     # 9) Layer thickness
     # -----------------------------------------------------------------------------------------------
+    print '-'*100
     vertical_coord_mode = 'sigma'
 
     if nLayers > 1:  #if a real 3d is here
@@ -310,6 +325,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 if 'Mesh2_face_depth_2d' in VARS.keys():
                     add_depth = False
                 process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
+    print '-'*100
 
 
     if create_davit_netcdf and log:
@@ -427,7 +443,7 @@ def rename_existing_file(filename, log=False):
 
     while os.path.isfile(new_filename):
         # WARNING! raw_input() may not work properly in SublimeText texteditor
-        answer = raw_input('\nWARNING! File already exists: {0}.    Overwrite? [Y/N]'.format(new_filename)) 
+        answer = raw_input('\nWARNING! File already exists: {0}.    Overwrite? [Y/N]'.format(new_filename))
 
         if answer in ['y', 'Y', 'yes', 'YES']:
             print '\nWARNING! Overwriting file: <{0}>\n'.format(filename)

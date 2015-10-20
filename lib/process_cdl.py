@@ -27,10 +27,11 @@ def remove_comments(string):
     # second group captures comments (//single-line)
     regex = re.compile(pattern, re.DOTALL)
     def _replacer(match):
-        print match
-        print match.group(0)
-        print match.group(1)
-        print match.group(2)
+        #print match
+        #print match.group(0)
+        #print match.group(1)
+        #print match.group(2)
+        
         # if the 2nd group (capturing comments) is not None,
         # it means we have captured a non-quoted (real) comment string.
         if match.group(2) is not None:
@@ -38,9 +39,9 @@ def remove_comments(string):
         else:  # otherwise, we will return the 1st group
             return match.group(1)  # captured quoted-string
     string_fixed = regex.sub(_replacer, string)
-    print '<', string
-    print '>', string_fixed
-    print '-'*5
+    #print '<', string
+    #print '>', string_fixed
+    #print '-'*5
     return string_fixed
 
 
@@ -90,7 +91,7 @@ def read_file_with_only_variables(content_in_lines, log=False):
     var_name_str = '_default_dummy_name_that_has_to_be_overwritten'
 
     for line in content_in_lines:
-        print line
+        #print line
         datatype_found = False
         
         for dt in dtype_list:
@@ -259,6 +260,8 @@ def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_d
         f.write('//\n')
         f.write('// Displaying Davit-friendly variables found in MOSSCO output netcdf file\n')
         f.write('// Let Davit-friendly variables be those, which have dimensions:\n// 1D: (tdim)\n// 2D: (ydim, xdim)\n// 3D: (tdim, ydim, xdim)\n// 4D: (tdim, zdim, ydim, xdim)\n')
+        f.write('//\n')
+        f.write('// WARNING! Currently these dimensions are !HARD-CODED! in function get_davit_friendly_variables()\n')
 
         f.write('// '+'-'*100+'\n')
 

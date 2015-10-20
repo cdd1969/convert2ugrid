@@ -11,6 +11,7 @@ This module contains functions relevant for processing NETCDF file, which is bei
 for further evaluation with DAVIT
 '''
 from __future__ import division
+import types
 from netCDF4 import Dataset
 import numpy as np
 import time
@@ -200,7 +201,7 @@ def create_uGrid_ncdf(filename,
                 ncVar_Mesh2_face_area.long_name = 'Zellenflaeche'
                 ncVar_Mesh2_face_area.units = 'm2'
                 ncVar_Mesh2_face_area.name_id = 1656
-                ncVar_Mesh2_face_area.valid_range = '0.0, maximale Flaeche'
+                ncVar_Mesh2_face_area.valid_range = [Mesh2_face_area[:].min(), Mesh2_face_area[:].max()]
                 ncVar_Mesh2_face_area.coordinates = 'Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat'
                 ncVar_Mesh2_face_area.grid_mapping = 'Mesh2_crs'
                 ncVar_Mesh2_face_area.standard_name = 'cell_area'
@@ -589,15 +590,24 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
 
 
 
-def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc, time_var_name='time'):
+def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_var_name='time', dummy_values=False):
         # --------------------------------------------------
         # 3.1) fill netcdf with time variables (TIME and DATATIME)
         # --------------------------------------------------
-        __nc = Dataset(fname_mossconc, mode='r')
-        time_var_units = __nc.variables[time_var_name].units
-        max_t          = np.squeeze(__nc.variables[time_var_name][...]).max()
-        min_t          = np.squeeze(__nc.variables[time_var_name][...]).min()
-        __nc.close()
+        if dummy_values is False:
+
+            __nc = Dataset(fname_mossconc, mode='r')
+            time_var_units = __nc.variables[time_var_name].units
+            max_t          = __nc.variables[time_var_name][:].max()
+            min_t          = __nc.variables[time_var_name][:].min()
+            __nc.close()
+        else:
+            time_var_units = 'seconds since 2000-01-01 00:00:00'
+            max_t = 60*60*24
+            min_t = 0
+
+
+
         var_t = dict()
         var_t['vname'] = 'nMesh2_time'
         var_t['dtype'] = 'f8'
@@ -608,13 +618,16 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc, time_var_na
         # because currently MOSSCO writes a time output as "hours since 2009-01-02 00:00:00",
         # it is nessesary to modify it. Will be removed, after corrections in MOSSCO.
         ATTRS['long_name'] = "time"
-        #ATTRS['units'] = time_var_units + ' 01:00'  # '01:00 is indicating timezone, see CF conventions for details'
-        ATTRS['units'] = 'seconds since 2008-01-02 00:00:00 01:00'  # '01:00 is indicating timezone, see CF conventions for details'
+        units = time_var_units+' 01:00'  # '01:00 is indicating timezone, see CF conventions for details'
+        ATTRS['units'] = units
+        #ATTRS['units'] = 'seconds since 2008-01-02 00:00:00 01:00'  # '01:00 is indicating timezone, see CF conventions for details'
         ATTRS['name_id'] = 1640
         ATTRS['axis'] = "T"
         ATTRS['bounds'] = "nMesh2_time_bnd"
         ATTRS['calendar'] = "gregorian"
         ATTRS['standard_name'] = "time"
+        if dummy_values:
+            ATTRS['comment'] = "warning: dummy values are used"
         var_t['attributes'] = ATTRS
         var_t['data'], dim_shape = np.array([min_t]), tuple([1])
         append_VariableData_to_netcdf(fname_davitnc, var_t)
@@ -623,32 +636,37 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc, time_var_na
         var_t_bnd['vname'] = 'nMesh2_time_bnd'
         var_t_bnd['dtype'] = 'f8'
         var_t_bnd['dims'] = ('nMesh2_time', 'two')
+        if dummy_values:
+            ATTRS = dict()
+            ATTRS['comment'] = "warning: dummy values are used"
+            var_t['attributes'] = ATTRS
         var_t_bnd['_FillValue'] = False
 
-        #var_t_bnd['data'] = np.array([min_t, max_t])
-        var_t_bnd['data'] = np.array([0, 62985600])
+        var_t_bnd['data'] = np.array([min_t, max_t])
+        #var_t_bnd['data'] = np.array([0, 62985600])
         append_VariableData_to_netcdf(fname_davitnc, var_t_bnd)
 
 
-        var_dt = dict()
-        var_dt['vname'] = 'nMesh2_data_time'
-        var_dt['dtype'] = 'f8'
-        var_dt['dims'] = ('nMesh2_data_time', )
-        var_dt['_FillValue'] = False
+        if dummy_values is False:
+            var_dt = dict()
+            var_dt['vname'] = 'nMesh2_data_time'
+            var_dt['dtype'] = 'f8'
+            var_dt['dims'] = ('nMesh2_data_time', )
+            var_dt['_FillValue'] = False
 
-        ATTRS = dict()
-        ATTRS['long_name'] = "time"
-        
-        ATTRS['units'] = time_var_units + ' 01:00'
-        ATTRS['name_id'] = 1640
-        ATTRS['axis'] = "T"
-        ATTRS['calendar'] = "gregorian"
-        ATTRS['standard_name'] = "time"
-        var_t['attributes'] = ATTRS
-        
-        var_dt['attributes'] = ATTRS
-        var_dt['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_1d(fname_mossconc, 'time')
-        append_VariableData_to_netcdf(fname_davitnc, var_dt)
+            ATTRS = dict()
+            ATTRS['long_name'] = "time"
+            
+            ATTRS['units'] = time_var_units + ' 01:00'
+            ATTRS['name_id'] = 1640
+            ATTRS['axis'] = "T"
+            ATTRS['calendar'] = "gregorian"
+            ATTRS['standard_name'] = "time"
+            var_t['attributes'] = ATTRS
+            
+            var_dt['attributes'] = ATTRS
+            var_dt['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_1d(fname_mossconc, 'time')
+            append_VariableData_to_netcdf(fname_davitnc, var_dt)
 
 
 
@@ -674,10 +692,10 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
     '''
 
 
-
-    if log: print 'append_VariableData_to_netcdf(): appending variable: ', variable['vname']
-    if log: print 'append_VariableData_to_netcdf(): input     datashape:', variable['data'].shape
-    if log: print 'append_VariableData_to_netcdf(): input    data-array:', variable['data']
+    _n = 'append_VariableData_to_netcdf():'
+    if log: print _n, 'appending variable: ', variable['vname']
+    if log: print _n, 'input     datashape:', variable['data'].shape
+    if log: print _n, 'input    data-array:', variable['data']
 
     # --------------------------------------------------
     #                   Appending ncdf
@@ -688,7 +706,7 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
     if variable['vname'] in root_grp.variables.keys():
         root_grp.close()
         if log:
-            print 'append_VariableData_to_netcdf(): Variable <%s> skipped. Already exising' % (variable['vname'])
+            print _n, 'Variable <%s> skipped. Already exising' % (variable['vname'])
         return
 
 
@@ -699,7 +717,29 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
     # add attributes
     if 'attributes' in variable.keys():
         for attr_name, attr_value in variable['attributes'].iteritems():
-            if attr_name != '_FillValue':  # this attribute has already been set during initialization
+            if not attr_name.startswith('_'):  # reserved for special attributes
+                # remove one element lists...
+                if isinstance(attr_value, list):
+                    if len(attr_value) == 1:
+                        attr_value = attr_value[0]
+
+                # change long to int
+                # since even if declared int() on 64bit python - it will become long()
+                if isinstance(attr_value, np.int64) or isinstance(attr_value, long) or isinstance(attr_value, int):
+                    attr_value = np.int32(attr_value)
+
+
+                # treat real range values
+                if attr_name in ['valid_range', 'range']:
+                    attr_value = [np.float32(variable['data'].min()), np.float32(variable['data'].max())]
+                elif attr_name in ['valid_max', 'max']:
+                    attr_value = np.float32(variable['data'].max())
+                elif attr_name in ['valid_min', 'min']:
+                    attr_value = np.float32(variable['data'].min())
+
+                if log: print _n, '\t adding attribute <{0} = {1}> of type <{2}>'.format(attr_name, attr_value, type(attr_value))
+
+                # actually append
                 ncVar_data.setncattr(attr_name, attr_value)
     
     # fill data
@@ -760,14 +800,15 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
                     else:  #NOT IMPLEMENTED YET
                         pass
 
-        elif len (variable['dims']) == 5:
+        elif len(variable['dims']) > 4:
+            a = raw_input('Unsupported number of dimensions nDim>4.   Not yet implemented')
             pass
 
 
-    if log: print 'append_VariableData_to_netcdf(): output    datashape:', ncVar_data.shape
-    if log: print 'append_VariableData_to_netcdf(): output   data-array:', ncVar_data[...]
+    if log: print _n, 'output    datashape:', ncVar_data.shape
+    if log: print _n, 'output   data-array:', ncVar_data[...]
     root_grp.close()
-    print 'Variable appended succesfully: %s' % (variable['vname'])
+    print _n, 'Variable appended succesfully: %s' % (variable['vname'])
 
 
 

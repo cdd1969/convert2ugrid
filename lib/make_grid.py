@@ -21,24 +21,33 @@ if cmd_subfolder not in sys.path:
     
 
 
-def make_2d_rectangular_grid(x_vector, y_vector, mask=None, log=False, startingindex=1):
+def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=False, startingindex=1, data_location='T_points'):
     '''
-    function creates grid of size len(x_vector)*len(y_vector)
+    -----------------------------------------------
+    Function creates unstructured grid of size.
+    -----------------------------------------------
+    See DOC string at Mesh2.Grid2D()
+    -----------------------------------------------
+    Inputs:
+    -----------------------------------------------
+    x - numpy array, x-coordinates of T or X points. Can be 1d or 2d
+    y - numpy array, y-coordinates of T or X points. Can be 1d or 2d
 
-    x_vector - numpy array, vector of x-coordinates of cell centers
-    y_vector - numpy array, vector of y-coordinates of cell centers
 
-    mask - is an 2D array of size (len(x_vector), len(y_vector)), filled with True, False
-            (True - for masked cell, False - for non-masked)
+    mask - is an 2D array of shape
+            - (len(x), len(y)), if x and y are 1D
+            - shape(x)=shape(y), if x and y are 2D
+        filled with True, False (True - for masked cell, False - for non-masked)
+
     startingindex - an integer [0 , 1], for starting indes of elements.
                     startingindex=0 >>> 0, 1, 2, ... N-1
                     startingindex=1 >>> 1, 2, 3, ... N
 
     log - flag for showing console log
     '''
-    nx, ny = len(x_vector), len(y_vector)
+    #nx, ny = len(x_vector), len(y_vector)
     
-    grid = Mesh2.Grid2D(x_vector, y_vector, mask=mask)
+    grid = Mesh2.Grid2D(x, y, mask=mask, data_location=data_location)
 
 
     #dims, topo, nodes, edges, faces
@@ -69,7 +78,7 @@ def make_2d_rectangular_grid(x_vector, y_vector, mask=None, log=False, startingi
     
     if log:
         print '-'*80
-        print 'Grid: {0}x{1} nodes'.format(nx, ny)
+        #print 'Grid: {0}x{1} nodes'.format(nx, ny)
         print grid
         print '-'*80
 
@@ -103,15 +112,15 @@ def make_2d_rectangular_grid(x_vector, y_vector, mask=None, log=False, startingi
             for ne in xrange(nMesh2_edge):
                 for i in xrange(2):
                     if Mesh2_edge_nodes[ne, i] > max_i_n:
-                        max_i_n = Mesh2_edge_nodes[ne, i]
+                        max_i_n = int(Mesh2_edge_nodes[ne, i])
                     if Mesh2_edge_faces[ne, i] > max_i_f:
-                        max_i_f = Mesh2_edge_faces[ne, i]
+                        max_i_f = int(Mesh2_edge_faces[ne, i])
             for nf in xrange(nMesh2_face):
                 for nfn in xrange(nMaxMesh2_face_nodes):
                     if Mesh2_face_nodes[nf, nfn] > max_i_n:
-                        max_i_n = Mesh2_face_nodes[nf, nfn]
+                        max_i_n = int(Mesh2_face_nodes[nf, nfn])
                     if Mesh2_face_edges[nf, nfn] > max_i_e:
-                        max_i_e = Mesh2_face_edges[nf, nfn]
+                        max_i_e = int(Mesh2_face_edges[nf, nfn])
             print 'maximum indexes of Nodes, Edges, Faces:', max_i_n, max_i_e, max_i_f
 
         if log:
