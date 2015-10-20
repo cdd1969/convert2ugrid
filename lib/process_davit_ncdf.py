@@ -45,7 +45,7 @@ def create_uGrid_ncdf(filename,
 
         coord_mode  - string indicating in which variable to store passed data, in x,y or in lon,lat
                 by default - 'geographic'
-                'local' <> 'geographic'
+                'cartesian' <> 'geographic'
     '''
 
 
@@ -82,7 +82,7 @@ def create_uGrid_ncdf(filename,
     root_grp.createDimension('nMesh2_class_names_strlen', dim_nMesh2_class_names_strlen)
     root_grp.createDimension('nMesh2_suspension_classes', dim_nMesh2_suspension_classes)
 
-    if coord_mode in ['local', 'both'] :
+    if coord_mode in ['cartesian', 'both'] :
         # **********************************************************************************************************************************************
         #
         #                  1) Local coordinates
@@ -176,7 +176,7 @@ def create_uGrid_ncdf(filename,
             ncVar_Mesh2_face_x_bnd[...] = Mesh2_face_x_bnd
             ncVar_Mesh2_face_y_bnd[...] = Mesh2_face_y_bnd
 
-        if coord_mode == 'local':
+        if coord_mode == 'cartesian':
             # ------------------------------------------------------------------------------------
             #                                   3.5) Topology
             # ------------------------------------------------------------------------------------
@@ -330,7 +330,7 @@ def create_uGrid_ncdf(filename,
 
     
     else:
-        err_msg = 'passed coord_mode = {0} , is invalid. Choose "local", "geographic" or "both"'.format(coord_mode)
+        err_msg = 'passed coord_mode = {0} , is invalid. Choose "cartesian", "geographic" or "both"'.format(coord_mode)
         raise TypeError(err_msg)
     # **************************************************
     #

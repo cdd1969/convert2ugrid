@@ -5,7 +5,7 @@
 #
 # Author: Nikolai Chernikov, nikolai.chernikov.ru@gmail.com
 #
-# version = 0.2
+# version = 0.3
 
 
 import os
@@ -19,7 +19,7 @@ if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
 import create_uGrid_netcdf
-
+import ui
 
 if __name__ == '__main__':
     """
@@ -39,22 +39,34 @@ if __name__ == '__main__':
     """
     
 
-    setup_path = '//net/widar/data/nick/to_do/033_UGRID_topo_SNS'
-    dict1 = os.path.join(setup_path, 'user_input/dictionary1.txt')
-    dict3 = os.path.join(setup_path, 'user_input/dictionary3.cdl')
+    dict1 = os.path.join(os.path.dirname(sys.argv[0]), 'lib', 'defaults', 'dictionary_1')
+    dict3 = os.path.join(os.path.dirname(sys.argv[0]), 'lib', 'defaults', 'dictionary_3')
         
+    setup_path = '//net/widar/data/nick/to_do/033_UGRID_topo_SNS'
     topo_nc     = os.path.join(setup_path, 'topo.nc')
     #synoptic_nc = os.path.join(setup_path, 'mossco_gfsen.nc')
     #synoptic_nc1 = os.path.join(setup_path, 'shallow_lake-1x1-erosion.3d.0000.nc')
     list_with_synoptic_nc = [topo_nc]
 
     # setting paths: OUTPUT FILES....
-    dict2  = os.path.join(setup_path,  'output/dictionary2.txt')
-    dict4  = os.path.join(setup_path, 'output/dictionary4.cdl')
     nc_out = os.path.join(setup_path, 'output/topo_davit1.nc')
+
+
+    # read command line args!
+    params = ui.commandline_support()
+    if 'nc_out' in params.keys():
+        nc_out = params['nc_out']
+    if 'nc_in' in params.keys():
+        list_with_synoptic_nc = params['nc_in']
+        topo_nc = params['nc_in'][0]
+    if 'dict1' in params.keys():
+        dict1 = params['dict1']
+    if 'dict3' in params.keys():
+        dict1 = params['dict3']
+
 
     # running script...
     create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
-                    dictionary_1=dict1, dictionary_2=dict2, dictionary_3=dict3, dictionary_4=dict4,
-                    start_from_step=3, create_davit_netcdf=True, log=True)
+                    dictionary_1=dict1, dictionary_3=dict3,
+                    start_from_step=params['step'], create_davit_netcdf=True, log=params['log'], overwrite=params['overwrite'])
 

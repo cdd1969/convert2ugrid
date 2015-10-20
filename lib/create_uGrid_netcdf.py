@@ -349,32 +349,37 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
 
 
 
-def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_out=None, dictionary_1=None, dictionary_2=None, dictionary_3=None,
-                                            dictionary_4=None, start_from_step=1,
-                                            create_davit_netcdf=True, log=False):
+def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_out=None, dictionary_1=None, dictionary_3=None,
+                                            start_from_step=1,
+                                            create_davit_netcdf=True, log=False, overwrite=False):
     """
         topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
         list_with_synoptic_nc   - list of strings, paths to netcdf with synoptic data
         nc_out                  - string, path to netcdf to be created
         dictionary_3            - string, path to cdl file with standard variables
-        dictionary_4            - string, path to cdl file to be created
-        dictionary_2            - string, path to txt file after scanning variables
+        dictionary_4            - string, path to cdl file to be created, NOW CREATED AUTOMATICALLY
+        dictionary_2            - string, path to txt file after scanning variables, NOW CREATED AUTOMATICALLY
         dictionary_1            - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
 
         start_from_step         - integer, (1,2,3) to indicate from which step to start
+        overwrite               - True/False , flag to use force overwrite existing files
     """
     # first check if files for outputs are already existing
     # It can happen that the user will specify as output parameter an input dictionary
     # In order to protect it (it may be owerwritten), we rename the files...
-    nc_out = rename_existing_file(nc_out, log=False)
+    dictionary_2 = create_dict_name('dictionary_2', os.path.abspath(nc_out))  # aoutomatically create dicts near NC_OUT
+    dictionary_4 = create_dict_name('dictionary_4', os.path.abspath(nc_out))  # aoutomatically create dicts near NC_OUT
+    if overwrite is False:
+        nc_out = rename_existing_file(nc_out, log=False)
 
 
 
     # now start program
     if start_from_step == 1:
         if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_1, dictionary_2, dictionary_3, dictionary_4]):
-            dictionary_2 = rename_existing_file(dictionary_2, log=False)
-            dictionary_4 = rename_existing_file(dictionary_4, log=False)
+            if overwrite is False:
+                dictionary_2 = rename_existing_file(dictionary_2, log=False)
+                dictionary_4 = rename_existing_file(dictionary_4, log=False)
             
             step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=log)
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
@@ -384,7 +389,8 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
     
     elif start_from_step == 2:
         if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_2, dictionary_3, dictionary_4]):
-            dictionary_4 = rename_existing_file(dictionary_4, log=False)
+            if overwrite is False:
+                dictionary_4 = rename_existing_file(dictionary_4, log=False)
             
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
             step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
@@ -400,6 +406,10 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
 
 
 
+
+def create_dict_name(dict_name, name_of_the_ncout):
+    dirname = os.path.dirname(name_of_the_ncout)
+    return os.path.join(dirname, dict_name)
 
 
 
@@ -477,7 +487,7 @@ def rename_existing_file(filename, log=False):
 
     if new_filename != filename:
         print '\n!Attempt to overwrite file!\nFile <{0}> is already existing, will work with newfile <{1}>\n'.format(filename, new_filename)
-    return new_filename
+    return os.path.abspath(new_filename)
 
 
 

@@ -10,8 +10,6 @@ import process_mossco_netcdf
 import numpy as np
 
 
-
-
 def create_magnitude_variable_from_x_y_component(VARS, varname, varval, mask=None, log=False):
     '''
     in:
