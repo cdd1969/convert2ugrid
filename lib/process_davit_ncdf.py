@@ -423,10 +423,9 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
         Mesh2_edge_z_edge_bnd_3d
 
     The data stored is artificial (!!!):
-        - layers are in down-positiv order (maximal layer is the very bottom)
-        - each layer has height of 1m, with middlevalues of every halfmeter
-        - layer center elevation is 0.5m for very top, NLAYERS-0.5m for very bottom
-        - bounds are (0,1), (1,2), (2,3), ..., (NLAYERS-1, NLAYERS)
+        - layers are in down-positiv order (first layer is at surface)
+        - each layer is 1m thick
+        - layer-borders are (0,1), (1,2), (2,3), ..., (NLAYERS-1, NLAYERS) in meters
         
 
 
@@ -699,7 +698,7 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
     _n = 'append_VariableData_to_netcdf():'
     if log: print _n, 'appending variable: ', variable['vname']
     if log: print _n, 'input     datashape:', variable['data'].shape
-    if log: print _n, 'input    data-array:', variable['data']
+    #if log: print _n, 'input    data-array:', variable['data']
 
     # --------------------------------------------------
     #                   Appending ncdf
@@ -810,7 +809,7 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
 
 
     if log: print _n, 'output    datashape:', ncVar_data.shape
-    if log: print _n, 'output   data-array:', ncVar_data[...]
+    #if log: print _n, 'output   data-array:', ncVar_data[...]
     root_grp.close()
     print _n, 'Variable appended succesfully: %s' % (variable['vname'])
 

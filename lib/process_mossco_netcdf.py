@@ -479,11 +479,12 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
             d_nc = root_grp.dimensions[dimname]
             nLayers = d_nc.__len__()
             root_grp.close()
+            layer_fname = nc_file
         except KeyError:  # if dimension is not found in cuurent file > skip to next file
             pass
     if nLayers:
-        print _n, 'found vertical-layers:', nLayers, '\t(from dimension <{0}>)'.format(dimname)
-        return nLayers
+        print _n, 'found vertical-layers:', nLayers, '\t(from dimension <{0}>) in file <{1}>'.format(dimname, layer_fname)
+        return nLayers, layer_fname
     else:
         print _n, 'Vertical layers not found. Variable <{0}> not found in files: {1}'.format(dimname, list_with_filenames)
         answer = None
@@ -558,6 +559,8 @@ def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm
     return FRIENDLY_VAR_DICT
 
 
+
+
 def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=False):
     '''
     get sigma coordinates information. Information is read from the given variable,
@@ -574,7 +577,7 @@ def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=Fal
         [[-1., -0.75, -0.5, -0.25, 0.], 'border']
 
     '''
-    
+    _n = 'get_sigma_coordinates():'
     sigma_found = False
     sigma_type = None
     
@@ -600,9 +603,9 @@ def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=Fal
 
         
     if sigma_found:
-        print 'get_sigma_coordinates(): Found sigma-coords:', sigma, '\n From variable <{0}>)'.format(varname)
-        print 'get_sigma_coordinates(): Values represent coordinates of layer <{0}>'.format(sigma_type)
-        print 'get_sigma_coordinates(): Number of layers <{0}>; Number of sigma coords found <{1}>'.format(nLayers, sigma.__len__())
+        print _n, 'Found sigma-coords:', sigma, '\n From variable <{0}>)'.format(varname)
+        print _n, 'Values represent coordinates of layer <{0}>'.format(sigma_type)
+        print _n, 'Number of layers <{0}>; Number of sigma coords found <{1}>'.format(nLayers, sigma.__len__())
         return [sigma, sigma_type]
     else:
         raise ValueError('Sigma coordinates not found. Variable <{0}> not found in files: {1}'.format(varname, list_with_filenames))

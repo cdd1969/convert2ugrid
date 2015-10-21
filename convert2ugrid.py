@@ -23,6 +23,19 @@ import ui
 
 if __name__ == '__main__':
     """
+    Script can convert structured grid netcdf files to unstructured grid format. Output files then can be viewed with DAVIT, QUICKPLOT or NCVIEW
+    Example usage (from console):
+     
+     (variant 1)$python convert2ugrid.py -c
+     (variant 1) >>> will use input parameters specified in the file <convert2ugrid.py>
+     
+     (variant 2)$python convert2ugrid.py [-s n] [-i s1,s2,...] [--dict1=s] [--dict3=s] [-o s] [-f] [-m] [-h]
+     (variant 2) >>> see description below
+
+        The inputs hard-coded here will only be used if you run the script with (variant 1), otherwise
+        they will be ignored
+
+
         topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
         nc_out                  - string, path to netcdf to be created
         dict1                   - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
@@ -39,34 +52,46 @@ if __name__ == '__main__':
     """
     
 
-    dict1 = os.path.join(os.path.dirname(sys.argv[0]), 'lib', 'defaults', 'dictionary_1')
-    dict3 = os.path.join(os.path.dirname(sys.argv[0]), 'lib', 'defaults', 'dictionary_3')
-        
+    # ---------------------
+    #     USER SETTINGS
+    #  (only for variant1)
+    # ---------------------
+    show_more_logs  = True
+    start_from_step = 1
     setup_path = '//net/widar/data/nick/to_do/033_UGRID_topo_SNS'
+    
     topo_nc     = os.path.join(setup_path, 'topo.nc')
-    #synoptic_nc = os.path.join(setup_path, 'mossco_gfsen.nc')
-    #synoptic_nc1 = os.path.join(setup_path, 'shallow_lake-1x1-erosion.3d.0000.nc')
-    list_with_synoptic_nc = [topo_nc]
+    synoptic_nc = os.path.join(setup_path, 'mossco_gfsen.nc')
+    synoptic_nc1 = os.path.join(setup_path, 'shallow_lake-1x1-erosion.3d.0000.nc')
+    list_with_synoptic_nc = [topo_nc, synoptic_nc, synoptic_nc1]
+    
+
+    dict1 = os.path.join(setup_path, 'user_input/dictionary1.txt')
+    dict3 = os.path.join(setup_path, 'user_input/dictionary3.cdl')
 
     # setting paths: OUTPUT FILES....
-    nc_out = os.path.join(setup_path, 'output/topo_davit1.nc')
+    dict2  = os.path.join(setup_path, 'output/dictionary2.txt')
+    dict4  = os.path.join(setup_path, 'output/dictionary4.cdl')
+    nc_out = os.path.join(setup_path, 'output/nsbs_davit_1.nc')
+    # ---------------------
+    # END USER SETTINGS END
+    #  (only for variant1)
+    # ---------------------
 
 
-    # read command line args!
+
+    # read command line args, and set defaults
     params = ui.commandline_support()
-    if 'nc_out' in params.keys():
-        nc_out = params['nc_out']
-    if 'nc_in' in params.keys():
-        list_with_synoptic_nc = params['nc_in']
-        topo_nc = params['nc_in'][0]
-    if 'dict1' in params.keys():
-        dict1 = params['dict1']
-    if 'dict3' in params.keys():
-        dict1 = params['dict3']
+
 
 
     # running script...
-    create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
-                    dictionary_1=dict1, dictionary_3=dict3,
+    if params['use_code_inputs']:
+        create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
+                    dictionary_1=dict1, dictionary_2=dict2, dictionary_3=dict3, dictionary_4=dict4,
+                    start_from_step=start_from_step, create_davit_netcdf=True, log=show_more_logs)
+    else:
+        create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=params['nc_in'][0], list_with_synoptic_nc=params['nc_in'], nc_out=params['nc_out'],
+                    dictionary_1=params['dict1'], dictionary_3=params['dict3'], dictionary_2=params['dict2'], dictionary_4=params['dict4'],
                     start_from_step=params['step'], create_davit_netcdf=True, log=params['log'], overwrite=params['overwrite'])
 

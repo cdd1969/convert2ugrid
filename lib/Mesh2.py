@@ -446,29 +446,80 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                 - (len(x_coord), len(y_coord)), if x and y are 1D
                 - shape(x_coord)=shape(y_coord), if x and y are 2D
             filled with True, False (True - for masked cell, False - for non-masked)
+        
+        data_location - string, 'T_points' or 'X_points', defines where do the arrays x_coord and y_coord show the values
         '''
-        # x_coord, y_coord - numpy arrays shwing coordinates of cell centers in x and y directions
-        # assuming that input is a regular grid with cells of equal dimensions
-        # mask - is an 2D array of size (x_coord, y_coord), filled with True, False, representing active cells
-        # data_location - 'T_points' or 'X_points', defines where do the arrays x_coord and y_coord show the values
+        self._x_coord = x_coord
+        self._y_coord = y_coord
         
 
-        if data_location == 'T_points':
+        # ------------------------------------
+        # --             CASE 1             --
+        # --    rectangular uniform grid    --
+        # --        data at T_points        --
+        # ------------------------------------
+        if (len(x_coord.shape) == 1) and (len(y_coord.shape) == 1) and (data_location == 'T_points'):
             self._nx = len(x_coord)
             self._ny = len(y_coord)
-            self._x_coord = x_coord
-            self._y_coord = y_coord
+            
+            # we cannot calculate the node coordinates in this case if the cells are not uniform!
+            # therefore here WE ASSUME that all the cells are uniform!
+            
+            # now let us check the dictance between cells
+            tolerance = 0.01  # tolerance in [units] to check grid uniformity
+            
+            for i, x in enumerate(x_coord[2:]):
+                if abs(abs(x_coord[i]-x_coord[i+1])-abs(x_coord[i+1]-x)) > tolerance:
+                    errmsg = 'Coordinates to generate grid are passed as two 1D arrays at T_points. Grid must be uniform in this case.\
+                              Therefore the distance between grid cells should be equal:\n\tabs( abs(x[i]-x[i+1])-abs(x[i+1]-x[i+2]) ) < tolerance\n\
+                              But the passed x_coordinate array does not comply:\n\tabs( abs(x[{0}]-x[{1}])-abs(x[{1}]-x[{2}]) ) > tolerance\n\
+                              \tabs( abs({3} - {4}) - abs({4} - {5}) ) > {6}\n\
+                              You can try following to fix the problem:\n\
+                              \t a) increase tolerance\n\t b) pass coordinates of X_points'.format(i, i+1, i, x_coord[i], x_coord[i+1], x, tolerance)
+                    raise ValueError(errmsg)
+            
+            for i, y in enumerate(y_coord[2:]):
+                if abs(abs(y_coord[i]-y_coord[i+1])-abs(y_coord[i+1]-y)) > tolerance:
+                    errmsg = 'Coordinates to generate grid are passed as two 1D arrays at T_points. Grid must be uniform in this case.\
+                              Therefore the distance between grid cells should be equal:\n\tabs( abs(y[i]-y[i+1])-abs(y[i+1]-y[i+2]) ) < tolerance\n\
+                              But the passed y_coordinate array does not comply:\n\tabs( abs(y[{0}]-y[{1}])-abs(y[{1}]-y[{2}]) ) > tolerance\n\
+                              \tabs( abs({3} - {4}) - abs({4} - {5}) ) > {6}\n\
+                              You can try following to fix the problem:\n\
+                              \t a) increase tolerance\n\t b) pass coordinates of X_points'.format(i, i+1, i, y_coord[i], y_coord[i+1], y, tolerance)
+                    raise ValueError(errmsg)
+            
+            # Since cells are uniform it doesnot make sence to find <dx> and <dy> for each cell within the loop,
+            # and we can simply do it one time
             self._dx = abs(x_coord[0]-x_coord[1])/2.  # x- projection of distance from cell center to its left/right border
             self._dy = abs(y_coord[0]-y_coord[1])/2.  # y- projection of distance from cell center to its top/bottom border
-            
-        elif data_location == 'X_points':
-            if len(x_coord.shape) == 2 and len(y_coord.shape) == 2:
-                self._x2D = x_coord
-                self._y2D = y_coord
-                self._nx = self._x2D.shape[1]-1
-                self._ny = self._x2D.shape[0]-1
-            else:
-                raise ValueError('currently X_points works only for 2d arrays, pass x_coord and y_coord as (y,x) arrays')
+        
+        # ------------------------------------
+        # --             CASE 2             --
+        # --        rectangular grid        --
+        # --        data at X_points        --
+        # ------------------------------------
+        elif (len(x_coord.shape) == 1) and (len(y_coord.shape) == 1) and (data_location == 'X_points'):
+            self._nx = len(x_coord)-1
+            self._ny = len(y_coord)-1
+
+
+        # ------------------------------------
+        # --             CASE 3             --
+        # --        curvilinear grid        --
+        # --        data at X_points        --
+        # ------------------------------------
+        elif (len(x_coord.shape) == 2) and (len(y_coord.shape) == 2) and data_location == 'X_points':
+            self._nx = x_coord.shape[1]-1
+            self._ny = x_coord.shape[0]-1
+        
+        else:
+            errmsg = 'INVALID GRID TYPE. Currently limited grid-types are implemented:\n\
+                     \t a) <x_coord> and <y_coord> are 1D, at T-points => Rectengular uniform\n\
+                     \t b) <x_coord> and <y_coord> are 1D, at X-points => Rectengular (uniform/non-uniform)\n\
+                     \t c) <x_coord> and <y_coord> are 2D, at X-points => Curvilinear\n\
+                     Passed arrays are:\n\t x_coord shape: ({0})\n\t y_coord shape: ({1})\n\t data location: {2}'.format(
+                     x_coord.shape, y_coord.shape, data_location)
+            raise ValueError(errmsg)
         
 
         self._faceMap = np.zeros((self._nx, self._ny))
@@ -508,18 +559,29 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                     self._faceMap[i, j] = int(self._nFaces)
 
                     # now get coordinates of the face center and nodes
-                    if data_location == 'T_points':
+                    # case 1
+                    if (len(self._x_coord.shape) == 1) and (len(self._y_coord.shape) == 1) and (data_location == 'T_points'):
                         x, y = self._x_coord[i], self._y_coord[j]  # x,y center coord
                         lt_x, lt_y = x-self._dx, y-self._dy  # left top node
                         lb_x, lb_y = x-self._dx, y+self._dy  # left bottom node
                         rb_x, rb_y = x+self._dx, y+self._dy  # right bottom node
                         rt_x, rt_y = x+self._dx, y-self._dy  # right top node
-                    elif data_location == 'X_points':
+                    
+                    # case 2
+                    elif (len(self._x_coord.shape) == 1) and (len(self._y_coord.shape) == 1) and (data_location == 'X_points'):
+                        lt_x, lt_y = self._x_coord[i  ], self._y_coord[j  ]  # left top node
+                        lb_x, lb_y = self._x_coord[i  ], self._y_coord[j+1]  # left bottom node
+                        rb_x, rb_y = self._x_coord[i+1], self._y_coord[j+1]  # right bottom node
+                        rt_x, rt_y = self._x_coord[i+1], self._y_coord[j  ]  # right top node
+
+
+                    # case 3
+                    elif (len(self._x_coord.shape) == 2) and (len(self._y_coord.shape) == 2) and data_location == 'X_points':
                         #x, y = self._x_coord[i], self._y_coord[j]  # x,y center coord
-                        lt_x, lt_y = self._x2D[j  , i  ], self._y2D[j,   i  ]  # left top node
-                        lb_x, lb_y = self._x2D[j+1, i  ], self._y2D[j+1, i  ]  # left bottom node
-                        rb_x, rb_y = self._x2D[j+1, i+1], self._y2D[j+1, i+1]  # right bottom node
-                        rt_x, rt_y = self._x2D[j  , i+1], self._y2D[j  , i+1]  # right top node
+                        lt_x, lt_y = self._x_coord[j  , i  ], self._y_coord[j,   i  ]  # left top node
+                        lb_x, lb_y = self._x_coord[j+1, i  ], self._y_coord[j+1, i  ]  # left bottom node
+                        rb_x, rb_y = self._x_coord[j+1, i+1], self._y_coord[j+1, i+1]  # right bottom node
+                        rt_x, rt_y = self._x_coord[j  , i+1], self._y_coord[j  , i+1]  # right top node
 
 
                     tr = False  # flag indicating, that there is a neighbour cell on top-right (diagonally)

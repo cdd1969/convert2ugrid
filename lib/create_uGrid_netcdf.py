@@ -150,7 +150,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 4) Get bumber of vertical layers, dimensions from MOSSCO
     # --------------------------------------------------
-    nLayers = process_mossco_netcdf.get_number_of_depth_layer_from_mossco(list_with_synoptic_nc, dimname='getmGrid3D_getm_3')
+    nLayers, layer_fname = process_mossco_netcdf.get_number_of_depth_layer_from_mossco(list_with_synoptic_nc, dimname='getmGrid3D_getm_3')
 
     # --------------------------------------------------
     # 5) Create netcdf
@@ -312,11 +312,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     vertical_coord_mode = 'sigma'
 
     if nLayers > 1:  #if a real 3d is here
-            
-            if vertical_coord_mode == 'dummy':
-                process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, list_with_synoptic_nc[0], mask=m, log=True)
-            
-            elif vertical_coord_mode == 'sigma':
+        try: 
+            if vertical_coord_mode == 'sigma':
                 add_eta   = True
                 add_depth = True
 
@@ -325,6 +322,18 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 if 'Mesh2_face_depth_2d' in VARS.keys():
                     add_depth = False
                 process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
+        except Exception as err:
+            print err
+            a = raw_input('Now i will try to add dummy vertical data. Press ENTER to see info about these values')
+            print process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__
+            a = raw_input('Do you want to proceed ? [y/n]')
+            if a in ['y', 'Y', 'yes', 'Yes', 'YES']:
+                process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, layer_fname, mask=m, log=True)
+            else:
+                sys.exit(2)
+                
+        #if vertical_coord_mode == 'dummy':
+        #    process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, list_with_synoptic_nc[0], mask=m, log=True)
     print '-'*100
 
 
@@ -349,8 +358,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
 
 
 
-def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_out=None, dictionary_1=None, dictionary_3=None,
-                                            start_from_step=1,
+def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=[None], nc_out=None, dictionary_1=None, dictionary_3=None,
+                                            start_from_step=1, dictionary_2=None, dictionary_4=None,
                                             create_davit_netcdf=True, log=False, overwrite=False):
     """
         topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
@@ -364,22 +373,19 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
         start_from_step         - integer, (1,2,3) to indicate from which step to start
         overwrite               - True/False , flag to use force overwrite existing files
     """
-    # first check if files for outputs are already existing
+    
     # It can happen that the user will specify as output parameter an input dictionary
     # In order to protect it (it may be owerwritten), we rename the files...
-    dictionary_2 = create_dict_name('dictionary_2', os.path.abspath(nc_out))  # aoutomatically create dicts near NC_OUT
-    dictionary_4 = create_dict_name('dictionary_4', os.path.abspath(nc_out))  # aoutomatically create dicts near NC_OUT
-    if overwrite is False:
-        nc_out = rename_existing_file(nc_out, log=False)
+
+    nc_out = rename_existing_file(nc_out, force_overwrite=overwrite, log=False)
 
 
 
     # now start program
     if start_from_step == 1:
-        if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_1, dictionary_2, dictionary_3, dictionary_4]):
-            if overwrite is False:
-                dictionary_2 = rename_existing_file(dictionary_2, log=False)
-                dictionary_4 = rename_existing_file(dictionary_4, log=False)
+        if all([topo_nc, list_with_synoptic_nc[0], nc_out, dictionary_1, dictionary_2, dictionary_3, dictionary_4]):
+            dictionary_2 = rename_existing_file(dictionary_2, force_overwrite=overwrite, log=False)
+            dictionary_4 = rename_existing_file(dictionary_4, force_overwrite=overwrite, log=False)
             
             step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=log)
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
@@ -388,12 +394,11 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
             raise ValueError('Fill missing inputs...')
     
     elif start_from_step == 2:
-        if all([topo_nc, list_with_synoptic_nc, nc_out, dictionary_2, dictionary_3, dictionary_4]):
-            if overwrite is False:
-                dictionary_4 = rename_existing_file(dictionary_4, log=False)
+        if all([topo_nc, list_with_synoptic_nc[0], nc_out, dictionary_2, dictionary_3, dictionary_4]):
+            dictionary_4 = rename_existing_file(dictionary_4, force_overwrite=overwrite, log=False)
             
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
-            step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
+            step_3(topo_nc, list_with_synoptic_nc[0], dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
         else:
             raise ValueError('Fill missing inputs...')
     elif start_from_step == 3:
@@ -407,17 +412,18 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=None, nc_ou
 
 
 
-def create_dict_name(dict_name, name_of_the_ncout):
+def generate_dict_name(dict_name, name_of_the_ncout):
     dirname = os.path.dirname(name_of_the_ncout)
     return os.path.join(dirname, dict_name)
 
 
 
 
-def rename_existing_file(filename, log=False):
+def rename_existing_file(filename, force_overwrite=False, log=False):
     '''
     Input:
         filename - string, path to file (fullpath)
+        force_overwrite - True/False, if True, skip this function and return <filename>
     Output:
         new_filename - string with filename to be saved (fullpath)
     ----------------------------------------------------------------------
@@ -449,14 +455,18 @@ def rename_existing_file(filename, log=False):
                 path/to/file/test(Copy_3).txt
     ------------------------------------------------------------------------
     '''
+    _n = 'rename_existing_file():'
+    if force_overwrite:
+        return filename
+
     new_filename = filename
 
     while os.path.isfile(new_filename):
         # WARNING! raw_input() may not work properly in SublimeText texteditor
-        answer = raw_input('\nWARNING! File already exists: {0}.    Overwrite? [Y/N]'.format(new_filename))
+        answer = raw_input('WARNING! File already exists: {0}.    Overwrite? [Y/N]'.format(new_filename))
 
         if answer in ['y', 'Y', 'yes', 'YES']:
-            print '\nWARNING! Overwriting file: <{0}>\n'.format(filename)
+            print 'WARNING! I will overwrite the file: <{0}>'.format(filename)
             break
         else:
             dirname = os.path.dirname(new_filename)
@@ -486,7 +496,9 @@ def rename_existing_file(filename, log=False):
             new_filename = os.path.join(dirname, new_fname)
 
     if new_filename != filename:
-        print '\n!Attempt to overwrite file!\nFile <{0}> is already existing, will work with newfile <{1}>\n'.format(filename, new_filename)
+        print _n, 'WARNING! Since <old> file exists, i will create a <new> one and work with it.'
+        print _n, '<old>: {0}'.format(filename)
+        print _n, '<new>: {0}'.format(new_filename)
     return os.path.abspath(new_filename)
 
 
