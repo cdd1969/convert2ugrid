@@ -1,6 +1,6 @@
 --------------------------
 |     convert2ugrid      |
-|         v 0.2          |
+|         v 0.3          |
 |    mossco >>> davit    |
 --------------------------
 
@@ -30,4 +30,6 @@ C) To use the convertor do the following steps:
 
 ----------------------------------------------------------------------------------
 TODO: add support of bathymetry at X_points
-      currently bathymetry should be located at T_points
+      currently only bathymetry located at T_points is accepted
+TODO: add more flexible support to choose <depth_variable>, since it my vary and the name
+      is not only limited to <GETM_grid_3D> or <levels>

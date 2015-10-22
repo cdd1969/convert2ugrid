@@ -299,7 +299,7 @@ float Mesh2_face_WaterVelocityAtSoil_m_2d(nMesh2_data_time, nMesh2_face) ;
 // -----------------------------------------------------------------------------
 
 float Mesh2_face_dummy_2d(nMesh2_data_time, nMesh2_face) ;
-    Mesh2_face_dummy_2d: standard_name = "DUMMY-VAR" ; 
+    Mesh2_face_dummy_2d: standard_name = "DUMMY_VAR" ; 
     Mesh2_face_dummy_2d: long_name = "time-dependent dummy variable to be able to use DAVIT filter <UGRID NetCDF-Format(Postprocessing)(*.nc)>" ; 
     Mesh2_face_dummy_2d: coordinates = "Mesh2_face_x Mesh2_face_y Mesh2_face_lon Mesh2_face_lat" ;
     Mesh2_face_dummy_2d: grid_mapping = "Mesh2_crs" ; 
