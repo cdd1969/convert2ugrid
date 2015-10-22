@@ -35,8 +35,8 @@ class InputError(Exception):
         self.msg = msg
     def __str__(self):
         print ': '+self.msg
-        print 'You have given: <{0}>'.format(self.expr)
-        print 'For help type: $python convert2ugrid -h'
+        print 'You have typed: <{0}>'.format(self.expr)
+        print 'For help type: $python convert2ugrid.py -h'
 
 
 def usage():
@@ -189,3 +189,36 @@ def commandline_support():
 
     check_inputs(P)
     return P
+
+
+
+def promtYesNo(question='', quitonno=False):
+    '''
+    function promts a yes-no question in console and catches answer,
+    based on raw_input()
+    ! WARNING! raw_input() may not work properly in SublimeText texteditor
+
+    Inputs:
+        question    -  string, will show this text before [y/n].
+        quitonno    -  True/False. If True will force exit application if "No" answered
+
+    Output:
+        True        - if answer is Yes
+        False       - if answer is No
+        sys.exit(2) - if answer is No and quitonno=True
+    '''
+    yes_answers = ['y', 'Y', 'yes', 'Yes', 'YES']
+    no_answers  = ['n', 'N', 'no', 'No', 'NO']
+    a = None  # answer
+
+    question += ' [y/n]'
+    
+    while a not in yes_answers+no_answers:
+        a = raw_input(question)
+        if a in yes_answers:
+            return True
+        elif a in no_answers:
+            if quitonno:
+                print 'Aborting... Good bye'
+                sys.exit(2)
+            return False

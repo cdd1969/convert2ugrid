@@ -17,7 +17,7 @@ import numpy as np
 import time
 import sys
 import os
-
+import ui
 
 
 def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, y_vname=None):
@@ -134,7 +134,7 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
         print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, Vars[x_v_n].shape)
         print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, Vars[y_v_n].shape)
         while coord_mode not in ['cartesian', 'geographic', 'c', 'g']:
-            coord_mode = raw_input('\n'+_n+'Coord-type not understood. Choose cartesian or geographic. Type [c/g]:')
+            coord_mode = raw_input(_n+'Coord-type not understood. Choose cartesian or geographic. Type [c/g]:')
         if coord_mode == 'c': coord_mode = 'cartesian'
         if coord_mode == 'g': coord_mode = 'geographic'
 
@@ -482,18 +482,18 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
             layer_fname = nc_file
         except KeyError:  # if dimension is not found in cuurent file > skip to next file
             pass
+        except RuntimeError as err:
+            print _n, 'filelist:', list_with_filenames
+            print _n, 'reading file:', nc_file
+            raise err
     if nLayers:
         print _n, 'found vertical-layers:', nLayers, '\t(from dimension <{0}>) in file <{1}>'.format(dimname, layer_fname)
         return nLayers, layer_fname
     else:
         print _n, 'Vertical layers not found. Variable <{0}> not found in files: {1}'.format(dimname, list_with_filenames)
-        answer = None
-        while answer not in ['y', 'Y', 'Yes', 'yes', 'n', 'N', 'no', 'No', 'NO']:
-            answer = raw_input(_n+' Will continue with 2D. Explicitly set nLayers=1 [y/n]?:')
-        if answer in ['y', 'Y', 'Yes', 'yes']:
-            return 1
-        else:
-            sys.exit(1)
+        if ui.promtYesNo(_n+' Will continue with 2D and set explicitly nLayers=1. Continue?', quitonno=True):
+            return 1, None
+
 
 
 def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm_3'],

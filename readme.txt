@@ -27,3 +27,7 @@ C) To use the convertor do the following steps:
         3) specify inputs (see documentation)
         4) specify parameters in function <create_davit_friendly_netcdf()>
         5) run the script
+
+----------------------------------------------------------------------------------
+TODO: add support of bathymetry at X_points
+      currently bathymetry should be located at T_points

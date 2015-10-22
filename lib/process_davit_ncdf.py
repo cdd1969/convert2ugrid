@@ -426,9 +426,8 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
         - layers are in down-positiv order (first layer is at surface)
         - each layer is 1m thick
         - layer-borders are (0,1), (1,2), (2,3), ..., (NLAYERS-1, NLAYERS) in meters
-        
-
-
+    '''
+    '''
     INPUT:
         fname_davit, fname_mossco  - strings, pathes to files
         mask - an boolean mask 2D array. See function process_mossco_netcdf.make_mask_array_from_mossco_bathymetry()

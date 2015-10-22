@@ -9,21 +9,16 @@
 
 import os
 import sys
-import inspect
 import re
 
-
-# use this if you want to include modules from a subfolder
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
-                    inspect.getfile( inspect.currentframe() ))[0], "lib")))
-if cmd_subfolder not in sys.path:
-    sys.path.insert(0, cmd_subfolder)
 
 import make_grid
 import process_davit_ncdf
 import process_mossco_netcdf
 import process_cdl
 import process_mixed_data
+import ui
+
 
 
 def step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=False):
@@ -312,7 +307,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     vertical_coord_mode = 'sigma'
 
     if nLayers > 1:  #if a real 3d is here
-        try: 
+        try:
             if vertical_coord_mode == 'sigma':
                 add_eta   = True
                 add_depth = True
@@ -323,17 +318,18 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                     add_depth = False
                 process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
         except Exception as err:
-            print err
-            a = raw_input('Now i will try to add dummy vertical data. Press ENTER to see info about these values')
-            print process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__
-            a = raw_input('Do you want to proceed ? [y/n]')
-            if a in ['y', 'Y', 'yes', 'Yes', 'YES']:
-                process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, layer_fname, mask=m, log=True)
-            else:
-                sys.exit(2)
+            try:
+                print err
+                raw_input('Now i will try to add dummy vertical data. Press ENTER to see info about these values')
+                print process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__
+                if ui.promtYesNo('Do you want to proceed?', quitonno=True):
+                    process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, layer_fname, mask=m, log=True)
+            except Exception as err:
+                print err
+                raw_input('Failed to find any vertical-layer information. Will proceed without any. Press ENTER')
+                pass
+
                 
-        #if vertical_coord_mode == 'dummy':
-        #    process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, list_with_synoptic_nc[0], mask=m, log=True)
     print '-'*100
 
 
@@ -398,7 +394,7 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=[None], nc_
             dictionary_4 = rename_existing_file(dictionary_4, force_overwrite=overwrite, log=False)
             
             step_2(dictionary_2, dictionary_3, dictionary_4, log=log)
-            step_3(topo_nc, list_with_synoptic_nc[0], dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
+            step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=create_davit_netcdf, log=log)
         else:
             raise ValueError('Fill missing inputs...')
     elif start_from_step == 3:
@@ -462,10 +458,7 @@ def rename_existing_file(filename, force_overwrite=False, log=False):
     new_filename = filename
 
     while os.path.isfile(new_filename):
-        # WARNING! raw_input() may not work properly in SublimeText texteditor
-        answer = raw_input('WARNING! File already exists: {0}.    Overwrite? [Y/N]'.format(new_filename))
-
-        if answer in ['y', 'Y', 'yes', 'YES']:
+        if ui.promtYesNo('WARNING! File already exists:<{0}> Overwrite?'.format(new_filename)):
             print 'WARNING! I will overwrite the file: <{0}>'.format(filename)
             break
         else:
