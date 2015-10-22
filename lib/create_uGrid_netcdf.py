@@ -90,15 +90,6 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # 1) Read, x any y vectors from the netcdf
     # --------------------------------------------------
     print 'searching x,y vector...'
-    #try:
-    #    coord_mode = 'local'
-    #    x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'x')
-    #    y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'y')
-    #except KeyError:
-    #    coord_mode = 'geographic'
-    #    x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'lon')
-    #    y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(topo_nc, 'lat')
-    #print 'working with... {0} coordinates'.format(coord_mode)
     coords = process_mossco_netcdf.find_coordinate_vars(topo_nc)
 
 
@@ -435,7 +426,7 @@ def rename_existing_file(filename, force_overwrite=False, log=False):
                 ../
                 ./
                 test.txt
-        After running scripts passing fullpath to the file <text.txt>, function 
+        After running scripts passing fullpath to the file <text.txt>, function
         will return
                 path/to/file/test(Copy_1).txt
 
@@ -446,7 +437,7 @@ def rename_existing_file(filename, force_overwrite=False, log=False):
                 test.txt
                 test(Copy_1).txt
                 test(Copy_2).txt
-        After running scripts passing fullpath to the file <text.txt>, function 
+        After running scripts passing fullpath to the file <text.txt>, function
         will return
                 path/to/file/test(Copy_3).txt
     ------------------------------------------------------------------------
