@@ -89,15 +89,15 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 1) Read, x any y vectors from the netcdf
     # --------------------------------------------------
-    print 'searching x,y vector...'
-    coords = process_mossco_netcdf.find_coordinate_vars(topo_nc)
+    print 'searching x, y, bathymetry ...'
+    coords = process_mossco_netcdf.find_coordinate_vars(topo_nc, log=log)
 
 
     # --------------------------------------------------
     # 2) Create mask
     # --------------------------------------------------
     print 'creating mask...'
-    m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(topo_nc, varname='bathymetry', fillvalue=None, transpose=True)
+    m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(topo_nc, varname=coords['bName'], fillvalue=None, transpose=True, log=log)
 
     # --------------------------------------------------
     # 3) Create grid, and unpack values

@@ -17,19 +17,42 @@ import numpy as np
 import time
 import sys
 import os
+import copy
+
 import ui
+from Mesh2 import gridhelp
 
-
-def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, y_vname=None):
+def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, y_vname=None, log=False):
     x_cartesian_vnames = ['x', 'xx', 'x_x' , 'xX', 'x_X', 'xt', 'x_t', 'xT', 'x_T']
     x_geographi_vnames = ['lon', 'lonx', 'lon_x' , 'lonX', 'lon_X', 'lont', 'lon_t', 'lonT', 'lon_T']
     y_cartesian_vnames = ['y', 'yx', 'y_x' , 'yX', 'y_X', 'yt', 'y_t', 'yT', 'y_T']
     y_geographi_vnames = ['lat', 'latx', 'lat_x' , 'latX', 'lat_X', 'latt', 'lat_t', 'latT', 'lat_T']
     
+    
+    nicely_print_variables_shot = False
+    global nicely_print_variables_shot
+
+    def nicely_print_variables(nc_dataset, filename=None, prefix=''):
+        global nicely_print_variables_shot
+        
+        if not nicely_print_variables_shot:  # we want to print it only once
+            nicely_print_variables_shot = True
+            Vars = nc_dataset.variables
+            if filename:
+                print prefix, 'File <{0}> contains following variables:'.format(filename)
+            else:
+                print prefix, 'Current file contains following variables:'
+            for i, v_n in enumerate(sorted(Vars.keys())):
+                print '\t{0:2d}) {1} {2} {3}'.format(i, v_n, Vars[v_n].dimensions, Vars[v_n].shape)
+    
+
+
+
+
     _n = 'find_coordinate_vars():'
-    print '-'*50
-    print _n, 'Now searching for coordinates to create grid (X and Y coordinate variables)'
-    print _n, 'Surching in file <{0}>'.format(filename)
+    if log: print '-'*50
+    if log: print _n, 'Now searching for bathymetry and for coordinates to create grid (X and Y coordinate variables)'
+    if log: print _n, 'Surching in first passed file <{0}>'.format(filename)
     root_grp = Dataset(filename, mode='r')
     Vars = root_grp.variables
 
@@ -43,26 +66,37 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
         
         x_v_n = x_vname
         y_v_n = y_vname
-        #return x, y
+    
+    # if X and Y names were not passed as params
     else:
+        if log: print _n, 'Now searching for bathymetry'
         if bathymetry_vname not in Vars.keys():
-            raise KeyError('find_coordinate_vars(): Variable <{0}> used for determining X-Y coordinates not found in file <{1}>.\
-                            \nTry passing manually var_names'.format(bathymetry_vname, filename))
+            # nothing found, ask user to give var-name
+            nicely_print_variables(root_grp, filename=filename, prefix=_n)
+            print _n, 'Default bathymetry name <{0}> not found in file <{1}>. All variables within the current file are listed above'.format(bathymetry_vname, filename)
+            while bathymetry_vname not in Vars.keys():
+                bathymetry_vname = raw_input(_n+' Type the name of the variable with bathymetry data (from the list above):')
+
+        
+        if log: print _n, 'Bathymetry selected: <{0}> of shape {1} {2}'.format(bathymetry_vname, Vars[bathymetry_vname].dimensions, Vars[bathymetry_vname].shape)
+        
+
         b = Vars[bathymetry_vname]
         bath_x_dimName = b.dimensions[1]
         bath_y_dimName = b.dimensions[0]
 
         # now try to get these variables , same as dim_names
         if bath_x_dimName in Vars.keys() and bath_y_dimName in Vars.keys():
-            print _n, 'Using variables that have same names as dimensions of bathymetry variable <{0}>'.format(bathymetry_vname)
-            print _n, '\t for X:<{0}>, for Y:<{1}>'.format(bath_x_dimName, bath_y_dimName)
+            if log: print _n, 'Using variables that have same names as dimensions of bathymetry variable <{0}>'.format(bathymetry_vname)
+            if log: print _n, '\t for X:<{0}>, for Y:<{1}>'.format(bath_x_dimName, bath_y_dimName)
             x_v_n = bath_x_dimName
             y_v_n = bath_y_dimName
         else:
             # nothing has been found... so try to match names from lists
-            print _n, 'Bathymetry variable <{2}> has dimensions (Y,X): <({0}, {1})>.'.format(bath_y_dimName, bath_x_dimName, bathymetry_vname)
-            print _n, 'But no variables found with these Y,X names. Now trying to search for other coord-vars'
+            if log: print _n, 'Bathymetry variable <{2}> has dimensions (Y,X): <({0}, {1})>.'.format(bath_y_dimName, bath_x_dimName, bathymetry_vname)
+            if log: print _n, 'But no variables found with these Y,X names. Now trying to search for other coord-vars'
 
+            
             x_valid_names = list()  # list with X variable found...
             for x_vname in x_cartesian_vnames:
                 if x_vname in Vars.keys():
@@ -83,62 +117,68 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
             # at this point two lists <x_valid_names>, <y_valid_names> should contain
             # names of the variables to fetch coordinate data
             # There could happen 3 cases:
-            #  1) nothing has been found => raise Error
+            #  1) nothing has been found => ask user to type manually
             #  2) one var has been found for x and for y => take them
             #  3) more then one var has been found for x and for y => ask user to choose one
-
-            # case (1)
-            if len(x_valid_names) == 0 or len(y_valid_names) == 0:
-                raise KeyError('find_coordinate_vars(): No coordinate variables found in current file. Try passing manually var_names')
             
-            # case (2)
-            elif len(x_valid_names) == 1 and len(y_valid_names) == 1:
-                x_v_n = x_valid_names[0]
-                y_v_n = y_valid_names[0]
-            # case (3)
-            else:
-                if len(x_valid_names) > 1:
-                    print _n, 'More than 1 X-coords variable exist; variables found:'
-                    for x_v_n in x_valid_names:
-                        print _n, '\t', x_v_n
-                    # now promt user to choose correct one
-                    x_v_n = None
-                    while x_v_n not in Vars.keys():
-                        x_v_n = raw_input(_n+'Type desired X-coords variable name:')
-                else:
-                    x_v_n = x_valid_names[0]
 
-                if len(y_valid_names) > 1:
-                    print _n, 'More than 1 Y-coords variable exist; variables found:'
-                    for y_v_n in y_valid_names:
-                        print _n, '\t', y_v_n
-                    
-                    # now promt user to choose correct one
-                    y_v_n = None
-                    while y_v_n not in Vars.keys():
-                        y_v_n = raw_input(_n+'Type desired Y-coords variable name:')
-                else:
-                    y_v_n = y_valid_names[0]
+            if log: print _n, 'X: Searching for variable with name from list {0}'.format(x_cartesian_vnames+x_geographi_vnames)
+            # X: case (1)
+            if len(x_valid_names) == 0:  # nothing found, ask user to type name
+                nicely_print_variables(root_grp, filename=filename, prefix=_n)
+                print _n, 'X-coords var not found in file <{0}>. All variables within the current file are listed above'.format(filename)
+                x_valid_names = [None]
+                while x_valid_names[0] not in Vars.keys():
+                    x_valid_names[0] = raw_input(_n+' Type the name of the variable with X-coords data (from the list above):')
+            
+            # X case (2)
+            elif len(x_valid_names) == 1:
+                pass
+            
+            # X case (3)
+            else:  # len(x_valid_names) > 1
+                print _n, 'More than 1 X-coords variable exist; variables found:'
+                for x_v_n in x_valid_names:
+                    print _n, '\t', x_v_n
+                # now promt user to choose correct one
+                while x_valid_names[0] not in Vars.keys():
+                    x_valid_names[0] = raw_input(_n+'Type desired X-coords variable name:')
+
+            x_v_n = x_valid_names[0]
+            if log: print _n, 'X-coords selected: <{0}> of shape {1} {2}'.format(x_v_n, Vars[x_v_n].dimensions, Vars[x_v_n].shape)
+
+
+
+            if log: print _n, 'Y: Searching for variable with name from list {0}'.format(y_cartesian_vnames+y_geographi_vnames)
+            # Y case (1)
+            if len(y_valid_names) == 0:  # nothing found, ask user to type name
+                nicely_print_variables(root_grp, filename=filename, prefix=_n)
+                print _n, 'Y-coords var not found in file <{0}>. All variables within the current file are listed above'.format(filename)
+                y_valid_names = [None]
+                while y_valid_names[0] not in Vars.keys():
+                    y_valid_names[0] = raw_input(_n+' Type the name of the variable with Y-coords data (from the list above):')
+
+            # Y case (2)
+            elif len(y_valid_names) == 1:
+                pass
+
+            # Y case (3)
+            else:  # len(y_valid_names) > 1
+                print _n, 'More than 1 Y-coords variable exist; variables found:'
+                for y_v_n in y_valid_names:
+                    print _n, '\t', y_v_n
+                # now promt user to choose correct one
+                while y_valid_names[0] not in Vars.keys():
+                    y_valid_names[0] = raw_input(_n+'Type desired Y-coords variable name:')
+            
+            y_v_n = y_valid_names[0]
+            if log: print _n, 'Y-coords selected: <{0}> of shape {1} {2}'.format(y_v_n, Vars[y_v_n].dimensions, Vars[y_v_n].shape)
+    
+
 
     # -------------------------------------------------------
     # now we know var-names for X and Y
     # -------------------------------------------------------
-
-    # determine mode.... (Geographic or Cartesian)
-    if x_v_n in x_cartesian_vnames and y_v_n in y_cartesian_vnames:
-        coord_mode = 'cartesian'
-    elif x_v_n in x_geographi_vnames and y_v_n in y_geographi_vnames:
-        coord_mode = 'geographic'
-    else:
-        # now show user found vars
-        print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, Vars[x_v_n].shape)
-        print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, Vars[y_v_n].shape)
-        while coord_mode not in ['cartesian', 'geographic', 'c', 'g']:
-            coord_mode = raw_input(_n+'Coord-type not understood. Choose cartesian or geographic. Type [c/g]:')
-        if coord_mode == 'c': coord_mode = 'cartesian'
-        if coord_mode == 'g': coord_mode = 'geographic'
-
-
     # now determine if it is rectangular grid or curvilinear....
     #
     # if x-coord and y-coord are 1d arrays
@@ -158,7 +198,7 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
     else:
         print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, x.shape)
         print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, y.shape)
-        raise ValueError('Grid type not understood. X and Y should be either two 1D arrays or two 2D arrays')
+        raise ValueError('Grid type not understood. X and Y should be either two 1D arrays or two 2D arrays'+'\n'+gridhelp())
 
 
     # now determine if coords are at T (cell center) or X (cell nodes) points...
@@ -171,7 +211,7 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
             print _n, 'Using bathymetry variable <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
             print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, x.shape)
             print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, y.shape)
-            raise ValueError('Invalid variable dimensions!\nLength of x- or y- dimension in X- or Y- coord-variable should be equal (T_points) or 1 more (X_points) than in bathymetry file')
+            raise ValueError('Invalid variable dimensions!\nLength of x- or y- dimension in X- or Y- coord-variable should be equal (T_points) or 1 more (X_points) than in bathymetry file'+'\n'+gridhelp())
     else:  #grid_type == 'curvilinear'
         if (x.shape[0] == b.shape[0]) and (x.shape[1] == b.shape[1]
             ) and (y.shape[0] == b.shape[0]) and (y.shape[1] == b.shape[1]):  # same as bathymetry
@@ -183,25 +223,75 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
             print _n, 'Using bathymetry variable <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
             print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, x.shape)
             print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, y.shape)
-            raise ValueError('Invalid variable dimensions!\nLength of x- or y- dimension in X- or Y- coord-variable should be equal (T_points) or 1 more (X_points) than in bathymetry file')
+            raise ValueError('Invalid variable dimensions!\nLength of x- or y- dimension in X- or Y- coord-variable should be equal (T_points) or 1 more (X_points) than in bathymetry file'+'\n'+gridhelp())
+    
+
+
+
+
+    # determine mode.... (Geographic or Cartesian)
+    coord_mode = None
+    if x_v_n in x_cartesian_vnames and y_v_n in y_cartesian_vnames:
+        coord_mode = 'cartesian'
+    elif x_v_n in x_geographi_vnames and y_v_n in y_geographi_vnames:
+        coord_mode = 'geographic'
+    else:
+        # now show user found vars
+        print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, Vars[x_v_n].shape)
+        print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, Vars[y_v_n].shape)
+        while coord_mode not in ['cartesian', 'geographic', 'c', 'g']:
+            coord_mode = raw_input(_n+'Coord-type not understood. Choose cartesian or geographic. Type [c/g]:')
+        if coord_mode == 'c': coord_mode = 'cartesian'
+        if coord_mode == 'g': coord_mode = 'geographic'
     # now print summary....
-    print _n, '-'*50
-    print _n, 'Summary'
-    print _n, '-'*50
-    print _n, '\tbathymetry: <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
-    print _n, '\tX-coords: <{0}>, of shape <{1}>, range <[{2:.2f}:{3:.2f}]>, units <{4}>'.format(
+    if log: print _n, '-'*50
+    if log: print _n, 'Summary'
+    if log: print _n, '-'*50
+    if log: print _n, '\tbathymetry: <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
+    if log: print _n, '\tX-coords: <{0}>, of shape <{1}>, range <[{2:.2f}:{3:.2f}]>, units <{4}>'.format(
                 x_v_n, x.shape, x[:].min(), x[:].max(), x.units if 'units' in x.ncattrs() else 'unknown')
-    print _n, '\tY-coords: <{0}>, of shape <{1}>, range <[{2:.2f}:{3:.2f}]>, units <{4}>'.format(
+    if log: print _n, '\tY-coords: <{0}>, of shape <{1}>, range <[{2:.2f}:{3:.2f}]>, units <{4}>'.format(
                 y_v_n, y.shape, y[:].min(), y[:].max(), y.units if 'units' in y.ncattrs() else 'unknown')
-    print _n, '\tCoordinate mode: <{0}>'.format(coord_mode)
-    print _n, '\tGrid_type: <{0}>'.format(grid_type)
-    print _n, '\tData location: <{0}>'.format(data_location)
-    print _n, '-'*50
+    if log: print _n, '\tCoordinate mode: <{0}>'.format(coord_mode)
+    if log: print _n, '\tGrid_type: <{0}>'.format(grid_type)
+    if log: print _n, '\tCoordinates located at: <{0}>'.format(data_location)
+    bath_data_location = 'T_points'  # this should be improved!!!!
+    if log: print _n, '\tBathymetry  located at: <{0}>'.format(bath_data_location)
+    if log: print _n, '-'*50
 
     x = x[:]
     y = y[:]
     root_grp.close()
-    return {'x' : x, 'y' : y, 'coord_mode' : coord_mode, 'grid_type' : grid_type, 'data_location' : data_location}
+    return {'x' : x, 'y' : y, 'bName': bathymetry_vname, 'coord_mode' : coord_mode, 'grid_type' : grid_type, 'data_location' : data_location, 'bath_data_location' : bath_data_location}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -438,7 +528,7 @@ def read_mossco_lat_vector(filename, varname='latc'):
     return lat
 
 
-def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillvalue=None, transpose=False):
+def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillvalue=None, transpose=False, log=False):
     ''' Function reads an 2D array (in MOSSCO - 'bathymetry') and generates a boolean mask
     array (True means that value is masked), based on 'fillvalue'
 
@@ -449,25 +539,45 @@ def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillv
                         gets _FillValue automatically
         transpose       - a boolean flag to return transposed array or not
     '''
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
+    _n = 'make_mask_array_from_mossco_bathymetry():'
+    _construct_mask = True
+    if log: print _n, 'working with variable <{0}> in file <{1}>'.format(varname, filename)
     fullname = filename
 
     root_grp = Dataset(fullname, mode='r')
     v_nc = root_grp.variables[varname]
-    if fillvalue is None:
-        try:
-            fillvalue = v_nc._FillValue
-        except:
-            print 'make_mask_array_from_mossco_bathymetry(): attribute "_FillValue" not found. Looking for "missing_value"'
-            fillvalue = v_nc.missing_value
-    v = np.squeeze(v_nc[:])
     # now get masked array and its mask ( if value is equal to FillValue we assume that is False)
-    msk = np.ma.masked_values(v, fillvalue).mask
+    # from numpy docs: "We must keep in mind that a True entry in the mask indicates an invalid data"
+
+    # if it is already masked array, simply take the mask
+    if isinstance(v_nc[:], np.ma.MaskedArray):
+        mask = v_nc[:].mask
+        print _n, 'array is already of type <numpy.ma.MaskedArray>'.format(fillvalue)
+        if ui.promtYesNo(_n+' Use its default mask of shape {0}'.format(mask.shape)):
+            _construct_mask = False
+    
+    # ... or create own mask based on fv
+    if _construct_mask:
+        if fillvalue is None:
+            try:
+                fillvalue = v_nc._FillValue
+                if log: print _n, '<_FillValue>={0} found'.format(fillvalue)
+            except:
+                if log: print _n, 'attribute <_FillValue> not found. Looking for <missing_value>'
+                if 'missing_value' in v_nc.ncattrs():
+                    fillvalue = v_nc.missing_value
+                    if log: print _n, 'attribute <missing_value>={0} found'.format(fillvalue)
+                else:
+                    raw_input(_n+' attribute <missing_value> not found. I will proceed without masked elements. Press ENTER to continue')
+                    return None
+        mask = np.ma.masked_values(v_nc[:], fillvalue).mask
+
+
     if transpose:
-        msk = msk.T
+        mask = mask.T
+    if log: print _n, 'returning boolean mask of shape {0} (created from array of shape{1})'.format(mask.shape, v_nc[:].shape)
     root_grp.close()
-    return msk
+    return mask
 
 
 def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid3D_getm_3'):

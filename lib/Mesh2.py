@@ -10,6 +10,15 @@ from __future__ import division
 import numpy as np
 import numpy.ma as ma
 
+
+def gridhelp():
+        errmsg = 'Currently limited grid-types are implemented:\n\
+                  \t a) <x_coord> and <y_coord> are 1D, at T-points, 2D <bathymetry> at T_points => Rectengular uniform\n\
+                  \t b) <x_coord> and <y_coord> are 1D, at X-points, 2D <bathymetry> at T_points => Rectengular (uniform/non-uniform)\n\
+                  \t c) <x_coord> and <y_coord> are 2D, at X-points, 2D <bathymetry> at T_points => Curvilinear'
+        return errmsg
+
+
 class Mesh2_node(object):
     """
     class describing a Point (Node) on a 2D plane
@@ -410,30 +419,28 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
         -----------------------------------------------
         Function creates unstructured grid of size.
         -----------------------------------------------
-        Currently two input possibilities are accepted (1) and (5):
+        Currently 4 input possibilities are accepted:
 
                 1) Rectengular uniform grid. (all cells have equal size), data_location='T_points'
                     inputs:
                         x_coord - 1d array of length nx
                         y_coord - 1d array of length ny
-                    Bathymetry is specified on grid (ny, nx)
+                    Bathymetry (at T_points) is specified on grid (ny, nx)
 
-         !TODO! 2) Rectengular uniform grid. (all cells have equal size), data_location='X_points'
+                2) Rectengular uniform grid. (all cells have equal size), data_location='X_points'
                     inputs:
                         x_coord - 1d array of length nx
                         y_coord - 1d array of length ny
-                    Bathymetry is specified on grid (nx-1, ny-1)
+                    Bathymetry (at T_points) is specified on grid (nx-1, ny-1)
          
-         !TODO! 3) Rectengular grid. (cells may have non-qual size), data_location='X_points'
-         !TODO! 4) Rectengular grid. (cells may have non-qual size), data_location='T_points'
+                3) Rectengular grid. (cells may have non-qual size), data_location='X_points'
+                    Bathymetry (at T_points) is specified on grid (ny-1, nx-1)
                 
-                5) Curvilinear grid. data_location='X_points'
+                4) Curvilinear grid. data_location='X_points'
                     inputs:
                         x_coord - 2d array of shape (ny, nx)
                         y_coord - 2d array of shape (ny, nx)
-                    Bathymetry is specified on grid (ny-1, nx-1)
-         
-         !TODO! 6) Curvilinear grid. data_location='T_points'
+                    Bathymetry (at T_points) is specified on grid (ny-1, nx-1)
 
         -----------------------------------------------
         Inputs:
@@ -513,11 +520,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
             self._ny = x_coord.shape[0]-1
         
         else:
-            errmsg = 'INVALID GRID TYPE. Currently limited grid-types are implemented:\n\
-                     \t a) <x_coord> and <y_coord> are 1D, at T-points => Rectengular uniform\n\
-                     \t b) <x_coord> and <y_coord> are 1D, at X-points => Rectengular (uniform/non-uniform)\n\
-                     \t c) <x_coord> and <y_coord> are 2D, at X-points => Curvilinear\n\
-                     Passed arrays are:\n\t x_coord shape: ({0})\n\t y_coord shape: ({1})\n\t data location: {2}'.format(
+            errmsg = 'INVALID GRID TYPE. '+gridhelp()+'\nPassed arrays are:\n\t x_coord shape: ({0})\n\t y_coord shape: ({1})\n\t data location: {2}'.format(
                      x_coord.shape, y_coord.shape, data_location)
             raise ValueError(errmsg)
         

@@ -131,6 +131,7 @@ def check_inputs(params):
 
 def commandline_support():
     P = dict()
+    
     # defaults....
     P['log'] = True
     P['step'] = 1
@@ -144,6 +145,8 @@ def commandline_support():
     P['dict4_default']  = True
     P['nc_out'] = os.path.join(os.getcwd(), 'ugrid.nc')
     P['use_code_inputs'] = False
+    
+
     # dont do anything if running without params
     if len(sys.argv) == 1:
         usage()
