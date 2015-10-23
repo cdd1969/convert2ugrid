@@ -45,47 +45,52 @@ def usage():
     print 'Example usage:'
     print ' (variant 1)$python convert2ugrid.py -c'
     print ' (variant 1) >>> will use input parameters hard-coded in the file <convert2ugrid.py>\n'
-    print ' (variant 2)$python convert2ugrid.py [-s n] [-i s1,s2,...] [--dict1=s] [--dict3=s] [-o s] [-f] [-m] [-h]'
+    print ' (variant 2)$python convert2ugrid.py [-s n] [--dict1=s] [--dict2=s] [--dict3=s] [--dict4=s] [-t s] [-o s] [-f] [-m] [-h] s1'
     print ' (variant 2) >>> see description below'
     print '*'*120
-    print ' [-c; --code]              >  Flag to use input params hard-coded in file <convert2ugrid.py>.'
-    print '                              Toggling this flag will IGNORE ALL other command-line inputs.'
-    print ''
-    print ' [-s n; --step=n]          >  Start from step <n>, integer (refer to documentation).'
-    print '                              If not set, [-s 1] is used.'
-    print '                              n=1 => create dict2, dict4 and netcdf.'
-    print '                              n=2 => create dict4 and netcdf, dict2 should be already created.'
-    print '                              n=3 => create only netcdf, dict2 and dict4 should be already created.'
-    print ''
-    print ' [-i s1,s2; --input=s1,s2] >  <s1,s2,...> name(-s) of the input file(-s), comma-separated string.'
-    print '                              First file should always be topo-file!'
-    print '                              Example reading 1 file : [-i topo.nc]'
-    print '                              Example reading 3 files: [-i topo.nc,data1.nc,data2.nc]'
-    print ''
-    print ' [-o s; --output=s]        >  <s> is the name of the outputfile to be created, string.'
-    print '                              If not set, will create file "ugrid.nc" in the current working directory.'
-    print ''
-    print ' [--dict1=s]               >  <s> name of the input dictionary1, string.'
-    print '                              If not set, will read from <./lib/defaults/dictionary_1>.'
-    print ''
-    print ' [--dict2=s]               >  <s> name of the input/output dictionary2, string.'
-    print '                              If not set, will read/write within directory of the output netcdf file (see -o)'
-    print '                              under default name "dictionary_2". Read/write status depends on the step (see -s).'
-    print '                              This file is only read when [-s 2] or [-s 3], and is created with [-s 1].'
-    print ''
-    print ' [--dict3=s]               >  <s> name of the input dictionary3, string.'
-    print '                              If not set, will read from <./lib/defaults/dictionary_3>.'
-    print ''
-    print ' [--dict4=s]               >  <s> name of the input/output dictionary4, string.'
-    print '                              If not set, will read/write within directory of the output netcdf file (see -o)'
-    print '                              under default name "dictionary_4". Read/write status depends on the step (see -s).'
-    print '                              This file is only read when [-s 3], and is created with [-s 1] or [-s 2].'
-    print ''
-    print ' [-f; --force]             >  Flag to force overwrite. Do not promt user before overwriting existing files.'
-    print ''
-    print ' [-m; --mute]              >  Flag to run in silent mode; minimum logs.'
-    print ''
-    print ' [-h; --help]              >  Show help, exit.'
+    print ' [-c; --code]   >  (OPTIONAL) Flag to use input params hard-coded in file <convert2ugrid.py>.'
+    print '                   Toggling this flag will IGNORE ALL other command-line inputs.'
+    print '                                              '
+    print ' [-t s]         >  (MANDATORY) <s> is the name of the input topo-netcdf file with coordinates and bathymetry, string.'
+    print '                   This file will be used for ugrid-generation'
+    print '                                              '
+    print ' s1             >  (OPTIONAL) Is the argument following the other opts. String. Should be at the end'
+    print '                   Names of the netcdf files to be converted. Note: you dont have to write here name'
+    print '                   of the mandatory topo-file specified with [-t s], since it will be included anyway.'
+    print '                   You may parse unlimited number of these arguments <s1 s2 s3 ...>'
+    print '                   Example: <$convert2ugrid.py -t topo.nc -o newfile.nc file1.nc file2.nc file3.nc>'
+    print '                            <$convert2ugrid.py -t topo.nc -o newfile.nc>'
+    print '                                              '
+    print ' [-s n]         >  (OPTIONAL) Start from step <n>, integer (refer to documentation).'
+    print '                   If not set, [-s 1] is used.'
+    print '                   n=1 => create dict2, dict4 and netcdf.'
+    print '                   n=2 => create dict4 and netcdf, dict2 should be already created.'
+    print '                   n=3 => create only netcdf, dict2 and dict4 should be already created.'
+    print '                                              '
+    print ' [-o s]         >  (OPTIONAL) <s> is the name of the outputfile to be created, string.'
+    print '                   If not set, will create file "ugrid.nc" in the current working directory.'
+    print '                                              '
+    print ' [--dict1=s]    >  (OPTIONAL) <s> name of the input dictionary1, string.'
+    print '                   If not set, will read from <./lib/defaults/dictionary_1>.'
+    print '                                              '
+    print ' [--dict2=s]    >  (OPTIONAL) <s> name of the input/output dictionary2, string.'
+    print '                   If not set, will read/write within directory of the output netcdf file (see -o)'
+    print '                   under default name "dictionary_2". Read/write status depends on the step (see -s).'
+    print '                   This file is only read when [-s 2] or [-s 3], and is created with [-s 1].'
+    print '                                              '
+    print ' [--dict3=s]    >  (OPTIONAL) <s> name of the input dictionary3, string.'
+    print '                   If not set, will read from <./lib/defaults/dictionary_3>.'
+    print '                                              '
+    print ' [--dict4=s]    >  (OPTIONAL) <s> name of the input/output dictionary4, string.'
+    print '                   If not set, will read/write within directory of the output netcdf file (see -o)'
+    print '                   under default name "dictionary_4". Read/write status depends on the step (see -s).'
+    print '                   This file is only read when [-s 3], and is created with [-s 1] or [-s 2].'
+    print '                                              '
+    print ' [-f; --force]  >  (OPTIONAL) Flag to force overwrite. Do not promt user before overwriting existing files.'
+    print '                                              '
+    print ' [-m; --mute]   >  (OPTIONAL) Flag to run in silent mode; minimum logs.'
+    print '                                              '
+    print ' [-h; --help]   >  Show help, exit.'
     print '*'*120
 
 
@@ -129,7 +134,7 @@ def check_inputs(params):
         # now we know all the files exist!
 
 
-def commandline_support():
+def commandline_support(log=False):
     P = dict()
     
     # defaults....
@@ -154,22 +159,23 @@ def commandline_support():
     else:
         # if more than 1 arg has been passed...  here the fun starts
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "s:o:i:fmhc",
-                ['code', 'step=', 'input=', 'dict1=', 'dict2=', 'dict3=', 'dict4=' 'output=', 'force', "help", "mute", ])
+            opts, args = getopt.getopt(sys.argv[1:], "s:o:t:fmhc",
+                ['dict1=', 'dict2=', 'dict3=', 'dict4=', 'force', 'help', 'mute', 'code'])
         except getopt.GetoptError as err:
             print str(err)
             usage()
             sys.exit(2)
-
+        if log: print 'detected options:  ', opts
+        if log: print 'detected arguments:', args
         for opt, arg in opts:
             if opt in ['-m', '--mute']:
                 P['log'] = False
-            elif opt in ['-s', '--step']:
+            elif opt in ['-s']:
                 P['step'] = arg
-            elif opt in ['-i', '--input']:
-                P['nc_in'] = str(arg).split(',')
-                for i, nc_name in enumerate(P['nc_in']):
-                    P['nc_in'][i] = os.path.abspath(nc_name)
+            elif opt in ['-t']:
+                P['nc_in'] = [os.path.abspath(str(arg))]
+                if len(args) > 0:
+                    P['nc_in'] = [os.path.abspath(str(arg))]+[os.path.abspath(nc_name) for nc_name in args]
             elif opt in ['--dict1']:
                 P['dict1'] = os.path.abspath(str(arg))
             elif opt in ['--dict2']:
@@ -180,7 +186,7 @@ def commandline_support():
             elif opt in ['--dict4']:
                 P['dict4'] = os.path.abspath(str(arg))
                 P['dict4_default']  = False
-            elif opt in ['-o', '--output']:
+            elif opt in ['-o']:
                 P['nc_out'] = os.path.abspath(str(arg))
             elif opt in ['-f', '--force']:
                 P['overwrite'] = True

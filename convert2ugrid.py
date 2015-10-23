@@ -81,7 +81,7 @@ if __name__ == '__main__':
 
 
     # read command line args, and set defaults
-    params = ui.commandline_support()
+    params = ui.commandline_support(log=True)
 
 
 
@@ -94,4 +94,3 @@ if __name__ == '__main__':
         create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=params['nc_in'][0], list_with_synoptic_nc=params['nc_in'], nc_out=params['nc_out'],
                     dictionary_1=params['dict1'], dictionary_3=params['dict3'], dictionary_2=params['dict2'], dictionary_4=params['dict4'],
                     start_from_step=params['step'], create_davit_netcdf=True, log=params['log'], overwrite=params['overwrite'])
-

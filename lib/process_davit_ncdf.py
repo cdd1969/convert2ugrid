@@ -739,7 +739,7 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
                 elif attr_name in ['valid_min', 'min']:
                     attr_value = np.float32(variable['data'].min())
 
-                if log: print _n, '\t adding attribute <{0} = {1}> of type <{2}>'.format(attr_name, attr_value, type(attr_value))
+                if log: print _n, '\t adding attribute <{0} = {1}> of type {2}'.format(attr_name, attr_value, type(attr_value))
 
                 # actually append
                 ncVar_data.setncattr(attr_name, attr_value)

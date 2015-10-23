@@ -27,11 +27,6 @@ def remove_comments(string):
     # second group captures comments (//single-line)
     regex = re.compile(pattern, re.DOTALL)
     def _replacer(match):
-        #print match
-        #print match.group(0)
-        #print match.group(1)
-        #print match.group(2)
-        
         # if the 2nd group (capturing comments) is not None,
         # it means we have captured a non-quoted (real) comment string.
         if match.group(2) is not None:
@@ -80,68 +75,65 @@ def read_file_with_only_variables(content_in_lines, log=False):
             variables [dict] - variables that have been found, (key - name of the variable, value = [datatype, [dim1,dim2,...], dict(attributes)])
                                 Note: all values are stored as strings
     '''
-    sname = "read_file_with_only_variables():"
+    _n = "read_file_with_only_variables():"
     VARIABLES = dict()
     # this is list with datatypes both supported by netcdf3(first row) and netcdf4(second row)
     dtype_list = ["char", "byte", "short", "int", "long", "float", "real", "double", ]
     #                "ubyte", "ushort", "uint", "int64", "uint64", "string"]
 
-    nVars = 0
-    variable_value_list = list()
-    var_name_str = '_default_dummy_name_that_has_to_be_overwritten'
+    # init variable to be read
+    buffer_var = None
 
     for line in content_in_lines:
         #print line
-        datatype_found = False
+        line_contains_var_definition = False
         
         for dt in dtype_list:
             if line.startswith(dt):  # if this is a line with definition a variable
-                datatype_found = True
-                nVars += 1  # variable found
-
-                #save previously gathered information
-                if var_name_str != '_default_dummy_name_that_has_to_be_overwritten':
-                    variable_value_list.append(attributes)
-                    VARIABLES[var_name_str] = variable_value_list
-                # nullify values and attributes
-                variable_value_list = list()
-                attributes = dict()
+                line_contains_var_definition = True
                 
-                dtype_str = line.split()[0]
-                
-                variable_value_list.append(dtype_str)
+                if buffer_var is not None:  #save previously gathered information, if we have
+                    VARIABLES[buffer_var['name']] = [buffer_var['dtype'], buffer_var['dims'], buffer_var['attrs']]
 
+                # clear buffer
+                buffer_var          = dict()  # initialize
+                buffer_var['attrs'] = dict()  # initialize
+                
+                # save var-name
+                buffer_var['name']  = line.split()[1].strip()
+                
+                # save data-type
+                buffer_var['dtype'] = line.split()[0].strip()
+
+                # save dims
                 if '(' in line:  # if variable has dimensions (because they are declared in parenthesis "()")
-                    var_name_str = line.split('(')[0]
-                    var_name_str = var_name_str.split()[1]
-                    vardims = re.match('.*?\((.*?)\).*', line).group(1)
-                    vardims = vardims.split(',')
-                    for i, item in enumerate(vardims):  # ensure that there are no whitespaces
-                        vardims[i] = item.strip()
-                    variable_value_list.append(vardims)
+                    buffer_var['name']  = line.split('(')[0].split()[1].strip()  # save var-name
+                    vardims = re.match('.*?\((.*?)\).*', line).group(1).strip()
+                    if len(vardims) == 0:  #checking length of the string! number of symbols! if we have ()
+                        buffer_var['dims'] = list()  # empty dims
+                    elif ',' not in vardims:  # we have something like (dim1)
+                        buffer_var['dims'] = [vardims]
+                    else:  # we have something like (dim1, dim2, dim3)
+                        vardims = vardims.split(',')
+                        buffer_var['dims'] = [vardim.strip() for vardim in vardims]  # real dims
                 else:
-                    var_name_str = line.split()[1]
-                    variable_value_list.append([])
+                    buffer_var['dims'] = list()  # empty dims
         
-        if datatype_found is False:
-            #print 'varname >>>', var_name_str
-            if line.startswith(var_name_str):  # if this is a line with attribute
+        if not line_contains_var_definition:
+            if line.startswith(buffer_var['name']):  # if this is a line with attribute
                 attr_line = ':'.join(line.split(':')[1::])
-                #print "attr_line found >>>", attr_line
-                attr_name_str = attr_line.split('=', 2)[0].strip()
-                #print "attr_name_str found >>>", attr_name_str
+                attr_name = attr_line.split('=', 2)[0].strip()
 
                 attr_val_str = '='.join(attr_line.split('=')[1::]) [0:-1].strip()  #removing last symbol, since the line is stripped it is semicolon ';'
-                #print "attr_val_str found >>>", attr_val_str
+
                 #now convert attr_val_str to a proper datatype
                 if '"' in attr_val_str or "'" in attr_val_str:
                     # attribute value is a string
                     attr_val_proper_type = attr_val_str.strip()[1:-1].strip()
-                elif ',' in attr_val_str:  # not a string but comma is present
+                elif ',' in attr_val_str:  # not a string but comma is present ==> list
                     # attribute value is a list
                     attr_val_str = attr_val_str.split(',')
-                    for i, item in enumerate(attr_val_str):  # ensure that there are no whitespaces
-                        attr_val_str[i] = item.strip()
+                    attr_val_str = [item.strip() for item in attr_val_str]  # ensure that there are no whitespaces
                 else:
                     attr_val_str = [attr_val_str]
 
@@ -150,27 +142,37 @@ def read_file_with_only_variables(content_in_lines, log=False):
                 if isinstance(attr_val_str, list):  # if we have list
                     attr_val_proper_type = []
                     for item in attr_val_str:
-                        #print "item found >>>", item
-                        try:
-                            item = re.sub(r'f', '', item)
-                        except:
-                            pass
-
-                        if ('.' in item) or ('e' in item):
-                            item = float(item)
+                        if ('.' in item) or ('e' in item) or ('f' in item):
+                            try:
+                                item = np.float32(item)
+                            except Exception as err1:
+                                if 'f' in item:
+                                    try:
+                                        item = np.float32(re.sub('f', '', item))
+                                    except Exception as err2:
+                                        print 'WARNING! : line <{0}> not understood. Could not convert <{1}> to float()'.format(line, item)
+                                        print 'WARNING! : therefore I tried deleting "f" symbols. Still cannot convert <{1}> to float()'.format(re.sub('f', '', item))
+                                        raise err2
+                                else:
+                                    print 'WARNING! : line <{0}> not understood. Cannot convert <{1}> to float()'.format(line, item)
+                                    raise err1
                         else:
-                            item = int(item)
+                            try:
+                                item = int(item)
+                            except Exception as err:
+                                print 'WARNING! : line <{0}> not understood. Cannot convert <{1}> to int()'.format(line, item)
+                                raise err
                         attr_val_proper_type.append(item)
 
-                attributes[attr_name_str] = attr_val_proper_type
+                buffer_var['attrs'][attr_name] = attr_val_proper_type
 
             elif line not in ['\n', '']:
-                raise IOError('{1}\n{2}\nline below not understood:\n{0}\n{2}'.format(line, sname, '-'*50))
+                raise IOError('{1}\n{2}\nline below not understood (should either start with <{3}> or <datatype_name(i.e float, double)>):\n{0}\n{2}\n'.format(line, _n, '-'*50, buffer_var['name']))
 
-
-    # adding last variable
-    variable_value_list.append(attributes)
-    VARIABLES[var_name_str] = variable_value_list
+        #add last variable
+        if line is content_in_lines[-1]:  #if we have finished proceeding the last line
+            if buffer_var is not None:  # if we have variable in buffer
+                VARIABLES[buffer_var['name']] = [buffer_var['dtype'], buffer_var['dims'], buffer_var['attrs']]
     
     return VARIABLES
 
@@ -222,8 +224,7 @@ def read_baw_mossco_varname_dictionary(fname, log=False):
         
             BAW_MOSSCO_VARNAMES[baw_vn] = [mossco_vn]
         except:
-            if log:
-                print 'read_baw_mossco_varname_dictionary(): Skipping line "{0}"'.format(l)
+            if log: print 'read_baw_mossco_varname_dictionary(): Skipping line "{0}"'.format(l)
             pass
     return BAW_MOSSCO_VARNAMES
 
@@ -269,7 +270,7 @@ def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_d
             if log: print 'searching for davit-friendly variables in file:', nc
             f.write('\n')
             f.write('// '+'-'*100+'\n')
-            nc_friendly_vars = process_mossco_netcdf.get_davit_friendly_variables(nc, log=True)
+            nc_friendly_vars = process_mossco_netcdf.get_davit_friendly_variables(nc, log=log)
             for typ in ['1D', '2D', '3D', '4D']:
                 f.write('//\t'+typ+'\n')
                 for v in nc_friendly_vars[typ]:
@@ -285,7 +286,7 @@ def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_d
 
 
 
-def read_txt_mossco_baw(txt_mossco_baw):
+def read_txt_mossco_baw(txt_mossco_baw, log=False):
     '''
     in:
         txt_mossco_baw - string, path to dictionary 2 (see documentation)
@@ -295,7 +296,7 @@ def read_txt_mossco_baw(txt_mossco_baw):
     VARS = dict()
     f = read_file_delete_comments(txt_mossco_baw, comments='//')
     for i, l in enumerate(f):
-        print l
+        if log: print l
         try:
             baw_vn = l.split('>>>')[1].strip()
             if baw_vn != 'NOT_INCLUDED':
@@ -310,7 +311,7 @@ def read_txt_mossco_baw(txt_mossco_baw):
     return VARS
 
 
-def create_cdl_file(cdl_baw, txt_mossco_baw, output_fname):
+def create_cdl_file(cdl_baw, txt_mossco_baw, output_fname, log=False):
     """
         script processes information and creates a CDL sample file with description of variables.
 
@@ -321,7 +322,7 @@ def create_cdl_file(cdl_baw, txt_mossco_baw, output_fname):
             output_fname        - string containing name of output file
     """
     cdl_baw, txt_mossco_baw = os.path.abspath(cdl_baw), os.path.abspath(txt_mossco_baw)
-    MOSSCO_VARS_TO_INCLUDE = read_txt_mossco_baw(txt_mossco_baw)
+    MOSSCO_VARS_TO_INCLUDE = read_txt_mossco_baw(txt_mossco_baw, log=log)
     #MOSSCO_VARS_TO_INCLUDE <<< [dict of strings]  (key - name of the variable, value = [mossco_filepath, mossco_varname, davit_dims])
     BAW_VARS_DESCRIPTION = read_file_with_only_variables(read_file_delete_comments(cdl_baw, comments='//'))
     #BAW_VARS_DESCRIPTION <<< [dict of strings]  (key - name of the variable, value = [datatype, [dim1,dim2,...], dict(attributes)])

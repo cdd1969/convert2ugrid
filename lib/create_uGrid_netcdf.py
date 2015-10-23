@@ -63,7 +63,7 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     if log: print ' '*20+'+'*10+'  STEP 2  '+'+'*10
     if log: print ' '*20+'+'*30
     if log: print ' '*20+'+'*30
-    process_cdl.create_cdl_file(dictionary_3, dictionary_2, dictionary_4)
+    process_cdl.create_cdl_file(dictionary_3, dictionary_2, dictionary_4, log=log)
     if log: print 'Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4)
 
 
@@ -171,7 +171,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         except KeyError:  # if var is not found in current file => skip to next file
             pass
     if not time_added:
-        print 'WARNING! added dummy "nMesh2_data_time"', nc_file
+        print 'WARNING! added dummy "nMesh2_data_time"'
         process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, dummy_values=True)
 
 
@@ -187,7 +187,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # 8) fill netcdf with SYNOPTIC data!!!
     # --------------------------------------------------
     print '-'*100
-    print 'Now adding data based on CDL file'
+    print 'Now adding data based on Dictionary 4.'
     print '-'*100
     # --------------------------------------------------
     # -- 8.1) fill netcdf with SYNOPTIC data!!!
@@ -198,7 +198,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -- 8.2) cycle through found variables
     # -----------------------------------------------------------------------------------------------
     for VN, VV in VARS.iteritems():
-        print 'Working with variable read from CDL:', VN
+        print 'Working with variable read from Dictionary 4:', VN
 
         # -----------------------------------------------------------------------------------------------
         # -- 8.2.1) add basic info
@@ -270,8 +270,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_4d(fname, varname, mask=m)
 
             else:
-                raise KeyError('Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN) )
-                print 'Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN)
+                #raise KeyError('Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN) )
+                print 'WARNING! Skipping variable: <{1}>. Dimensions <{0}> not recognised. Check for hardcoded solution'.format(var_to_add['dims'], VN)
                 break
 
         # -----------------------------------------------------------------------------------------------

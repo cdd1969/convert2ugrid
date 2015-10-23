@@ -14,13 +14,9 @@ MOSSCO output netcdf file
 from __future__ import division
 from netCDF4 import Dataset
 import numpy as np
-import time
-import sys
-import os
-import copy
-
 import ui
 from Mesh2 import gridhelp
+
 
 def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, y_vname=None, log=False):
     x_cartesian_vnames = ['x', 'xx', 'x_x' , 'xX', 'x_X', 'xt', 'x_t', 'xT', 'x_T']
@@ -29,8 +25,8 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
     y_geographi_vnames = ['lat', 'latx', 'lat_x' , 'latX', 'lat_X', 'latt', 'lat_t', 'latT', 'lat_T']
     
     
-    nicely_print_variables_shot = False
     global nicely_print_variables_shot
+    nicely_print_variables_shot = False
 
     def nicely_print_variables(nc_dataset, filename=None, prefix=''):
         global nicely_print_variables_shot
@@ -553,7 +549,7 @@ def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillv
     if isinstance(v_nc[:], np.ma.MaskedArray):
         mask = v_nc[:].mask
         print _n, 'array is already of type <numpy.ma.MaskedArray>'.format(fillvalue)
-        if ui.promtYesNo(_n+' Use its default mask of shape {0}'.format(mask.shape)):
+        if ui.promtYesNo(_n+' Default mask of shape {0} found. Use it? If "no" i will try to build mask based on _FillValue.'.format(mask.shape)):
             _construct_mask = False
     
     # ... or create own mask based on fv
@@ -657,7 +653,7 @@ def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm
     FRIENDLY_VAR_DICT['4D'] = _4D
     
     if log:
-        print '\n'+'-'*50
+        print '-'*50
         print 'Displaying Davit-friendly variables found in MOSSCO output netcdf file'
         print 'Let Davit-friendly variables be those, which have dimensions:\n\t(tdim)\n\t(ydim, xdim)\n\t(tdim, ydim, xdim)\n\t(tdim, zdim, ydim, xdim)'
         print '-'*50
