@@ -21,6 +21,44 @@ import process_mossco_netcdf
 import copy
 
 
+class cdlVariable(object):
+    '''
+        class describes variables from cdl file format
+    '''
+    def __init__(self):
+        self.__name  = None  # inits var-name
+        self.__dtype = None  # inits var d-type
+        self.__dims  = None  # inits var dims
+        self.__fv    = None  # inits var fill-value
+        self.__attrs = None  # inits var attributes
+
+        self._init_constants()
+
+    def _init_constants(self):
+        self.__dtypes_list = ["char", "byte", "short", "int", "long", "float", "real", "double",
+                    "ubyte", "ushort", "uint", "int64", "uint64", "string"]
+
+    def set_name(self, name):
+        # name - string
+        if self._check_dtype(name, str):
+            self.__name = name
+
+    def set_dtype(self, dtype):
+        # dtype - string
+        if self._check_dtype(dtype, str):
+            if dtype in self.__dtypes_list:
+                self.__dtype = dtype
+            else:
+                raise TypeError('Invalid datatype. Received <{0}> not found in default list {1}'.format(dtype, self.__dtypes_list))
+
+    def _check_dtype(self, _object, dtype):
+        # compare type(<_object>) to <dtype>
+        if isinstance(_object, dtype):
+            return True
+        else:
+            raise TypeError('<{0}> should be of type <{2}>. Is {1}'.format(_object, type(_object), str(dtype)))
+
+
 def remove_comments(string):
     pattern = r"(\".*?\"|\'.*?\')|(//[^\n]*$)"
     # first group captures quoted strings (double or single)
