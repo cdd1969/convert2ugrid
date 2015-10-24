@@ -277,18 +277,20 @@ def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, 
 
 
 
+def read_mossco_nc_0d(filename, varname):
+
+    fullname = filename
 
 
+    root_grp = Dataset(fullname, mode='r')
+    Vars = root_grp.variables
 
-
-
-
-
-
-
-
-
-
+    v = Vars[varname]
+    a = v[...]
+    root_grp.close()
+    del root_grp
+    print 'read_mossco_nc_0d: returning {0}'.format(a)
+    return a
 
 
 def read_mossco_nc_1d(filename, varname):
@@ -308,6 +310,7 @@ def read_mossco_nc_1d(filename, varname):
     a[:] = v[:]  # copying values from variable to numpy array
 
     root_grp.close()
+    del root_grp
     print 'read_mossco_nc_1d: returning {0} of shape {1}'.format(type(a), a.shape)
     return a, dims_v
 
@@ -318,12 +321,10 @@ def read_mossco_nc_2d(filename, varname, mask=None):
 
     root_grp = Dataset(fullname, mode='r')
     Vars = root_grp.variables
-    Dims = root_grp.dimensions
 
     v = Vars[varname]
 
     if mask is None:
-        dims_n = v.dimensions
         dims_v = v.shape
 
         ######
@@ -342,8 +343,9 @@ def read_mossco_nc_2d(filename, varname, mask=None):
         a = var_masked
 
     root_grp.close()
+    del root_grp
     print 'read_mossco_nc_2d: returning {0} of shape {1}'.format(type(a), a.shape)
-    return  a, dims_v
+    return  a
 
 
 def read_mossco_nc_3d(filename, varname, mask=None):
@@ -352,8 +354,6 @@ def read_mossco_nc_3d(filename, varname, mask=None):
 
     root_grp = Dataset(fullname, mode='r')
     Vars = root_grp.variables
-    Dims = root_grp.dimensions
-    print varname
     v = Vars[varname]
 
     if mask is None:  # IF NOT MASKED ARRAY
@@ -379,9 +379,7 @@ def read_mossco_nc_3d(filename, varname, mask=None):
                 var_masked = var_masked.flatten(order='F').compressed()
                 a[i, :] = var_masked
                 
-                #plt.imshow(layer_thicness)
-                #plt.colorbar()
-                #plt.show()
+
 
         #--------------------------------------------------------------------------------------
         #--------------------------------------------------------------------------------------
@@ -429,8 +427,9 @@ def read_mossco_nc_3d(filename, varname, mask=None):
             raise KeyError(msg)
 
     root_grp.close()
+    del root_grp
     print 'read_mossco_nc_3d: returning {0} of shape {1}'.format(type(a), a.shape)
-    return a, dims_v
+    return a
 
 
 def read_mossco_nc_4d(filename, varname, mask=None):
@@ -440,7 +439,6 @@ def read_mossco_nc_4d(filename, varname, mask=None):
 
     root_grp = Dataset(fullname, mode='r')
     Vars = root_grp.variables
-    Dims = root_grp.dimensions
 
     v = Vars[varname]
 
@@ -482,9 +480,10 @@ def read_mossco_nc_4d(filename, varname, mask=None):
             raise KeyError(msg)
 
     root_grp.close()
+    del root_grp
     #return a.flatten(1), dims_v
     print 'read_mossco_nc_4d: returning {0} of shape {1}'.format(type(a), a.shape)
-    return a, dims_v
+    return a
 
 
 
@@ -565,14 +564,23 @@ def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillv
                     if log: print _n, 'attribute <missing_value>={0} found'.format(fillvalue)
                 else:
                     raw_input(_n+' attribute <missing_value> not found. I will proceed without masked elements. Press ENTER to continue')
+                    root_grp.close()
+                    del root_grp
                     return None
-        mask = np.ma.masked_values(v_nc[:], fillvalue).mask
+        
+        masked_arr = np.ma.masked_values(v_nc[:], fillvalue, copy=True)
+        mask = np.ma.getmask(masked_arr)
 
+    if mask is not np.ma.nomask:
+        if transpose: mask = mask.T
+        if log: print _n, 'Created boolean mask of shape {0} (created from array of shape{1})'.format(mask.shape, v_nc[:].shape)
+    else:
+        if log: print _n, 'Array has no invalid entries. Mask is not needed. Returning <nomask>'
+        mask = None  # overwriting nomask value
 
-    if transpose:
-        mask = mask.T
-    if log: print _n, 'returning boolean mask of shape {0} (created from array of shape{1})'.format(mask.shape, v_nc[:].shape)
     root_grp.close()
+    del root_grp
+    del masked_arr
     return mask
 
 

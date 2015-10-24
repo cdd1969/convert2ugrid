@@ -5,10 +5,105 @@
 #
 # Author: Nikolai Chernikov, nikolai.chernikov.ru@gmail.com
 
-
-import process_mossco_netcdf
 import numpy as np
+import os.path
+import netCDF4
 
+
+import process_cdl
+import process_mossco_netcdf
+
+
+
+class cdlVariableExt(object):
+    """this class is an extension of class cdlVariable()
+        pass here parent of type cdlVariable()
+        the idea is to save here meta-data from source netcdf-variable"""
+    def __init__(self, parent):
+        if not isinstance(parent, process_cdl.cdlVariable):
+            raise TypeError('Invalid type. Should be <cdlVariable>, received {0}'.format(type(parent)))
+        self.__parent = parent
+
+        self._init_constants()
+
+        # do not know if it is good idea to check at the init stage
+        # whether netcdf file is valid, and var is whithin
+        self.__source = self._search_source_metadata()
+
+
+    def _init_constants(self):
+        # overwriting method of parent
+        self.__source_attrs = ['_source_filename', '_source_varname']
+
+    def scan_netcdf_var(self, ncname, varname):
+        self.__parent.check_dtype(ncname, str)
+        self.__parent.check_dtype(varname, str)
+
+        nc = netCDF4.Dataset(ncname, mode='r')
+        if varname in nc.variables.keys():
+            metadata = dict()
+            var = nc.variables[varname]
+            metadata['fname'] = ncname
+            metadata['name']  = varname
+            metadata['dims']  = var.dimensions
+            metadata['dtype'] = var.dtype
+            metadata['shape'] = var.shape  # will be <()> if single value
+            metadata['size']  = var.size  # number of elements
+            metadata['mask']  = var.mask  # True/False flag
+            metadata['fillvalue']    = var._FillValue if '_FillValue' in var.ncattrs() else None
+            metadata['nNonOneDims'] = len(filter(lambda a: a != 1, var.shape))  # length of the array.shape excluding single dimensions, for <()> will give 0
+            metadata['attrs'] = dict()
+            if var.ncattrs():  # if not empty list
+                for attr_n in sorted(var.ncattrs()):
+                    metadata['attrs'][attr_n] = var.getncattr(attr_n)
+        else:
+            raise IndexError('No such variable <0> in file <{1}>'.format(varname, ncname))
+
+        nc.close()
+        del nc
+        return metadata
+
+
+    def _search_source_metadata(self):
+        parent_attrs = self.__parent.get_attrs()
+        if all(attr in parent_attrs.keys() for attr in self.__source_attrs):
+            # if the file exists
+            if os.path.isfile( parent_attrs[self.__source_attrs[0]] ):
+                return self.scan_netcdf_var(parent_attrs[self.__source_attrs[0]], parent_attrs[self.__source_attrs[1]])
+
+            else:
+                raise IOError('Special attribute <_source_filename>: No such file <{0}>'.format(parent_attrs[self.__source_attrs[0]]))
+
+        else:
+            raise ValueError('Add missing attributes to know where to search for data. Both these attributess should exist {0}'.format(self.__source_attrs))
+
+
+    def get_parent(self):
+        return self.__parent
+
+
+    def get_source_metadata(self):
+        #return self._search_source_metadata()
+        return self.__source
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
 
 def create_magnitude_variable_from_x_y_component(VARS, varname, varval, mask=None, log=False):
     '''

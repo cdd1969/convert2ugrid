@@ -63,7 +63,7 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     if log: print ' '*20+'+'*10+'  STEP 2  '+'+'*10
     if log: print ' '*20+'+'*30
     if log: print ' '*20+'+'*30
-    process_cdl.create_cdl_file(dictionary_3, dictionary_2, dictionary_4, log=log)
+    process_cdl.create_dictionary4(dictionary_3, dictionary_2, dictionary_4, log=log)
     if log: print 'Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4)
 
 
@@ -197,90 +197,44 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -----------------------------------------------------------------------------------------------
     # -- 8.2) cycle through found variables
     # -----------------------------------------------------------------------------------------------
-    for VN, VV in VARS.iteritems():
-        print 'Working with variable read from Dictionary 4:', VN
+    for var_name, var in VARS.iteritems():
+        print 'Variable read from Dictionary 4:', var.get_name()
+        varExt = process_mixed_data.cdlVariableExt(var)
+        source = varExt.get_source_metadata()
 
         # -----------------------------------------------------------------------------------------------
         # -- 8.2.1) add basic info
         # -----------------------------------------------------------------------------------------------
         var_to_add = dict()
-        var_to_add['vname'] = VN
-        if VV[0] == 'float' : VV[0] = 'f4'
-        if VV[0] == 'double': VV[0] = 'f8'
-        var_to_add['dtype'] = VV[0]  # here there might be a problem, cause datatypes are specified in CDL format (i.e. "double", "float", "int", etc.)
-        var_to_add['dims'] = tuple(VV[1])
-
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.2) adding fillvalue
-        # -----------------------------------------------------------------------------------------------
-        if '_FillValue' in VV[2].keys():
-            var_to_add['_FillValue'] = VV[2]['_FillValue']
-        else:
-            var_to_add['_FillValue'] = False
-        
-
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.3) check if we have data to add...
-        # -----------------------------------------------------------------------------------------------
-        if '_mossco_filename' in VV[2].keys():
-            fname = VV[2]['_mossco_filename']
-            varname = VV[2]['_mossco_varname']
-        else:
-            fname, varname, var_to_add['data'] = None, None, None
-            # -----------------------------------------------------------------------------------------------
-            # Create auto variables
-            # -----------------------------------------------------------------------------------------------
-            if '_auto_creation' in VV[2].keys():
-                var_to_add['data'] = process_mixed_data.create_magnitude_variable_from_x_y_component(VARS,
-                                        VN, VV, mask=m, log=True)
+        var_to_add['vname'] = varExt.get_parent().get_name()
+        var_to_add['dtype'] = varExt.get_parent().get_dtype(syntax="python-netcdf")
+        var_to_add['dims']  = varExt.get_parent().get_dims()
+        var_to_add['_FillValue'] = source['fillvalue']
+        var_to_add['attributes'] = varExt.get_parent().get_attrs()
 
         # -----------------------------------------------------------------------------------------------
         # 8.2.4) add data
         # -----------------------------------------------------------------------------------------------
-        if fname:
-            # if 0D
-            if var_to_add['dims'] == tuple([]):
-                var_to_add['data'] = None
-            
-            # if 1D
-            elif var_to_add['dims'] in [tuple(['nMesh2_data_time'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_1d(fname, varname)
-            
-            # if 2D
-            elif var_to_add['dims'] in [tuple(['nMesh2_time', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_layer_2d', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_2d(fname, varname, mask=m)
-            
-            # if 3D
-            elif var_to_add['dims'] in [tuple(['nMesh2_data_time', 'nMesh2_face']),
-                                        tuple(['nMesh2_data_time', 'nMesh2_layer_2d', 'nMesh2_face']),
-                                        tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_layer_3d', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_3d(fname, varname, mask=m)
 
-            # if 4D
-            elif var_to_add['dims'] in [tuple(['nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face']),
-                                        tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_4d(fname, varname, mask=m)
+        if source['nNonOneDims'] == 0:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_0d(source['fname'], source['name'], mask=m)
+        
+        elif source['nNonOneDims'] == 1:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_1d(source['fname'], source['name'])
+        
+        elif source['nNonOneDims'] == 2:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_2d(source['fname'], source['name'], mask=m)
+        
+        elif source['nNonOneDims'] == 3:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_3d(source['fname'], source['name'], mask=m)
 
-            else:
-                #raise KeyError('Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN) )
-                print 'WARNING! Skipping variable: <{1}>. Dimensions <{0}> not recognised. Check for hardcoded solution'.format(var_to_add['dims'], VN)
-                break
+        elif source['nNonOneDims'] == 4:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_4d(source['fname'], source['name'], mask=m)
 
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.5) adding attributes
-        # -----------------------------------------------------------------------------------------------
-        attrs = dict()
-        for ATR_N, ATR_V in VV[2].iteritems():
-            attrs[ATR_N] = ATR_V
-        var_to_add['attributes'] = attrs
+        else:
+            raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non single dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
+                        varExt.get_name(), source['dims'], source['shape']), source['nNonOneDims'])
+            break
 
 
         # -----------------------------------------------------------------------------------------------
@@ -288,6 +242,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         # -----------------------------------------------------------------------------------------------
         process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var_to_add, log=True)
         print '-'*100
+        del varExt
     
 
 

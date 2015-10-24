@@ -11,7 +11,6 @@ This module contains functions relevant for processing NETCDF file, which is bei
 for further evaluation with DAVIT
 '''
 from __future__ import division
-import types
 from netCDF4 import Dataset
 import numpy as np
 import time
