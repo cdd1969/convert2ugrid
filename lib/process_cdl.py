@@ -11,14 +11,12 @@ This module contains functions relevant for processing CDL format file, which is
 for further creation of netcdf file compatible with DAVIT
 '''
 from __future__ import division
-from netCDF4 import Dataset
 import numpy as np
-import time
 import sys
 import os
 import re
+
 import process_mossco_netcdf
-import copy
 
 
 class cdlVariable(object):
@@ -74,6 +72,9 @@ class cdlVariable(object):
         if isinstance(_object, dtype):
             return True
         else:
+            # here we treat unicode and simple string as same objects
+            if isinstance(_object, unicode) and dtype is str:
+                return True
             if raise_error: raise TypeError('<{0}> should be of type <{2}>. Is {1}'.format(_object, type(_object), str(dtype)))
             else: return False
 
@@ -288,8 +289,7 @@ def read_file_with_only_variables(content_in_lines, log=False):
         input:
             content_in_lines [list] - list with strings representing lines, note that each line should be stripped, to successfully apply .startswith()
         out:
-            variables [dict] - variables that have been found, (key - name of the variable, value = [datatype, [dim1,dim2,...], dict(attributes)])
-                                Note: all values are stored as strings
+            variables [dict] - variables that have been found, (key - name of the variable, value = object of type <cdlVariable>
     '''
     _n = "read_file_with_only_variables():"
     VARIABLES = dict()
@@ -315,10 +315,7 @@ def read_file_with_only_variables(content_in_lines, log=False):
                 del buffer_var
                 buffer_var = cdlVariable()
                 
-                # save var-name
                 buffer_var.set_name( line.split()[1].strip() )
-                
-                # save data-type
                 buffer_var.set_dtype( line.split()[0].strip() )
 
                 # save dims

@@ -26,8 +26,9 @@ def create_uGrid_ncdf(filename,
                         Mesh2_face_area=None,
                         Mesh2_edge_x_bnd=None, Mesh2_edge_y_bnd=None,
                         Mesh2_face_x_bnd=None, Mesh2_face_y_bnd=None,
-                        coord_mode='geographic',
-                        dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=1, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1):
+                        coord_type='geographic',
+                        dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=1, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1,
+                        log=True):
     '''
     Function creates a NETCDF4 file. Data is stored in accordance with
     BAW convention for 2D Unstructured Grid (http://www.baw.de/methoden/index.php5/NetCDF_Unstrukturiertes_Gitter)
@@ -42,7 +43,7 @@ def create_uGrid_ncdf(filename,
         Mesh2_face_x, Mesh2_face_y, Mesh2_face_center_x, Mesh2_face_center_y,       |
         Mesh2_face_area                                                             |
 
-        coord_mode  - string indicating in which variable to store passed data, in x,y or in lon,lat
+        coord_type  - string indicating in which variable to store passed data, in x,y or in lon,lat
                 by default - 'geographic'
                 'cartesian' <> 'geographic'
     '''
@@ -81,7 +82,7 @@ def create_uGrid_ncdf(filename,
     root_grp.createDimension('nMesh2_class_names_strlen', dim_nMesh2_class_names_strlen)
     root_grp.createDimension('nMesh2_suspension_classes', dim_nMesh2_suspension_classes)
 
-    if coord_mode in ['cartesian', 'both'] :
+    if coord_type in ['cartesian', 'both'] :
         # **********************************************************************************************************************************************
         #
         #                  1) Local coordinates
@@ -175,7 +176,7 @@ def create_uGrid_ncdf(filename,
             ncVar_Mesh2_face_x_bnd[...] = Mesh2_face_x_bnd
             ncVar_Mesh2_face_y_bnd[...] = Mesh2_face_y_bnd
 
-        if coord_mode == 'cartesian':
+        if coord_type == 'cartesian':
             # ------------------------------------------------------------------------------------
             #                                   3.5) Topology
             # ------------------------------------------------------------------------------------
@@ -208,7 +209,7 @@ def create_uGrid_ncdf(filename,
                 ncVar_Mesh2_face_area.location = 'face'
                 ncVar_Mesh2_face_area [:] = Mesh2_face_area[:]
     
-    elif coord_mode in ['geographic', 'both']:
+    elif coord_type in ['geographic', 'both']:
         # *********************************************************************************************************************************************
         #
         #                  2) Georaphical coordinates
@@ -329,7 +330,7 @@ def create_uGrid_ncdf(filename,
 
     
     else:
-        err_msg = 'passed coord_mode = {0} , is invalid. Choose "cartesian", "geographic" or "both"'.format(coord_mode)
+        err_msg = 'passed <coord_type = {0}> is invalid. Choose "cartesian", "geographic" or "both"'.format(coord_type)
         raise TypeError(err_msg)
     # **************************************************
     #
@@ -382,7 +383,7 @@ def create_uGrid_ncdf(filename,
     # --------------------------------------------------
     root_grp.close()
 
-    print 'File created succesfully: %s' % (filename)
+    if log: print 'File created succesfully: %s' % (filename)
     
 
 
@@ -412,7 +413,7 @@ def create_uGrid_ncdf(filename,
 
 
 
-def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossco, mask=None, log=False):
+def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, nx=0, ny=0, mask=None, log=False):
     '''
                     DUMMY VALUES!!!
     Function appends to DAVIT netcdf following variables:
@@ -446,15 +447,13 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
     if log: print 'running: append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd()'
     
     # get dimensions....
-    # ----------------------------------------------------------------------------
-    __nc = Dataset(fname_mossco, mode='r')
-    nz = __nc.dimensions['getmGrid3D_getm_3'].__len__()
-    ny = __nc.dimensions['getmGrid3D_getm_2'].__len__()
-    nx = __nc.dimensions['getmGrid3D_getm_1'].__len__()
-    nt = __nc.dimensions['time'].__len__()
-    __nc.close()
-    
+    # ----------------------------------------------------------------------------   
     __nc = Dataset(fname_davit, mode='r')
+    try:
+        nt = __nc.dimensions['nMesh2_data_time'].__len__()
+    except:
+        nt = __nc.dimensions['nMesh2_time'].__len__()
+    nz     = __nc.dimensions['nMesh2_layer_3d'].__len__()
     nFaces = __nc.dimensions['nMesh2_face'].__len__()
     nEdges = __nc.dimensions['nMesh2_edge'].__len__()
     __nc.close()
@@ -591,7 +590,7 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, fname_mossc
 
 
 
-def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_var_name='time', dummy_values=False):
+def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_var_name='time', dummy_values=False, log=True):
         # --------------------------------------------------
         # 3.1) fill netcdf with time variables (TIME and DATATIME)
         # --------------------------------------------------
@@ -621,7 +620,6 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_v
         ATTRS['long_name'] = "time"
         units = time_var_units+' 01:00'  # '01:00 is indicating timezone, see CF conventions for details'
         ATTRS['units'] = units
-        #ATTRS['units'] = 'seconds since 2008-01-02 00:00:00 01:00'  # '01:00 is indicating timezone, see CF conventions for details'
         ATTRS['name_id'] = 1640
         ATTRS['axis'] = "T"
         ATTRS['bounds'] = "nMesh2_time_bnd"
@@ -630,8 +628,8 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_v
         if dummy_values:
             ATTRS['comment'] = "warning: dummy values are used"
         var_t['attributes'] = ATTRS
-        var_t['data'], dim_shape = np.array([min_t]), tuple([1])
-        append_VariableData_to_netcdf(fname_davitnc, var_t)
+        var_t['data'] = np.array([min_t])
+        append_VariableData_to_netcdf(fname_davitnc, var_t, log=log)
         
         var_t_bnd = dict()
         var_t_bnd['vname'] = 'nMesh2_time_bnd'
@@ -645,7 +643,7 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_v
 
         var_t_bnd['data'] = np.array([min_t, max_t])
         #var_t_bnd['data'] = np.array([0, 62985600])
-        append_VariableData_to_netcdf(fname_davitnc, var_t_bnd)
+        append_VariableData_to_netcdf(fname_davitnc, var_t_bnd, log=log)
 
 
         if dummy_values is False:
@@ -666,14 +664,14 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_v
             var_t['attributes'] = ATTRS
             
             var_dt['attributes'] = ATTRS
-            var_dt['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_1d(fname_mossconc, 'time')
-            append_VariableData_to_netcdf(fname_davitnc, var_dt)
+            var_dt['data'] = process_mossco_netcdf.read_mossco_nc_1d(fname_mossconc, 'time')
+            append_VariableData_to_netcdf(fname_davitnc, var_dt, log=log)
 
 
 
 
 
-def append_VariableData_to_netcdf(filename, variable, log=False):
+def append_VariableData_to_netcdf(filename, variable, log=True):
     '''
     Function appends data to a NETCDF4 file created by function "create_uGrid_ncdf()". Check description there.
     Data is stored in accordance with BAW convention for 2D Unstructured Grid
@@ -807,9 +805,8 @@ def append_VariableData_to_netcdf(filename, variable, log=False):
 
 
     if log: print _n, 'output    datashape:', ncVar_data.shape
-    #if log: print _n, 'output   data-array:', ncVar_data[...]
+    if log: print _n, 'Variable appended succesfully: %s' % (variable['vname'])
     root_grp.close()
-    print _n, 'Variable appended succesfully: %s' % (variable['vname'])
 
 
 

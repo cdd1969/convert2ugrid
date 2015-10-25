@@ -961,14 +961,6 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                                 self._edges.append(edge)
                         # now, after edges were changed in face, we can append it
                         self._faces.append(face)
-                        #
-                        #
-                        #
-                        #
-                        #
-                        #
-                        #
-        print self._faceMap.T
 
 
 
@@ -1402,7 +1394,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
 
     def __repr__(self):
         #self.update()
-        return "Grid2:\n\tnodes: {0}, \n\tedges: {1}, \n\tfaces: {2}".format(
+        return "uGrid2D:\n\tnodes: {0}, \n\tedges: {1}, \n\tfaces: {2}".format(
                 self._nNodes, self._nEdges, self._nFaces)
 
 

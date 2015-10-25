@@ -18,345 +18,69 @@ import ui
 from Mesh2 import gridhelp
 
 
-def find_coordinate_vars(filename, bathymetry_vname='bathymetry', x_vname=None, y_vname=None, log=False):
-    x_cartesian_vnames = ['x', 'xx', 'x_x' , 'xX', 'x_X', 'xt', 'x_t', 'xT', 'x_T']
-    x_geographi_vnames = ['lon', 'lonx', 'lon_x' , 'lonX', 'lon_X', 'lont', 'lon_t', 'lonT', 'lon_T']
-    y_cartesian_vnames = ['y', 'yx', 'y_x' , 'yX', 'y_X', 'yt', 'y_t', 'yT', 'y_T']
-    y_geographi_vnames = ['lat', 'latx', 'lat_x' , 'latX', 'lat_X', 'latt', 'lat_t', 'latT', 'lat_T']
-    
-    
-    global nicely_print_variables_shot
-    nicely_print_variables_shot = False
-
-    def nicely_print_variables(nc_dataset, filename=None, prefix=''):
-        global nicely_print_variables_shot
-        
-        if not nicely_print_variables_shot:  # we want to print it only once
-            nicely_print_variables_shot = True
-            Vars = nc_dataset.variables
-            if filename:
-                print prefix, 'File <{0}> contains following variables:'.format(filename)
-            else:
-                print prefix, 'Current file contains following variables:'
-            for i, v_n in enumerate(sorted(Vars.keys())):
-                print '\t{0:2d}) {1} {2} {3}'.format(i, v_n, Vars[v_n].dimensions, Vars[v_n].shape)
-    
 
 
-
-
-    _n = 'find_coordinate_vars():'
-    if log: print '-'*50
-    if log: print _n, 'Now searching for bathymetry and for coordinates to create grid (X and Y coordinate variables)'
-    if log: print _n, 'Surching in first passed file <{0}>'.format(filename)
-    root_grp = Dataset(filename, mode='r')
-    Vars = root_grp.variables
-
-    if x_vname is not None and y_vname is not None:
-        print _n, 'User has explicitly passed varnames for X:<{0}> and for Y:<{1}>'.format(x_vname, y_vname)
-        if x_vname not in Vars.keys():
-            raise KeyError('find_coordinate_vars(): Variable <{0}> not found in current file'.format(x_vname))
-        if y_vname not in Vars.keys():
-            raise KeyError('find_coordinate_vars(): Variable <{0}> not found in current file'.format(y_vname))
-        print _n, 'Picking them now...'
-        
-        x_v_n = x_vname
-        y_v_n = y_vname
-    
-    # if X and Y names were not passed as params
-    else:
-        if log: print _n, 'Now searching for bathymetry'
-        if bathymetry_vname not in Vars.keys():
-            # nothing found, ask user to give var-name
-            nicely_print_variables(root_grp, filename=filename, prefix=_n)
-            print _n, 'Default bathymetry name <{0}> not found in file <{1}>. All variables within the current file are listed above'.format(bathymetry_vname, filename)
-            while bathymetry_vname not in Vars.keys():
-                bathymetry_vname = raw_input(_n+' Type the name of the variable with bathymetry data (from the list above):')
-
-        
-        if log: print _n, 'Bathymetry selected: <{0}> of shape {1} {2}'.format(bathymetry_vname, Vars[bathymetry_vname].dimensions, Vars[bathymetry_vname].shape)
-        
-
-        b = Vars[bathymetry_vname]
-        bath_x_dimName = b.dimensions[1]
-        bath_y_dimName = b.dimensions[0]
-
-        # now try to get these variables , same as dim_names
-        if bath_x_dimName in Vars.keys() and bath_y_dimName in Vars.keys():
-            if log: print _n, 'Using variables that have same names as dimensions of bathymetry variable <{0}>'.format(bathymetry_vname)
-            if log: print _n, '\t for X:<{0}>, for Y:<{1}>'.format(bath_x_dimName, bath_y_dimName)
-            x_v_n = bath_x_dimName
-            y_v_n = bath_y_dimName
-        else:
-            # nothing has been found... so try to match names from lists
-            if log: print _n, 'Bathymetry variable <{2}> has dimensions (Y,X): <({0}, {1})>.'.format(bath_y_dimName, bath_x_dimName, bathymetry_vname)
-            if log: print _n, 'But no variables found with these Y,X names. Now trying to search for other coord-vars'
-
-            
-            x_valid_names = list()  # list with X variable found...
-            for x_vname in x_cartesian_vnames:
-                if x_vname in Vars.keys():
-                    x_valid_names.append(x_vname)
-            for x_vname in x_geographi_vnames:
-                if x_vname in Vars.keys():
-                    x_valid_names.append(x_vname)
-
-
-            y_valid_names = list()  # list with Y variables found
-            for y_vname in y_cartesian_vnames:
-                if y_vname in Vars.keys():
-                    y_valid_names.append(y_vname)
-            for y_vname in y_geographi_vnames:
-                if y_vname in Vars.keys():
-                    y_valid_names.append(y_vname)
-
-            # at this point two lists <x_valid_names>, <y_valid_names> should contain
-            # names of the variables to fetch coordinate data
-            # There could happen 3 cases:
-            #  1) nothing has been found => ask user to type manually
-            #  2) one var has been found for x and for y => take them
-            #  3) more then one var has been found for x and for y => ask user to choose one
-            
-
-            if log: print _n, 'X: Searching for variable with name from list {0}'.format(x_cartesian_vnames+x_geographi_vnames)
-            # X: case (1)
-            if len(x_valid_names) == 0:  # nothing found, ask user to type name
-                nicely_print_variables(root_grp, filename=filename, prefix=_n)
-                print _n, 'X-coords var not found in file <{0}>. All variables within the current file are listed above'.format(filename)
-                x_valid_names = [None]
-                while x_valid_names[0] not in Vars.keys():
-                    x_valid_names[0] = raw_input(_n+' Type the name of the variable with X-coords data (from the list above):')
-            
-            # X case (2)
-            elif len(x_valid_names) == 1:
-                pass
-            
-            # X case (3)
-            else:  # len(x_valid_names) > 1
-                print _n, 'More than 1 X-coords variable exist; variables found:'
-                for x_v_n in x_valid_names:
-                    print _n, '\t', x_v_n
-                # now promt user to choose correct one
-                while x_valid_names[0] not in Vars.keys():
-                    x_valid_names[0] = raw_input(_n+'Type desired X-coords variable name:')
-
-            x_v_n = x_valid_names[0]
-            if log: print _n, 'X-coords selected: <{0}> of shape {1} {2}'.format(x_v_n, Vars[x_v_n].dimensions, Vars[x_v_n].shape)
-
-
-
-            if log: print _n, 'Y: Searching for variable with name from list {0}'.format(y_cartesian_vnames+y_geographi_vnames)
-            # Y case (1)
-            if len(y_valid_names) == 0:  # nothing found, ask user to type name
-                nicely_print_variables(root_grp, filename=filename, prefix=_n)
-                print _n, 'Y-coords var not found in file <{0}>. All variables within the current file are listed above'.format(filename)
-                y_valid_names = [None]
-                while y_valid_names[0] not in Vars.keys():
-                    y_valid_names[0] = raw_input(_n+' Type the name of the variable with Y-coords data (from the list above):')
-
-            # Y case (2)
-            elif len(y_valid_names) == 1:
-                pass
-
-            # Y case (3)
-            else:  # len(y_valid_names) > 1
-                print _n, 'More than 1 Y-coords variable exist; variables found:'
-                for y_v_n in y_valid_names:
-                    print _n, '\t', y_v_n
-                # now promt user to choose correct one
-                while y_valid_names[0] not in Vars.keys():
-                    y_valid_names[0] = raw_input(_n+'Type desired Y-coords variable name:')
-            
-            y_v_n = y_valid_names[0]
-            if log: print _n, 'Y-coords selected: <{0}> of shape {1} {2}'.format(y_v_n, Vars[y_v_n].dimensions, Vars[y_v_n].shape)
-    
-
-
-    # -------------------------------------------------------
-    # now we know var-names for X and Y
-    # -------------------------------------------------------
-    # now determine if it is rectangular grid or curvilinear....
-    #
-    # if x-coord and y-coord are 1d arrays
-    # then the grid is rectangular but the cells may be of
-    # any rectangular shape
-    #
-    # if x-y- coords are 2d arrays,
-    # then the grid is curvilinear
-
-    x = Vars[x_v_n]
-    y = Vars[y_v_n]
-
-    if len(x.shape) == 1 and len(y.shape) == 1:
-        grid_type = 'rectangular'
-    elif len(x.shape) == 2 and len(y.shape) == 2:
-        grid_type = 'curvilinear'
-    else:
-        print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, x.shape)
-        print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, y.shape)
-        raise ValueError('Grid type not understood. X and Y should be either two 1D arrays or two 2D arrays'+'\n'+gridhelp())
-
-
-    # now determine if coords are at T (cell center) or X (cell nodes) points...
-    if grid_type == 'rectangular':
-        if x.shape[0] == b.shape[1] and y.shape[0] == b.shape[0]:  # same as bathymetry
-            data_location = 'T_points'
-        elif x.shape[0] == (b.shape[1]+1) and y.shape[0] == (b.shape[0]+1):  #+1 more
-            data_location = 'X_points'
-        else:
-            print _n, 'Using bathymetry variable <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
-            print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, x.shape)
-            print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, y.shape)
-            raise ValueError('Invalid variable dimensions!\nLength of x- or y- dimension in X- or Y- coord-variable should be equal (T_points) or 1 more (X_points) than in bathymetry file'+'\n'+gridhelp())
-    else:  #grid_type == 'curvilinear'
-        if (x.shape[0] == b.shape[0]) and (x.shape[1] == b.shape[1]
-            ) and (y.shape[0] == b.shape[0]) and (y.shape[1] == b.shape[1]):  # same as bathymetry
-            data_location = 'T_points'
-        elif (x.shape[0] == (b.shape[0]+1)) and (x.shape[1] == (b.shape[1]+1)
-            ) and (y.shape[0] == (b.shape[0]+1)) and (y.shape[1] == (b.shape[1]+1)):
-            data_location = 'X_points'
-        else:
-            print _n, 'Using bathymetry variable <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
-            print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, x.shape)
-            print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, y.shape)
-            raise ValueError('Invalid variable dimensions!\nLength of x- or y- dimension in X- or Y- coord-variable should be equal (T_points) or 1 more (X_points) than in bathymetry file'+'\n'+gridhelp())
-    
-
-
-
-
-    # determine mode.... (Geographic or Cartesian)
-    coord_mode = None
-    if x_v_n in x_cartesian_vnames and y_v_n in y_cartesian_vnames:
-        coord_mode = 'cartesian'
-    elif x_v_n in x_geographi_vnames and y_v_n in y_geographi_vnames:
-        coord_mode = 'geographic'
-    else:
-        # now show user found vars
-        print _n, 'Using variable for X-coords <{0}>, of shape <{1}>'.format(x_v_n, Vars[x_v_n].shape)
-        print _n, 'Using variable for Y-coords <{0}>, of shape <{1}>'.format(y_v_n, Vars[y_v_n].shape)
-        while coord_mode not in ['cartesian', 'geographic', 'c', 'g']:
-            coord_mode = raw_input(_n+'Coord-type not understood. Choose cartesian or geographic. Type [c/g]:')
-        if coord_mode == 'c': coord_mode = 'cartesian'
-        if coord_mode == 'g': coord_mode = 'geographic'
-    # now print summary....
-    if log: print _n, '-'*50
-    if log: print _n, 'Summary'
-    if log: print _n, '-'*50
-    if log: print _n, '\tbathymetry: <{0}>, of shape <{1}>'.format(bathymetry_vname, b.shape)
-    if log: print _n, '\tX-coords: <{0}>, of shape <{1}>, range <[{2:.2f}:{3:.2f}]>, units <{4}>'.format(
-                x_v_n, x.shape, x[:].min(), x[:].max(), x.units if 'units' in x.ncattrs() else 'unknown')
-    if log: print _n, '\tY-coords: <{0}>, of shape <{1}>, range <[{2:.2f}:{3:.2f}]>, units <{4}>'.format(
-                y_v_n, y.shape, y[:].min(), y[:].max(), y.units if 'units' in y.ncattrs() else 'unknown')
-    if log: print _n, '\tCoordinate mode: <{0}>'.format(coord_mode)
-    if log: print _n, '\tGrid_type: <{0}>'.format(grid_type)
-    if log: print _n, '\tCoordinates located at: <{0}>'.format(data_location)
-    bath_data_location = 'T_points'  # this should be improved!!!!
-    if log: print _n, '\tBathymetry  located at: <{0}>'.format(bath_data_location)
-    if log: print _n, '-'*50
-
-    x = x[:]
-    y = y[:]
-    root_grp.close()
-    return {'x' : x, 'y' : y, 'bName': bathymetry_vname, 'coord_mode' : coord_mode, 'grid_type' : grid_type, 'data_location' : data_location, 'bath_data_location' : bath_data_location}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def read_mossco_nc_0d(filename, varname):
-
-    fullname = filename
-
-
-    root_grp = Dataset(fullname, mode='r')
-    Vars = root_grp.variables
+def read_mossco_nc_0d(filename, varname, log=False):
+    nc = Dataset(filename, mode='r')
+    Vars = nc.variables
 
     v = Vars[varname]
     a = v[...]
-    root_grp.close()
-    del root_grp
-    print 'read_mossco_nc_0d: returning {0}'.format(a)
+    if len(a.shape) != 0:
+        raise TypeError('read_mossco_nc_0d(): Invalid array shape. Should be 0D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, a.shape))
+
+    nc.close()
+    del nc
+    if log: print 'read_mossco_nc_0d(): returning {0}'.format(a)
     return a
 
 
-def read_mossco_nc_1d(filename, varname):
+def read_mossco_nc_1d(filename, varname, log=False):
+    nc = Dataset(filename, mode='r')
+    Vars = nc.variables
 
-    fullname = filename
+    a = np.squeeze(Vars[varname][:])
+    if len(a.shape) != 1:
+        raise TypeError('read_mossco_nc_1d(): Invalid array shape. Should be 1D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, a.shape))
 
-
-    root_grp = Dataset(fullname, mode='r')
-    Vars = root_grp.variables
-    Dims = root_grp.dimensions
-
-    v = Vars[varname]
-    dims_n = v.dimensions
-    dims_v = v.shape
-
-    a = np.zeros(dims_v)
-    a[:] = v[:]  # copying values from variable to numpy array
-
-    root_grp.close()
-    del root_grp
-    print 'read_mossco_nc_1d: returning {0} of shape {1}'.format(type(a), a.shape)
-    return a, dims_v
+    nc.close()
+    del nc
+    if log: print 'read_mossco_nc_1d(): returning {0} of shape {1}'.format(type(a), a.shape)
+    return a
 
 
-def read_mossco_nc_2d(filename, varname, mask=None):
+def read_mossco_nc_2d(filename, varname, flatten=False, mask=None, log=False):
+    nc = Dataset(filename, mode='r')
+    Vars = nc.variables
 
-    fullname = filename
+    a = np.squeeze(Vars[varname][:])
+    if len(a.shape) != 2:
+        raise TypeError('read_mossco_nc_2d(): Invalid array shape. Should be 2D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, a.shape))
 
-    root_grp = Dataset(fullname, mode='r')
-    Vars = root_grp.variables
-
-    v = Vars[varname]
-
-    if mask is None:
-        dims_v = v.shape
-
-        ######
-        # BRUTAL HARDCODE!!!!
-        ######
-        a = np.zeros(dims_v)
-        a[:] = v[:].T  # copying values from variable to numpy array
-        a = a.flatten(order='F')
+    if mask is None and flatten:
+        a = a.T.flatten(order='F')
 
     elif mask is not None:
-        n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d part. invert - because True is an invalid element
-        dims_v = tuple([n_valid_2d])
-        
-        var_masked = np.ma.array(v, mask=mask.T).T
-        var_masked = var_masked.flatten(order='F').compressed()
-        a = var_masked
+        a = np.ma.array(a, mask=mask.T)
+        if flatten:
+            a = a.T.flatten(order='F').compressed()
 
-    root_grp.close()
-    del root_grp
-    print 'read_mossco_nc_2d: returning {0} of shape {1}'.format(type(a), a.shape)
+    nc.close()
+    del nc
+    if log: print 'read_mossco_nc_2d(): returning {0} of shape {1}'.format(type(a), a.shape)
     return  a
 
 
-def read_mossco_nc_3d(filename, varname, mask=None):
+def read_mossco_nc_3d(filename, varname, flatten=False, mask=None, log=False):
+    nc   = Dataset(filename, mode='r')
+    Vars = nc.variables
+    v    = Vars[varname]
+    a    = np.squeeze(v[:])
+    
+    if len(a.shape) != 3:
+        raise TypeError('read_mossco_nc_3d(): Invalid array shape. Should be 3D. Received shape {0}, after squeezing {1}'.format(v.shape, a.shape))
 
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
-    Vars = root_grp.variables
-    v = Vars[varname]
-
-    if mask is None:  # IF NOT MASKED ARRAY
+    if mask is None and flatten:
         if v.dimensions[0] in ['nMesh2_data_time', 'time']:
             dims_v = tuple([v.shape[0], v.shape[1]*v.shape[2]])
             a = np.zeros(dims_v)
@@ -399,8 +123,8 @@ def read_mossco_nc_3d(filename, varname, mask=None):
 
                 dims_v = tuple([Vars['time'].size, v.shape[0], n_valid_2d])
                 a = np.zeros(dims_v)
-                print a.shape
-                print layer_thicness0.shape
+                if log: print a.shape
+                if log: print layer_thicness0.shape
                 for t in xrange(a.shape[0]):
                     i = 0
                     for z in xrange(a.shape[1]):
@@ -426,21 +150,21 @@ def read_mossco_nc_3d(filename, varname, mask=None):
             msg = "Attempting to write 3D variable which first dimension is not any of ['nMesh2_data_time', 'time', 'getmGrid3D_getm_3']\nNot implemented yet"
             raise KeyError(msg)
 
-    root_grp.close()
-    del root_grp
-    print 'read_mossco_nc_3d: returning {0} of shape {1}'.format(type(a), a.shape)
+    nc.close()
+    del nc
+    if log: print 'read_mossco_nc_3d: returning {0} of shape {1}'.format(type(a), a.shape)
     return a
 
 
-def read_mossco_nc_4d(filename, varname, mask=None):
+def read_mossco_nc_4d(filename, varname, mask=None, log=False):
     # this will work only for 4d variables which have dimensions (time, z, y, x)
-    #
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
-    Vars = root_grp.variables
+    nc = Dataset(filename, mode='r')
+    Vars = nc.variables
 
     v = Vars[varname]
+    vv = np.squeeze(v[:])
+    if len(v.shape) != 4:
+        raise TypeError('read_mossco_nc_4d(): Invalid array shape. Should be 4D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, vv.shape))
 
     if mask is None:  # IF NOT MASKED ARRAY
         if v.dimensions[0] in ['nMesh2_data_time', 'time']:
@@ -479,109 +203,21 @@ def read_mossco_nc_4d(filename, varname, mask=None):
             msg = "Attempting to write 4D variable which has no ['nMesh2_data_time', 'time'] as 1st dimension.\nNot implemented yet"
             raise KeyError(msg)
 
-    root_grp.close()
-    del root_grp
+    nc.close()
+    del nc
     #return a.flatten(1), dims_v
-    print 'read_mossco_nc_4d: returning {0} of shape {1}'.format(type(a), a.shape)
+    if log: print 'read_mossco_nc_4d: returning {0} of shape {1}'.format(type(a), a.shape)
     return a
 
 
 
 
 def read_mossco_nc_rawvar(filename, varname, mask=None):
-    root_grp = Dataset(filename, mode='r')
-    a = root_grp.variables[varname][:]
-    root_grp.close()
+    nc = Dataset(filename, mode='r')
+    a = nc.variables[varname][:]
+    nc.close()
     return a
 
-
-def read_mossco_lon_vector(filename, varname='lonc'):
-
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
-    lon_nc = root_grp.variables[varname]
-    lon = np.squeeze(lon_nc[:])
-    
-    root_grp.close()
-    return lon
-
-
-def read_mossco_lat_vector(filename, varname='latc'):
-
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
-    lat_nc = root_grp.variables[varname]
-    lat = np.squeeze(lat_nc[:])
-    
-    root_grp.close()
-    return lat
-
-
-def make_mask_array_from_mossco_bathymetry(filename, varname='bathymetry', fillvalue=None, transpose=False, log=False):
-    ''' Function reads an 2D array (in MOSSCO - 'bathymetry') and generates a boolean mask
-    array (True means that value is masked), based on 'fillvalue'
-
-    input:
-        filename        - string to filename (relative path)
-        varname         - string containing name of the variable
-        fillvalue       - float indicating the values to be masked (mask=True). By default (fillvalue=None)
-                        gets _FillValue automatically
-        transpose       - a boolean flag to return transposed array or not
-    '''
-    _n = 'make_mask_array_from_mossco_bathymetry():'
-    _construct_mask = True
-    if log: print _n, 'working with variable <{0}> in file <{1}>'.format(varname, filename)
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
-    v_nc = root_grp.variables[varname]
-    # now get masked array and its mask ( if value is equal to FillValue we assume that is False)
-    # from numpy docs: "We must keep in mind that a True entry in the mask indicates an invalid data"
-
-    # if it is already masked array, simply take the mask
-    if isinstance(v_nc[:], np.ma.MaskedArray):
-        mask = v_nc[:].mask
-        print _n, 'array is already of type <numpy.ma.MaskedArray>'.format(fillvalue)
-        if ui.promtYesNo(_n+' Default mask of shape {0} found. Use it? If "no" i will try to build mask based on _FillValue.'.format(mask.shape)):
-            _construct_mask = False
-    
-    # ... or create own mask based on fv
-    if _construct_mask:
-        if fillvalue is None:
-            try:
-                fillvalue = v_nc._FillValue
-                if log: print _n, '<_FillValue>={0} found'.format(fillvalue)
-            except:
-                if log: print _n, 'attribute <_FillValue> not found. Looking for <missing_value>'
-                if 'missing_value' in v_nc.ncattrs():
-                    fillvalue = v_nc.missing_value
-                    if log: print _n, 'attribute <missing_value>={0} found'.format(fillvalue)
-                else:
-                    raw_input(_n+' attribute <missing_value> not found. I will proceed without masked elements. Press ENTER to continue')
-                    root_grp.close()
-                    del root_grp
-                    return None
-        
-        masked_arr = np.ma.masked_values(v_nc[:], fillvalue, copy=True)
-        mask = np.ma.getmask(masked_arr)
-
-    if mask is not np.ma.nomask:
-        if transpose: mask = mask.T
-        if log: print _n, 'Created boolean mask of shape {0} (created from array of shape{1})'.format(mask.shape, v_nc[:].shape)
-    else:
-        if log: print _n, 'Array has no invalid entries. Mask is not needed. Returning <nomask>'
-        mask = None  # overwriting nomask value
-
-    root_grp.close()
-    del root_grp
-    del masked_arr
-    return mask
 
 
 def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid3D_getm_3'):
@@ -589,10 +225,10 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
     nLayers = False
     for nc_file in list_with_filenames:
         try:
-            root_grp = Dataset(nc_file, mode='r')
-            d_nc = root_grp.dimensions[dimname]
+            nc = Dataset(nc_file, mode='r')
+            d_nc = nc.dimensions[dimname]
             nLayers = d_nc.__len__()
-            root_grp.close()
+            nc.close()
             layer_fname = nc_file
         except KeyError:  # if dimension is not found in cuurent file > skip to next file
             pass
@@ -604,9 +240,17 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
         print _n, 'found vertical-layers:', nLayers, '\t(from dimension <{0}>) in file <{1}>'.format(dimname, layer_fname)
         return nLayers, layer_fname
     else:
-        print _n, 'Vertical layers not found. Variable <{0}> not found in files: {1}'.format(dimname, list_with_filenames)
-        if ui.promtYesNo(_n+' Will continue with 2D and set explicitly nLayers=1. Continue?', quitonno=True):
-            return 1, None
+        print _n, 'Vertical layers not recognized. Dimension <{0}> not found in files: {1}'.format(dimname, list_with_filenames)
+        nLayers = -1
+        while (nLayers < 1):
+            user_input = raw_input(_n+' Set number of vertical layers manually. To continue with 2D, set 1 (nLayers integer >=1):')
+            try:
+                nLayers = int(user_input)
+            except:
+                nLayers = -1
+
+        return nLayers, None
+
 
 
 
