@@ -107,9 +107,10 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 3) Create grid, and unpack values
     # --------------------------------------------------
+    start_index = 0
     print 'Generating uGrid... (be patient, this may take a while)'
     dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_qudratic_grid_or_curvilinear(coords['x'], coords['y'],
-                                                data_location=meta['x']['points_location'], mask=m, log=log, startingindex=0)
+                                                data_location=meta['x']['points_location'], mask=m, log=log, startingindex=start_index)
 
     nMesh2_node = dims[0]
     nMesh2_edge = dims[1]
@@ -160,6 +161,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                         Mesh2_face_x_bnd=Mesh2_face_x_bnd, Mesh2_face_y_bnd=Mesh2_face_y_bnd,
                         coord_type=meta['x']['coordinate_type'],
                         dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=nLayers, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1,
+                        start_index=start_index,
                         log=log)
     if log: print 'grid created', '\n', '-'*100, '\n', 'Now adding data', '\n', '-'*100
 
@@ -204,7 +206,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -----------------------------------------------------------------------------------------------
     for var_name, var in VARS.iteritems():
         if log: print 'Variable read from Dictionary 4:', var.get_name()
-        varExt = process_mixed_data.cdlVariableExt(var)
+        varExt = process_mixed_data.cdlVariableExt(var)  #var is an instance of type <cdlVariable>
         source = varExt.get_source_metadata()
 
         # -----------------------------------------------------------------------------------------------
@@ -237,7 +239,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
             var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_4d(source['fname'], source['name'], flatten=True, mask=m, log=log)
 
         else:
-            raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non single dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
+            raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
                         varExt.get_name(), source['dims'], source['shape']), source['nNonOneDims'])
             break
 
@@ -254,6 +256,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -----------------------------------------------------------------------------------------------
     # 9) Layer thickness
     # -----------------------------------------------------------------------------------------------
+    if log: print '-'*100
+    if log: print 'Now adding vertical layer information'
     if log: print '-'*100
     vertical_coord_mode = 'sigma'
 

@@ -711,7 +711,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         #
                     elif i == 0 and j == 0:
                         #print "found cell on the border: i=0, j=0. Not implemented yet. Border cells should be empty"
-                        faceIndex = self._nFaces
+                        faceIndex = int(self._nFaces)
                         nNodes = 4
                         nEdges = 4
                         self._nNodes += nNodes
@@ -967,7 +967,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
     def get_face_by_index(self, index):
         """
         # list self._faces contains faces in ascending order:
-        #
+        # NOTE: object indixes start here from <1> and not from <0>
         # self._faces[0].get_index() >>> 1
         # self._faces[1].get_index() >>> 2
         # self._faces[2].get_index() >>> 3 etc.
@@ -976,6 +976,71 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
         #print '\t\t\tcurrently ', len(self._faces), ' faces'
         return self._faces[int(index)-1]
 
+
+    def set_start_index(self, index):
+        nMesh2_node = self.get_nMesh2_node()
+        nMesh2_edge = self.get_nMesh2_edge()
+        nMesh2_face = self.get_nMesh2_face()
+        nMaxMesh2_face_nodes = self.get_nMaxMesh2_face_nodes()
+
+        Mesh2_edge_nodes = self.get_Mesh2_edge_nodes()
+        Mesh2_edge_faces = self.get_Mesh2_edge_faces()
+        Mesh2_face_nodes = self.get_Mesh2_face_nodes()
+        Mesh2_face_edges = self.get_Mesh2_face_edges()
+
+        Mesh2_node_x = self.get_Mesh2_node_x()
+        Mesh2_node_y = self.get_Mesh2_node_y()
+        
+        Mesh2_edge_x = self.get_Mesh2_edge_x()
+        Mesh2_edge_y = self.get_Mesh2_edge_y()
+        
+        Mesh2_face_x = self.get_Mesh2_face_x()
+        Mesh2_face_y = self.get_Mesh2_face_y()
+        Mesh2_face_center_x = self.get_Mesh2_face_center_x()
+        Mesh2_face_center_y = self.get_Mesh2_face_center_y()
+        Mesh2_face_area = self.get_Mesh2_face_area()
+        def find_max_indixes():
+            max_i_n = 0
+            max_i_e = 0
+            max_i_f = 0
+            for ne in xrange(nMesh2_edge):
+                for i in xrange(2):
+                    if Mesh2_edge_nodes[ne, i] > max_i_n:
+                        max_i_n = int(Mesh2_edge_nodes[ne, i])
+                    if Mesh2_edge_faces[ne, i] > max_i_f:
+                        max_i_f = int(Mesh2_edge_faces[ne, i])
+            for nf in xrange(nMesh2_face):
+                for nfn in xrange(nMaxMesh2_face_nodes):
+                    if Mesh2_face_nodes[nf, nfn] > max_i_n:
+                        max_i_n = int(Mesh2_face_nodes[nf, nfn])
+                    if Mesh2_face_edges[nf, nfn] > max_i_e:
+                        max_i_e = int(Mesh2_face_edges[nf, nfn])
+            print 'maximum indexes of Nodes, Edges, Faces:', max_i_n, max_i_e, max_i_f
+
+        if log:
+            print '-'*50
+            # find maximum indexes used
+            find_max_indixes()
+
+        for ne in xrange(nMesh2_edge):
+            for i in xrange(2):
+                if Mesh2_edge_nodes[ne, i] != -999:
+                    Mesh2_edge_nodes[ne, i] += -1
+                if Mesh2_edge_faces[ne, i] != -999:
+                    Mesh2_edge_faces[ne, i] += -1
+
+        for nf in xrange(nMesh2_face):
+            for nfn in xrange(nMaxMesh2_face_nodes):
+                if Mesh2_face_nodes[nf, nfn] != -999:
+                    Mesh2_face_nodes[nf, nfn] += -1
+                if Mesh2_face_edges[nf, nfn] != -999:
+                    Mesh2_face_edges[nf, nfn] += -1
+
+        if log:
+            # find maximum indexes used
+            print '\t indexes have been reworked'
+            find_max_indixes()
+            print '-'*50
 
     def update(self):
         pass

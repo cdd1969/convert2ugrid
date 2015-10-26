@@ -90,8 +90,7 @@ def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=True, startinginde
         # WARNING!!! change 'start_index' attribute to = 1 in process_davit_ncdf.create_uGrid_ncdf() manually
         # for all variables like node_x, node_y, node_lat, etc...
         
-        if log: print "WARNING!!! change 'start_index' attribute to = 1 in process_davit_ncdf.create_uGrid_ncdf() manually"
-        if log: print "for all variables like node_x, node_y, node_lat, etc..."
+        if log: print "WARNING! make sure 'start_index' attribute is set to <1> in process_davit_ncdf.create_uGrid_ncdf()"
         pass
     # ------------------------------------------------------------
     # ------------------------------------------------------------
@@ -101,8 +100,7 @@ def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=True, startinginde
         # WARNING!!! change 'start_index' attribute to = 0 in process_davit_ncdf.create_uGrid_ncdf() manually
         # for all variables like node_x, node_y, node_lat, etc...
 
-        if log: print "WARNING!!! change 'start_index' attribute to = 0 in process_davit_ncdf.create_uGrid_ncdf() manually"
-        if log: print "for all variables like node_x, node_y, node_lat, etc..."
+        if log: print "WARNING! make sure 'start_index' attribute is set to <0> in process_davit_ncdf.create_uGrid_ncdf()"
 
 
         def find_max_indixes():

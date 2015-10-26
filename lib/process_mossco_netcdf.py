@@ -56,6 +56,8 @@ def read_mossco_nc_2d(filename, varname, flatten=False, mask=None, log=False):
     a = np.squeeze(Vars[varname][:])
     if len(a.shape) != 2:
         raise TypeError('read_mossco_nc_2d(): Invalid array shape. Should be 2D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, a.shape))
+    if mask and a.shape != mask.shape:
+        raise ValueError('read_mossco_nc_2d(): Invalid data or mask shape. Should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(a.shape, mask.shape))
 
     if mask is None and flatten:
         a = a.T.flatten(order='F')
@@ -72,147 +74,84 @@ def read_mossco_nc_2d(filename, varname, flatten=False, mask=None, log=False):
 
 
 def read_mossco_nc_3d(filename, varname, flatten=False, mask=None, log=False):
+    _n   = 'read_mossco_nc_3d(): '
     nc   = Dataset(filename, mode='r')
     Vars = nc.variables
     v    = Vars[varname]
-    a    = np.squeeze(v[:])
+    vs   = np.squeeze(v[:])
     
-    if len(a.shape) != 3:
-        raise TypeError('read_mossco_nc_3d(): Invalid array shape. Should be 3D. Received shape {0}, after squeezing {1}'.format(v.shape, a.shape))
+    if not flatten:
+        a = vs
+    
+    if len(vs.shape) != 3:
+        raise TypeError(_n+'Invalid array shape. Should be 3D. Received shape {0}, after squeezing {1}'.format(v.shape, vs.shape))
+    if mask and vs[0, :, :].shape != mask.shape:
+        raise ValueError(_n+'Invalid data or mask shape. Last two dimensions should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(vs.shape, mask.shape))
 
     if mask is None and flatten:
-        if v.dimensions[0] in ['nMesh2_data_time', 'time']:
-            dims_v = tuple([v.shape[0], v.shape[1]*v.shape[2]])
-            a = np.zeros(dims_v)
-            for i in xrange(v.shape[0]):
-                a[i, :] = v[i, ...].T.flatten(1)
-
-        else:
-            msg = "Attempting to write 3D variable which has no ['nMesh2_data_time', 'time'] dimension.\nNot implemented yet"
-            raise KeyError(msg)
+        a = np.zeros(tuple([vs.shape[0], vs.shape[1]*vs.shape[2]]))
+        for i in xrange(v.shape[0]):
+            a[i, :] = vs[i, ...].T.flatten(1)
 
     elif mask is not None:  # IF MASKED ARRAY
-        n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d part. invert - because True is an invalid element
+        n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d grid. invert - because True(True=1) is an invalid element
         #print 'read_mossco_nc_3d: working with masked array. Mask shape {0}. N_valid elements {1}'.format(mask.shape, n_valid_2d)
         #print 'read_mossco_nc_3d: data shape {0}'.format(v.shape)
-        if v.dimensions[0] in ['nMesh2_data_time', 'time']:
-            dims_v = tuple([v.shape[0], n_valid_2d])
-            a = np.zeros(dims_v)
-            for i in xrange(v.shape[0]):
-                var_masked = np.ma.array(v[i, ...], mask=mask.T).T
-                var_masked = var_masked.flatten(order='F').compressed()
-                a[i, :] = var_masked
-                
-
-
-        #--------------------------------------------------------------------------------------
-        #--------------------------------------------------------------------------------------
-        #--------------------------HARDCODE BELOW WARNIING-----------------------------------
-        #--------------------------------------------------------------------------------------
-        #--------------------------------------------------------------------------------------
-        elif v.dimensions[0] in ['getmGrid3D_getm_3']:  # if we have variable (z, y, x)
-            if varname in ['getmGrid3D_getm_layer', 'getmGrid3D_getm_z']:  # HARDCODE
-                # we know that in mossco output this variable is 3D (z,y,x) but we need it as
-                # a timedependent variable in davit.... therefore adding time dimension
-                layer_thicness0 = np.ma.array(Vars['water_depth_at_soil_surface'][0, ...] , mask=mask.T).T
-
-                #layer_thicness = layer_thicness.flatten(order='F').compressed()
-                #for i in xrange(len(layer_thicness)):
-                #    layer_thicness[i] = layer_thicness[i]/float(v.shape[0])
-                # now we have an approximate layer thickness...
-
-                dims_v = tuple([Vars['time'].size, v.shape[0], n_valid_2d])
-                a = np.zeros(dims_v)
-                if log: print a.shape
-                if log: print layer_thicness0.shape
-                for t in xrange(a.shape[0]):
-                    i = 0
-                    for z in xrange(a.shape[1]):
-                        var_masked = np.ma.array(v[z, ...], mask=mask.T).T
-                        var_masked = var_masked.flatten(order='F').compressed()
-                        #layer_thicness = layer_thicness0*(1-i/30.)
-                        i += 1
-                        a[t, z, :] = var_masked
-                        
-                        #a[t, z, :] = layer_thicness.flatten(order='F').compressed()
-                        #plt.imshow(layer_thicness)
-                        #plt.colorbar()
-                        #plt.show()
-            else:
-                msg = "Attempting to write 3D variable which first dimension is 'getmGrid3D_getm_3'\nNot implemented yet. Check code"
-                raise KeyError(msg)
-        #--------------------------------------------------------------------------------------
-        #--------------------------------------------------------------------------------------
-        #--------------------------HARDCODE ABOVE WARNIING-----------------------------------
-        #--------------------------------------------------------------------------------------
-        #--------------------------------------------------------------------------------------
-        else:
-            msg = "Attempting to write 3D variable which first dimension is not any of ['nMesh2_data_time', 'time', 'getmGrid3D_getm_3']\nNot implemented yet"
-            raise KeyError(msg)
-
+        if flatten:
+            a = np.zeros(tuple([vs.shape[0], n_valid_2d]))
+        for i in xrange(vs.shape[0]):
+            var_masked = np.ma.array(vs[i, ...], mask=mask.T)
+            if flatten:
+                var_masked = var_masked.T.flatten(order='F').compressed()
+            a[i, ...] = var_masked
     nc.close()
     del nc
-    if log: print 'read_mossco_nc_3d: returning {0} of shape {1}'.format(type(a), a.shape)
+    if log: print _n+'returning {0} of shape {1}'.format(type(a), a.shape)
     return a
 
 
-def read_mossco_nc_4d(filename, varname, mask=None, log=False):
+def read_mossco_nc_4d(filename, varname, flatten=False, mask=None, log=False):
     # this will work only for 4d variables which have dimensions (time, z, y, x)
-    nc = Dataset(filename, mode='r')
+    _n   = 'read_mossco_nc_4d(): '
+    nc   = Dataset(filename, mode='r')
     Vars = nc.variables
+    v    = Vars[varname]
+    vs   = np.squeeze(v[:])
+    if not flatten:
+        a = vs
 
-    v = Vars[varname]
-    vv = np.squeeze(v[:])
-    if len(v.shape) != 4:
-        raise TypeError('read_mossco_nc_4d(): Invalid array shape. Should be 4D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, vv.shape))
+    if len(vs.shape) != 4:
+        raise TypeError(_n+'Invalid array shape. Should be 4D. Received shape {0}, after squeezing {1}'.format(v.shape, vs.shape))
+    if mask and vs[0, 0, :, :].shape != mask.shape:
+        raise ValueError(_n+'Invalid data or mask shape. Last two dimensions should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(vs.shape, mask.shape))
 
-    if mask is None:  # IF NOT MASKED ARRAY
-        if v.dimensions[0] in ['nMesh2_data_time', 'time']:
-            if v.dimensions[1] in ['getmGrid3D_getm_3']:
+    if mask is None and flatten:  # IF NOT MASKED ARRAY
+        a = np.zeros(tuple([vs.shape[0], vs.shape[1], vs.shape[2]*vs.shape[3]]))
+        for t in xrange(vs.shape[0]):
+            for z in xrange(vs.shape[1]):
+                a[t, z, :] = vs[t, z, ...].T.flatten(1)
 
-                    dims_v = tuple([v.shape[0], v.shape[1], v.shape[2]*v.shape[3]])
-                    a = np.zeros(dims_v)
-                    for t in xrange(v.shape[0]):
-                        for z in xrange(v.shape[1]):
-                            a[t, z, :] = v[t, z, ...].T.flatten(1)
-            else:
-                msg = "Attempting to write 4D variable which has no ['getmGrid3D_getm_3'] as 2nd dimension.\nNot implemented yet"
-                raise KeyError(msg)
-        else:
-            msg = "Attempting to write 4D variable which has no ['nMesh2_data_time', 'time'] as 1st dimension.\nNot implemented yet"
-            raise KeyError(msg)
 
     elif mask is not None:  # IF MASKED ARRAY
         n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d part. invert - because True is an invalid element
-        #print 'read_mossco_nc_3d: working with masked array. Mask shape {0}. N_valid elements {1}'.format(mask.shape, n_valid_2d)
-        #print 'read_mossco_nc_3d: data shape {0}'.format(v.shape)
-        if v.dimensions[0] in ['nMesh2_data_time', 'time']:
-            if v.dimensions[1] in ['getmGrid3D_getm_3']:
-                dims_v = tuple([v.shape[0], v.shape[1], n_valid_2d])
-                a = np.zeros(dims_v)
-                for t in xrange(v.shape[0]):
-                    for z in xrange(v.shape[1]):
-                        var_masked = np.ma.array(v[t, z, ...], mask=mask.T).T
-                        var_masked = var_masked.flatten(order='F').compressed()
-                        a[t, z, :] = var_masked
-
-            else:
-                msg = "Attempting to write 4D variable which has no ['getmGrid3D_getm_3'] as 2nd dimension.\nNot implemented yet"
-                raise KeyError(msg)
-        else:
-            msg = "Attempting to write 4D variable which has no ['nMesh2_data_time', 'time'] as 1st dimension.\nNot implemented yet"
-            raise KeyError(msg)
+        if flatten:
+            a = np.zeros(tuple([v.shape[0], v.shape[1], n_valid_2d]))
+        for t in xrange(v.shape[0]):
+            for z in xrange(v.shape[1]):
+                var_masked = np.ma.array(v[t, z, ...], mask=mask.T)
+                if flatten:
+                    var_masked = var_masked.T.flatten(order='F').compressed()
+                a[t, z, :] = var_masked
 
     nc.close()
     del nc
-    #return a.flatten(1), dims_v
-    if log: print 'read_mossco_nc_4d: returning {0} of shape {1}'.format(type(a), a.shape)
+    if log: print _n+'returning {0} of shape {1}'.format(type(a), a.shape)
     return a
 
 
 
 
-def read_mossco_nc_rawvar(filename, varname, mask=None):
+def read_mossco_nc_rawvar(filename, varname):
     nc = Dataset(filename, mode='r')
     a = nc.variables[varname][:]
     nc.close()

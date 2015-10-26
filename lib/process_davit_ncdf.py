@@ -28,6 +28,7 @@ def create_uGrid_ncdf(filename,
                         Mesh2_face_x_bnd=None, Mesh2_face_y_bnd=None,
                         coord_type='geographic',
                         dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=1, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1,
+                        start_index=0,
                         log=True):
     '''
     Function creates a NETCDF4 file. Data is stored in accordance with
@@ -344,7 +345,7 @@ def create_uGrid_ncdf(filename,
     ncVar_Mesh2_edge_nodes = root_grp.createVariable('Mesh2_edge_nodes', 'i', ('nMesh2_edge', 'two'))
     ncVar_Mesh2_edge_nodes.long_name = 'Knotenverzeichnis der Kanten, Anfangs- und Endpunkt'
     ncVar_Mesh2_edge_nodes.cf_role = 'edge_node_connectivity'
-    ncVar_Mesh2_edge_nodes.start_index = 0
+    ncVar_Mesh2_edge_nodes.start_index = start_index
     ncVar_Mesh2_edge_nodes[:] = Mesh2_edge_nodes[:]
 
     # --------------------------------------------------
@@ -354,7 +355,7 @@ def create_uGrid_ncdf(filename,
     ncVar_Mesh2_edge_faces = root_grp.createVariable('Mesh2_edge_faces', 'i', ('nMesh2_edge', 'two'), fill_value=-999)
     ncVar_Mesh2_edge_faces.long_name = 'Face- (Polygon-) Verzeichnis der Kanten, linker und rechter Nachbar'
     ncVar_Mesh2_edge_faces.cf_role = 'edge_face_connectivity'
-    ncVar_Mesh2_edge_faces.start_index = 0
+    ncVar_Mesh2_edge_faces.start_index = start_index
     ncVar_Mesh2_edge_faces[:] = Mesh2_edge_faces[:]
 
     # --------------------------------------------------
@@ -364,7 +365,7 @@ def create_uGrid_ncdf(filename,
     ncVar_Mesh2_face_nodes = root_grp.createVariable('Mesh2_face_nodes', 'i', ('nMesh2_face', 'nMaxMesh2_face_nodes'), fill_value=-999)
     ncVar_Mesh2_face_nodes.long_name = 'Knotenverzeichnis der Faces (Polygone),entgegen dem Uhrzeigersinn'
     ncVar_Mesh2_face_nodes.cf_role = 'face_node_connectivity'
-    ncVar_Mesh2_face_nodes.start_index = 0
+    ncVar_Mesh2_face_nodes.start_index = start_index
     ncVar_Mesh2_face_nodes[:] = Mesh2_face_nodes[:]
 
     # ------------------------------------------------------------------------------------
@@ -374,7 +375,7 @@ def create_uGrid_ncdf(filename,
     ncVar_Mesh2_face_edges = root_grp.createVariable('Mesh2_face_edges', 'i', ('nMesh2_face', 'nMaxMesh2_face_nodes'), fill_value=-999)
     ncVar_Mesh2_face_edges.long_name = 'Kantenverzeichnis der Faces (Polygone),entgegen dem Uhrzeigersinn'
     ncVar_Mesh2_face_edges.cf_role = 'face_edge_connectivity'
-    ncVar_Mesh2_face_edges.start_index = 0
+    ncVar_Mesh2_face_edges.start_index = start_index
     ncVar_Mesh2_face_edges[:] = Mesh2_face_edges[:]
 
 
