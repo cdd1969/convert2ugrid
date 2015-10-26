@@ -100,7 +100,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     if log: print 'creating mask...'
     #m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(topo_nc, varname=coords['bName'], fillvalue=None, transpose=True, log=log)
-    m = structGrid.get_mask(transpose=True, log=log)
+    m = structGrid.get_mask(transpose=False, log=log)
 
     
 
@@ -110,7 +110,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     start_index = 0
     print 'Generating uGrid... (be patient, this may take a while)'
     dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_qudratic_grid_or_curvilinear(coords['x'], coords['y'],
-                                                data_location=meta['x']['points_location'], mask=m, log=log, startingindex=start_index)
+                                                data_location=meta['x']['points_location'], mask=m.T, log=log, startingindex=start_index)
 
     nMesh2_node = dims[0]
     nMesh2_edge = dims[1]

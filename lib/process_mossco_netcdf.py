@@ -14,6 +14,8 @@ MOSSCO output netcdf file
 from __future__ import division
 from netCDF4 import Dataset
 import numpy as np
+import sys
+
 import ui
 from Mesh2 import gridhelp
 
@@ -56,14 +58,14 @@ def read_mossco_nc_2d(filename, varname, flatten=False, mask=None, log=False):
     a = np.squeeze(Vars[varname][:])
     if len(a.shape) != 2:
         raise TypeError('read_mossco_nc_2d(): Invalid array shape. Should be 2D. Received shape {0}, after squeezing {1}'.format(Vars[varname].shape, a.shape))
-    if mask and a.shape != mask.shape:
+    if mask is not None and a.shape != mask.shape:
         raise ValueError('read_mossco_nc_2d(): Invalid data or mask shape. Should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(a.shape, mask.shape))
 
     if mask is None and flatten:
         a = a.T.flatten(order='F')
 
     elif mask is not None:
-        a = np.ma.array(a, mask=mask.T)
+        a = np.ma.array(a, mask=mask)
         if flatten:
             a = a.T.flatten(order='F').compressed()
 
@@ -85,7 +87,7 @@ def read_mossco_nc_3d(filename, varname, flatten=False, mask=None, log=False):
     
     if len(vs.shape) != 3:
         raise TypeError(_n+'Invalid array shape. Should be 3D. Received shape {0}, after squeezing {1}'.format(v.shape, vs.shape))
-    if mask and vs[0, :, :].shape != mask.shape:
+    if mask is not None and vs[0, :, :].shape != mask.shape:
         raise ValueError(_n+'Invalid data or mask shape. Last two dimensions should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(vs.shape, mask.shape))
 
     if mask is None and flatten:
@@ -95,14 +97,15 @@ def read_mossco_nc_3d(filename, varname, flatten=False, mask=None, log=False):
 
     elif mask is not None:  # IF MASKED ARRAY
         n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d grid. invert - because True(True=1) is an invalid element
-        #print 'read_mossco_nc_3d: working with masked array. Mask shape {0}. N_valid elements {1}'.format(mask.shape, n_valid_2d)
-        #print 'read_mossco_nc_3d: data shape {0}'.format(v.shape)
+        #print _n+'working with masked array. Mask shape {0}. N_valid elements {1}'.format(mask.shape, n_valid_2d)
+        #print _n+'data shape {0}'.format(v.shape)
         if flatten:
             a = np.zeros(tuple([vs.shape[0], n_valid_2d]))
         for i in xrange(vs.shape[0]):
-            var_masked = np.ma.array(vs[i, ...], mask=mask.T)
+            var_masked = np.ma.array(vs[i, ...], mask=mask)
             if flatten:
                 var_masked = var_masked.T.flatten(order='F').compressed()
+                #print _n+'var_masked shape {0}'.format(var_masked.shape)
             a[i, ...] = var_masked
     nc.close()
     del nc
@@ -122,7 +125,7 @@ def read_mossco_nc_4d(filename, varname, flatten=False, mask=None, log=False):
 
     if len(vs.shape) != 4:
         raise TypeError(_n+'Invalid array shape. Should be 4D. Received shape {0}, after squeezing {1}'.format(v.shape, vs.shape))
-    if mask and vs[0, 0, :, :].shape != mask.shape:
+    if mask is not None and vs[0, 0, :, :].shape != mask.shape:
         raise ValueError(_n+'Invalid data or mask shape. Last two dimensions should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(vs.shape, mask.shape))
 
     if mask is None and flatten:  # IF NOT MASKED ARRAY
@@ -138,7 +141,7 @@ def read_mossco_nc_4d(filename, varname, flatten=False, mask=None, log=False):
             a = np.zeros(tuple([v.shape[0], v.shape[1], n_valid_2d]))
         for t in xrange(v.shape[0]):
             for z in xrange(v.shape[1]):
-                var_masked = np.ma.array(v[t, z, ...], mask=mask.T)
+                var_masked = np.ma.array(v[t, z, ...], mask=mask)
                 if flatten:
                     var_masked = var_masked.T.flatten(order='F').compressed()
                 a[t, z, :] = var_masked
@@ -194,11 +197,11 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
 
 
 def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm_3'],
-        ydim=['getmGrid3D_getm_2', 'getmGrid2D_getm_2', 'y', 'yx', 'y_x', 'yX', 'y_X', 'yt', 'y_t', 'y_T', 'yT' 'yc', 'y_c', 'y_C'
+        ydim=['getmGrid3D_getm_2', 'getmGrid2D_getm_2', 'y', 'yx', 'y_x', 'yX', 'y_X', 'yt', 'y_t', 'y_T', 'yT' 'yc', 'y_c', 'y_C',
               'lat', 'latc', 'latx', 'latt', 'lat_c', 'lat_x', 'lat_t'],
-        xdim=['getmGrid3D_getm_1', 'getmGrid2D_getm_1', 'x', 'xx', 'x_x', 'xX', 'x_X', 'xt', 'x_t', 'x_T', 'xT' 'xc', 'x_c', 'x_C'
+        xdim=['getmGrid3D_getm_1', 'getmGrid2D_getm_1', 'x', 'xx', 'x_x', 'xX', 'x_X', 'xt', 'x_t', 'x_T', 'xT' 'xc', 'x_c', 'x_C',
               'lon', 'lonc', 'lonx', 'lont', 'lon_c', 'lon_x', 'lon_t'],
-        log=False):
+        log=True):
     '''
     function searches for 2D, 3D, 4D variables in mossco netcdf file , that are davit-friendly.
     Let Davit-friendly variables be those, which have dimensions:
@@ -217,42 +220,40 @@ def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm
     Where "tdim, zdim, ydim, xdim" are dimensions which are contained in the list specified as input parameter
     Returns a dictionary with varibles names as strings.
     '''
+    _n = 'get_davit_friendly_variables(): '
     FRIENDLY_VAR_DICT = dict()
     _1D = list()
     _2D = list()
     _3D = list()
     _4D = list()
 
-    #path = os.path.dirname(sys.argv[0])
-    #fullname = os.path.join(path, filename)
-    fullname = filename
-
-    root_grp = Dataset(fullname, mode='r')
+    if log: print _n, 'Scanning file :', filename
+    root_grp = Dataset(filename, mode='r')
     for var_name, var in root_grp.variables.iteritems():
-        if (len(var.shape) == 1) and (var.dimensions[0] in tdim):
+        dims = [str(d) for d in var.dimensions]
+        if log: sys.stdout.write('\tScanning variable : '+var_name+' '+str(dims))
+        
+        if (len(var.shape) == 1) and (dims[0] in tdim):
             _1D.append(var_name)
-        if (len(var.shape) == 2) and (var.dimensions[0] in ydim) and (var.dimensions[1] in xdim):
+            if log: sys.stdout.write(' >>> added\n')
+        if (len(var.shape) == 2) and (dims[0] in ydim) and (dims[1] in xdim):
             _2D.append(var_name)
-        elif (len(var.shape) == 3) and (var.dimensions[0] in tdim) and (var.dimensions[1] in ydim) and (var.dimensions[2] in xdim):
+            if log: sys.stdout.write(' >>> added\n')
+        elif (len(var.shape) == 3) and (dims[0] in tdim) and (dims[1] in ydim) and (dims[2] in xdim):
             _3D.append(var_name)
-        elif (len(var.shape) == 4) and (var.dimensions[0] in tdim) and (var.dimensions[1] in zdim) and (var.dimensions[2] in ydim) and (var.dimensions[3] in xdim):
+            if log: sys.stdout.write(' >>> added\n')
+        elif (len(var.shape) == 4) and (dims[0] in tdim) and (dims[1] in zdim) and (dims[2] in ydim) and (dims[3] in xdim):
             _4D.append(var_name)
+            if log: sys.stdout.write(' >>> added\n')
+        else:
+            if log: sys.stdout.write(' >>> skipped\n')
+            pass
     root_grp.close()
     FRIENDLY_VAR_DICT['1D'] = _1D
     FRIENDLY_VAR_DICT['2D'] = _2D
     FRIENDLY_VAR_DICT['3D'] = _3D
     FRIENDLY_VAR_DICT['4D'] = _4D
     
-    if log:
-        print '-'*50
-        print 'Displaying Davit-friendly variables found in MOSSCO output netcdf file'
-        print 'Let Davit-friendly variables be those, which have dimensions:\n\t(tdim)\n\t(ydim, xdim)\n\t(tdim, ydim, xdim)\n\t(tdim, zdim, ydim, xdim)'
-        print '-'*50
-        i = 1
-        for typ in ['1D', '2D', '3D', '4D']:
-            for v in FRIENDLY_VAR_DICT[typ]:
-                print i, ')\t', typ, ':', v
-                i += 1
     return FRIENDLY_VAR_DICT
 
 

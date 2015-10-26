@@ -138,7 +138,8 @@ class netcdfVariableReader(object):
         metadata['dtype'] = var.dtype
         metadata['shape'] = var.shape  # will be <()> if single value
         metadata['size']  = var.size   # number of elements
-        metadata['mask']  = var.mask   # True/False flag
+        # for some reason not working, giving "attribute 'mask' not found"
+        #metadata['mask']  = var.mask   # True/False flag
         metadata['fillvalue']    = var._FillValue if '_FillValue' in var.ncattrs() else None
         metadata['nNonOneDims'] = len(filter(lambda a: a != 1, var.shape))  # length of the array.shape excluding single dimensions, for <()> will give 0
         metadata['attrs'] = dict()

@@ -450,8 +450,7 @@ def create_txt_mossco_baw(list_with_ncfnames, output_fname, baw_mossco_varname_d
 
         for nc in list_with_ncfnames:
             if log: print 'searching for davit-friendly variables in file:', nc
-            f.write('\n')
-            f.write('// '+'-'*100+'\n')
+            f.write('\n// '+'-'*100+'\n')
             nc_friendly_vars = process_mossco_netcdf.get_davit_friendly_variables(nc, log=log)
             for typ in ['1D', '2D', '3D', '4D']:
                 f.write('//\t'+typ+'\n')
