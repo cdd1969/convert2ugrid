@@ -24,13 +24,14 @@ B) A tutorial is described in HOWTO section of documentation
 
 C) Basic usage:
    in console type:
-        $ python convert2ugrid -i filename
+        $ python convert2ugrid -t topo
    for help:
         $ python convert2ugrid -h
 
 
 D) This tool is developed to be used from console, since it requeres user-interaction
-   and it is known that some UI do not work properly with raw_input() command.
+   and it is known that some UI (i.e. SublimeText) does not work properly with
+   raw_input() command.
     
 
 ----------------------------------------------------------------------------------
@@ -41,3 +42,7 @@ TODO: add support of bathymetry at X_points
 
 TODO: add more flexible support to choose <depth_variable>, since it my vary and the name
       is not only limited to <GETM_grid_3D> or <levels>
+
+TODO: include numpy.squeeze in fetching ncdf data
+
+TODO: check more usage of new classes cdlVariable() and cdlVariableExt()

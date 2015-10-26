@@ -13,7 +13,7 @@ import getopt
 import process_davit_ncdf
 import process_mossco_netcdf
 import Mesh2
-from process_mossco_netcdf import make_mask_array_from_mossco_bathymetry, read_mossco_lon_vector, read_mossco_lat_vector
+
 # use this if you want to include modules from a subfolder
 cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0], "lib")))
 if cmd_subfolder not in sys.path:
@@ -21,7 +21,7 @@ if cmd_subfolder not in sys.path:
     
 
 
-def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=False, startingindex=1, data_location='T_points'):
+def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=True, startingindex=1, data_location='T_points'):
     '''
     -----------------------------------------------
     Function creates unstructured grid of size.
@@ -90,8 +90,7 @@ def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=False, startingind
         # WARNING!!! change 'start_index' attribute to = 1 in process_davit_ncdf.create_uGrid_ncdf() manually
         # for all variables like node_x, node_y, node_lat, etc...
         
-        if log: print "WARNING!!! change 'start_index' attribute to = 1 in process_davit_ncdf.create_uGrid_ncdf() manually"
-        if log: print "for all variables like node_x, node_y, node_lat, etc..."
+        if log: print "WARNING! make sure 'start_index' attribute is set to <1> in process_davit_ncdf.create_uGrid_ncdf()"
         pass
     # ------------------------------------------------------------
     # ------------------------------------------------------------
@@ -101,8 +100,7 @@ def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=False, startingind
         # WARNING!!! change 'start_index' attribute to = 0 in process_davit_ncdf.create_uGrid_ncdf() manually
         # for all variables like node_x, node_y, node_lat, etc...
 
-        if log: print "WARNING!!! change 'start_index' attribute to = 0 in process_davit_ncdf.create_uGrid_ncdf() manually"
-        if log: print "for all variables like node_x, node_y, node_lat, etc..."
+        if log: print "WARNING! make sure 'start_index' attribute is set to <0> in process_davit_ncdf.create_uGrid_ncdf()"
 
 
         def find_max_indixes():
@@ -165,66 +163,3 @@ def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=False, startingind
            [Mesh2_edge_x, Mesh2_edge_y],\
            [Mesh2_face_x, Mesh2_face_y, Mesh2_face_center_x, Mesh2_face_center_y, Mesh2_face_area],\
            [Mesh2_edge_x_bnd, Mesh2_edge_y_bnd, Mesh2_face_x_bnd, Mesh2_face_y_bnd]
-
-
-def test():
-    nc_name1 = 'deep_lake-1x1-reference_3d.2d.0000.nc'
-    m = make_mask_array_from_mossco_bathymetry(nc_name1)
-    x = read_mossco_lon_vector(nc_name1)
-    y = read_mossco_lat_vector(nc_name1)
-    make_2d_rectangular_grid(x, y, mask=m, log=True)
-    
-
-def test2():
-        #filenameINPUT1 = 'data/NSBS/netcdf_reference_3d.nc'
-        filenameINPUT1 = '../data/square/netcdf_reference_3d.nc'
-        #filenameINPUT2 = 'data/NSBS/topo.nc'
-        filenameINPUT2 = '../data/square/deep_lake-1x1-reference_3d.2d.0000.nc'
-        # --------------------------------------------------
-        # 0) Read, x any y vectors from the netcdf
-        # --------------------------------------------------
-        #x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(filenameINPUT2, 'lon')
-        #y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(filenameINPUT2, 'lat')
-        x_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(filenameINPUT2, 'lonc')
-        y_vector, _ = process_mossco_netcdf.read_mossco_nc_1d(filenameINPUT2, 'latc')
-        print '-'*50
-        for i in x_vector: print i
-        print '-'*50
-        for i in y_vector: print i
-        print '-'*50
-        m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(filenameINPUT2, varname='bathymetry', fillvalue=-10., transpose=True)
-
-        # --------------------------------------------------
-        # 1) Create grid, and unpack values
-        # --------------------------------------------------
-        g = Mesh2.Grid2D(x_vector, y_vector, mask=None)
-        n = g.get_nodes()
-        for i in range(36):
-            print n[i]
-        """
-        dims, topo, local_nodes, local_edges, local_faces = make_2d_rectangular_grid(x_vector, y_vector, mask=None, log=True)
-
-        nMesh2_node = dims[0]
-        nMesh2_edge = dims[1]
-        nMesh2_face = dims[2]
-        nMaxMesh2_face_nodes = dims[3]
-
-        Mesh2_edge_nodes = topo[0]
-        Mesh2_edge_faces = topo[1]
-        Mesh2_face_nodes = topo[2]
-        Mesh2_face_edges = topo[3]
-
-        Mesh2_node_x = local_nodes[0]
-        Mesh2_node_y = local_nodes[1]
-
-        Mesh2_edge_x = local_edges[0]
-        Mesh2_edge_y = local_edges[1]
-
-        Mesh2_face_x = local_faces[0]
-        Mesh2_face_y = local_faces[1]
-        Mesh2_face_center_x = local_faces[2]
-        Mesh2_face_center_y = local_faces[3]
-        """
-
-if __name__ == '__main__':
-    test2()

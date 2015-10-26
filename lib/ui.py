@@ -9,6 +9,14 @@ import sys
 import os
 import getopt
 
+try:
+    # This will modify the behavior of raw_input() so that it behaves more like the python interactive shell
+    # in terms of history and line editing.
+    import readline
+except:
+    pass #readline not available
+
+
 
 class FileError(Exception):
     """Exception raised if file does nto exist.
@@ -165,8 +173,8 @@ def commandline_support(log=False):
             print str(err)
             usage()
             sys.exit(2)
-        if log: print 'detected options:  ', opts
-        if log: print 'detected arguments:', args
+        if log: print 'commandline_support(): you gave options  :', opts
+        if log: print 'commandline_support(): you gave arguments:', args
         for opt, arg in opts:
             if opt in ['-m', '--mute']:
                 P['log'] = False

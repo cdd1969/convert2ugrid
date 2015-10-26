@@ -63,7 +63,7 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     if log: print ' '*20+'+'*10+'  STEP 2  '+'+'*10
     if log: print ' '*20+'+'*30
     if log: print ' '*20+'+'*30
-    process_cdl.create_cdl_file(dictionary_3, dictionary_2, dictionary_4, log=log)
+    process_cdl.create_dictionary4(dictionary_3, dictionary_2, dictionary_4, log=log)
     if log: print 'Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4)
 
 
@@ -89,22 +89,28 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 1) Read, x any y vectors from the netcdf
     # --------------------------------------------------
-    print 'searching x, y, bathymetry ...'
-    coords = process_mossco_netcdf.find_coordinate_vars(topo_nc, log=log)
-
+    if log: print 'searching x, y, bathymetry ...'
+    #coords = process_mossco_netcdf.find_coordinate_vars(topo_nc, log=log)
+    structGrid = process_mixed_data.containerForGridGeneration(topo_nc, log=log)
+    coords = structGrid.get_data()
+    meta   = structGrid.get_metadata()
 
     # --------------------------------------------------
     # 2) Create mask
     # --------------------------------------------------
-    print 'creating mask...'
-    m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(topo_nc, varname=coords['bName'], fillvalue=None, transpose=True, log=log)
+    if log: print 'creating mask...'
+    #m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(topo_nc, varname=coords['bName'], fillvalue=None, transpose=True, log=log)
+    m = structGrid.get_mask(transpose=True, log=log)
+
+    
 
     # --------------------------------------------------
     # 3) Create grid, and unpack values
     # --------------------------------------------------
-    print 'creating grid... (be patient, this may take a while)'
+    start_index = 0
+    print 'Generating uGrid... (be patient, this may take a while)'
     dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_qudratic_grid_or_curvilinear(coords['x'], coords['y'],
-                                                data_location=coords['data_location'], mask=m, log=True, startingindex=0)
+                                                data_location=meta['x']['points_location'], mask=m, log=log, startingindex=start_index)
 
     nMesh2_node = dims[0]
     nMesh2_edge = dims[1]
@@ -142,7 +148,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # 5) Create netcdf
     # --------------------------------------------------
     if not create_davit_netcdf:
-        print "\nExiting...\nNetcdf has not been created, switch flag 'create_davit_netcdf' to True."
+        print "\nAbortig here...\nNetcdf has not been created, switch flag 'create_davit_netcdf' to True."
         sys.exit(0)
 
     process_davit_ncdf.create_uGrid_ncdf(nc_out,
@@ -153,29 +159,32 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                         Mesh2_face_area=Mesh2_face_area,
                         Mesh2_edge_x_bnd=Mesh2_edge_x_bnd, Mesh2_edge_y_bnd=Mesh2_edge_y_bnd,
                         Mesh2_face_x_bnd=Mesh2_face_x_bnd, Mesh2_face_y_bnd=Mesh2_face_y_bnd,
-                        coord_mode=coords['coord_mode'],
-                        dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=nLayers, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1)
-    print 'grid created', '\n', '-'*100, '\n', 'Now adding data', '\n', '-'*100
+                        coord_type=meta['x']['coordinate_type'],
+                        dim_nMesh2_layer2d=1, dim_nMesh2_layer3d=nLayers, dim_nMesh2_class_names_strlen=20, dim_nMesh2_suspension_classes=1,
+                        start_index=start_index,
+                        log=log)
+    if log: print 'grid created', '\n', '-'*100, '\n', 'Now adding data', '\n', '-'*100
 
     
     # --------------------------------------------------
     # 6) fill netcdf with time variables (TIME and DATATIME)
     # --------------------------------------------------
-    print '-'*100
+    if log: print '-'*100
     time_added = False
     for nc_file in list_with_synoptic_nc:
         try:
-            process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, nc_file, time_var_name='time')
-            print 'added "nMesh2_data_time" from file ', nc_file
+            process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, nc_file, time_var_name='time', log=log)
+            if log: print 'added "nMesh2_data_time" from file ', nc_file
             time_added = True
+            break
         except KeyError:  # if var is not found in current file => skip to next file
             pass
     if not time_added:
         print 'WARNING! added dummy "nMesh2_data_time"'
-        process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, dummy_values=True)
+        process_davit_ncdf.append_Time_andDatetime_to_netcdf(nc_out, dummy_values=True, log=log)
 
 
-    print '-'*100
+    if log: print '-'*100
     # ---------------------------------------------------------------------------
     # 7) Layer thicness
     # ---------------------------------------------------------------------------
@@ -186,9 +195,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 8) fill netcdf with SYNOPTIC data!!!
     # --------------------------------------------------
-    print '-'*100
-    print 'Now adding data based on Dictionary 4.'
-    print '-'*100
+    if log: print '-'*100+'\n+Now adding data based on Dictionary 4.\n'+'-'*100
     # --------------------------------------------------
     # -- 8.1) fill netcdf with SYNOPTIC data!!!
     # --------------------------------------------------
@@ -197,104 +204,61 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -----------------------------------------------------------------------------------------------
     # -- 8.2) cycle through found variables
     # -----------------------------------------------------------------------------------------------
-    for VN, VV in VARS.iteritems():
-        print 'Working with variable read from Dictionary 4:', VN
+    for var_name, var in VARS.iteritems():
+        if log: print 'Variable read from Dictionary 4:', var.get_name()
+        varExt = process_mixed_data.cdlVariableExt(var)  #var is an instance of type <cdlVariable>
+        source = varExt.get_source_metadata()
 
         # -----------------------------------------------------------------------------------------------
         # -- 8.2.1) add basic info
         # -----------------------------------------------------------------------------------------------
         var_to_add = dict()
-        var_to_add['vname'] = VN
-        if VV[0] == 'float' : VV[0] = 'f4'
-        if VV[0] == 'double': VV[0] = 'f8'
-        var_to_add['dtype'] = VV[0]  # here there might be a problem, cause datatypes are specified in CDL format (i.e. "double", "float", "int", etc.)
-        var_to_add['dims'] = tuple(VV[1])
-
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.2) adding fillvalue
-        # -----------------------------------------------------------------------------------------------
-        if '_FillValue' in VV[2].keys():
-            var_to_add['_FillValue'] = VV[2]['_FillValue']
-        else:
-            var_to_add['_FillValue'] = False
-        
-
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.3) check if we have data to add...
-        # -----------------------------------------------------------------------------------------------
-        if '_mossco_filename' in VV[2].keys():
-            fname = VV[2]['_mossco_filename']
-            varname = VV[2]['_mossco_varname']
-        else:
-            fname, varname, var_to_add['data'] = None, None, None
-            # -----------------------------------------------------------------------------------------------
-            # Create auto variables
-            # -----------------------------------------------------------------------------------------------
-            if '_auto_creation' in VV[2].keys():
-                var_to_add['data'] = process_mixed_data.create_magnitude_variable_from_x_y_component(VARS,
-                                        VN, VV, mask=m, log=True)
+        var_to_add['vname'] = varExt.get_parent().get_name()
+        var_to_add['dtype'] = varExt.get_parent().get_dtype(syntax="python-netcdf")
+        var_to_add['dims']  = varExt.get_parent().get_dims()
+        var_to_add['_FillValue'] = source['fillvalue']
+        var_to_add['attributes'] = varExt.get_parent().get_attrs()
 
         # -----------------------------------------------------------------------------------------------
         # 8.2.4) add data
         # -----------------------------------------------------------------------------------------------
-        if fname:
-            # if 0D
-            if var_to_add['dims'] == tuple([]):
-                var_to_add['data'] = None
-            
-            # if 1D
-            elif var_to_add['dims'] in [tuple(['nMesh2_data_time'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_1d(fname, varname)
-            
-            # if 2D
-            elif var_to_add['dims'] in [tuple(['nMesh2_time', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_layer_2d', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_2d(fname, varname, mask=m)
-            
-            # if 3D
-            elif var_to_add['dims'] in [tuple(['nMesh2_data_time', 'nMesh2_face']),
-                                        tuple(['nMesh2_data_time', 'nMesh2_layer_2d', 'nMesh2_face']),
-                                        tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_2d', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_layer_3d', 'nMesh2_face']),
-                                        tuple(['nMesh2_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_3d(fname, varname, mask=m)
 
-            # if 4D
-            elif var_to_add['dims'] in [tuple(['nMesh2_data_time', 'nMesh2_layer_3d', 'nMesh2_face']),
-                                        tuple(['nMesh2_data_time', 'nMesh2_suspension_classes', 'nMesh2_layer_3d', 'nMesh2_face'])
-                                        ]:
-                var_to_add['data'], dim_shape = process_mossco_netcdf.read_mossco_nc_4d(fname, varname, mask=m)
+        if source['nNonOneDims'] == 0:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_0d(source['fname'], source['name'], log=log)
+        
+        elif source['nNonOneDims'] == 1:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_1d(source['fname'], source['name'], log=log)
+        
+        elif source['nNonOneDims'] == 2:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_2d(source['fname'], source['name'], flatten=True, mask=m, log=log)
+        
+        elif source['nNonOneDims'] == 3:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_3d(source['fname'], source['name'], flatten=True, mask=m, log=log)
 
-            else:
-                #raise KeyError('Skipping variable: {1}\nDimensions "{0}" not recognised.\nCheck for hardcoded solution'.format(var_to_add['dims'], VN) )
-                print 'WARNING! Skipping variable: <{1}>. Dimensions <{0}> not recognised. Check for hardcoded solution'.format(var_to_add['dims'], VN)
-                break
+        elif source['nNonOneDims'] == 4:
+            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_4d(source['fname'], source['name'], flatten=True, mask=m, log=log)
 
-        # -----------------------------------------------------------------------------------------------
-        # -- 8.2.5) adding attributes
-        # -----------------------------------------------------------------------------------------------
-        attrs = dict()
-        for ATR_N, ATR_V in VV[2].iteritems():
-            attrs[ATR_N] = ATR_V
-        var_to_add['attributes'] = attrs
+        else:
+            raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
+                        varExt.get_name(), source['dims'], source['shape']), source['nNonOneDims'])
+            break
 
 
         # -----------------------------------------------------------------------------------------------
         # 8.2.6) append data variable to nc_out...
         # -----------------------------------------------------------------------------------------------
-        process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var_to_add, log=True)
-        print '-'*100
+        process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var_to_add, log=log)
+        if log: print '-'*100
+        del varExt
     
 
 
     # -----------------------------------------------------------------------------------------------
     # 9) Layer thickness
     # -----------------------------------------------------------------------------------------------
-    print '-'*100
+    if log: print '-'*100
+    if log: print 'Now adding vertical layer information'
+    if log: print '-'*100
     vertical_coord_mode = 'sigma'
 
     if nLayers > 1:  #if a real 3d is here
@@ -314,18 +278,19 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 raw_input('Now i will try to add dummy vertical data. Press ENTER to see info about these values')
                 print process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__
                 if ui.promtYesNo('Do you want to proceed?', quitonno=True):
-                    process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, layer_fname, mask=m, log=True)
+                    process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, nx=meta['b']['shape'][-1],
+                                    ny=meta['b']['shape'][-2], mask=m, log=log)
             except Exception as err:
                 print err
                 raw_input('Failed to find any vertical-layer information. Will proceed without any. Press ENTER')
                 pass
 
                 
-    print '-'*100
+    if log: print '-'*100
 
 
-    if create_davit_netcdf and log:
-        print '\n\nFile created:', os.path.abspath(nc_out)
+    if create_davit_netcdf:
+        print 'File created:', os.path.abspath(nc_out)
 
 
 
