@@ -59,6 +59,8 @@ class cdlVariable(object):
             raise TypeError('<{0}> should be of type <{2}>. Is {1}'.format(_object, type(_object), str(dtype)))
 
 
+
+
 def remove_comments(string):
     pattern = r"(\".*?\"|\'.*?\')|(//[^\n]*$)"
     # first group captures quoted strings (double or single)
