@@ -216,7 +216,7 @@ class Mesh2_face(object):
             v3 = self.__edge3
             v4 = self.__edge4
             for edge1, edge2 in zip([v1, v2, v3, v4], [v4, v1, v2, v3]):
-                product = np.dot(edge1.get_vector(), edge2.get_vector()) # if vectors are orthogonal dot product == 0
+                product = np.dot(edge1.get_vector(), edge2.get_vector())  # if vectors are orthogonal dot product == 0
                 error_margin = 1.e-5  # error margin for determining orthogonallity
                 #if product != 0:
                 if abs(product)-error_margin > 0:
@@ -270,28 +270,13 @@ class Mesh2_face(object):
         elif self.__nNodes == 4:
             n1, n2, n3 = self.__node1, self.__node2, self.__node4
         
-
-        vector1 = Mesh2_edge(n1, n2, -1).get_vector()  # side1
-        vector2 = Mesh2_edge(n1, n3, -1).get_vector()  # side2
-        
         # calculating polygon area
         # ------------------------
-        #self.__area = (self.__nNodes-2)/2.*abs(np.cross(vector1, vector2))
         self.__area = self.polygonArea()
         
         # calculating polygon centroid
         # ----------------------------
-        #centroid_center = (self.__nNodes-1)/3.*(0.5*(vector1+vector2))  # works for triangles and rectangles (n-1)*1/6*(vector1+vector2)
-        #centroid_center += n1.get_vector()  # adding coords of first vertex
-
         centroid_center = self.polygonCentroid()
-
-        # works for triangles and rectangles (n-1)*1/6*SUM(vector_i), where n - number of nodes
-        #summ = np.zeros(2)
-        #for n in self.__nodelist:  # summ of all points as vectors OA where O - (0,0)
-            #print n.get_vector()
-        #    summ += n.get_vector()
-        #centroid_center = (self.__nNodes-1)/6.*summ
 
         self.__face_x = centroid_center[0]
         self.__face_y = centroid_center[1]
@@ -525,7 +510,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
             raise ValueError(errmsg)
         
 
-        self._faceMap = np.zeros((self._nx, self._ny))
+        self._faceMap = np.zeros((self._ny, self._nx))
         self._faceMap[:] = -999  # -999 is a missingValue indicator
     
         if mask is not None:
@@ -556,10 +541,10 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
         # cycle through all valid cells
         for j in xrange(self._ny):
             for i in xrange(self._nx):
-                if self._faceMap[i, j]:
+                if self._faceMap[j, i]:
                     #a valid cell center is found
                     self._nFaces += 1
-                    self._faceMap[i, j] = int(self._nFaces)
+                    self._faceMap[j, i] = int(self._nFaces)
 
                     # now get coordinates of the face center and nodes
                     # case 1
@@ -604,18 +589,18 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         nNodes = 4
                         nEdges = 4
                         #
-                        if self._faceMap[i+1, j-1]:
+                        if self._faceMap[j-1, i+1]:
                             tr = True
-                            tr_face = self.get_face_by_index(self._faceMap[i+1, j-1])
-                        if self._faceMap[i, j-1]:
+                            tr_face = self.get_face_by_index(self._faceMap[j-1, i+1])
+                        if self._faceMap[j-1, i]:
                             t = True
-                            t_face = self.get_face_by_index(self._faceMap[i, j-1])
-                        if self._faceMap[i-1, j-1]:
+                            t_face = self.get_face_by_index(self._faceMap[j-1, i])
+                        if self._faceMap[j-1, i-1]:
                             tl = True
-                            tl_face = self.get_face_by_index(self._faceMap[i-1, j-1])
-                        if self._faceMap[i-1, j]:
+                            tl_face = self.get_face_by_index(self._faceMap[j-1, i-1])
+                        if self._faceMap[j, i-1]:
                             l = True
-                            l_face = self.get_face_by_index(self._faceMap[i-1, j])
+                            l_face = self.get_face_by_index(self._faceMap[j, i-1])
 
                         if tr:
                             nNodes += -1
@@ -745,12 +730,12 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         nNodes = 4  # to be placed... at this moment
                         nEdges = 4  # to be placed... at this moment
                         #
-                        if self._faceMap[i+1, j-1]:
+                        if self._faceMap[j-1, i+1]:
                             tr = True
-                            tr_face = self.get_face_by_index(self._faceMap[i+1, j-1])
-                        if self._faceMap[i, j-1]:
+                            tr_face = self.get_face_by_index(self._faceMap[j-1, i+1])
+                        if self._faceMap[j-1, i]:
                             t = True
-                            t_face = self.get_face_by_index(self._faceMap[i, j-1])
+                            t_face = self.get_face_by_index(self._faceMap[j-1, i])
     
 
                         if tr:
@@ -820,9 +805,9 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._nNodes += nNodes
                         self._nEdges += nEdges
 
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[j, i-1]:
                             l = True
-                            l_face = self.get_face_by_index(self._faceMap[i-1, j])
+                            l_face = self.get_face_by_index(self._faceMap[j, i-1])
                         if l:
                             nNodes += -2
                             nEdges += -1
@@ -876,15 +861,15 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         nNodes = 4
                         nEdges = 4
 
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[j-1, i]:
                             t = True
-                            t_face = self.get_face_by_index(self._faceMap[i, j-1])
-                        if self._faceMap[i-1, j-1]:
+                            t_face = self.get_face_by_index(self._faceMap[j-1, i])
+                        if self._faceMap[j-1, i-1]:
                             tl = True
-                            tl_face = self.get_face_by_index(self._faceMap[i-1, j-1])
-                        if self._faceMap[i-1, j]:
+                            tl_face = self.get_face_by_index(self._faceMap[j-1, i-1])
+                        if self._faceMap[j, i-1]:
                             l = True
-                            l_face = self.get_face_by_index(self._faceMap[i-1, j])
+                            l_face = self.get_face_by_index(self._faceMap[j, i-1])
 
                         if tl:
                             nNodes += -1
@@ -977,71 +962,6 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
         return self._faces[int(index)-1]
 
 
-    def set_start_index(self, index):
-        nMesh2_node = self.get_nMesh2_node()
-        nMesh2_edge = self.get_nMesh2_edge()
-        nMesh2_face = self.get_nMesh2_face()
-        nMaxMesh2_face_nodes = self.get_nMaxMesh2_face_nodes()
-
-        Mesh2_edge_nodes = self.get_Mesh2_edge_nodes()
-        Mesh2_edge_faces = self.get_Mesh2_edge_faces()
-        Mesh2_face_nodes = self.get_Mesh2_face_nodes()
-        Mesh2_face_edges = self.get_Mesh2_face_edges()
-
-        Mesh2_node_x = self.get_Mesh2_node_x()
-        Mesh2_node_y = self.get_Mesh2_node_y()
-        
-        Mesh2_edge_x = self.get_Mesh2_edge_x()
-        Mesh2_edge_y = self.get_Mesh2_edge_y()
-        
-        Mesh2_face_x = self.get_Mesh2_face_x()
-        Mesh2_face_y = self.get_Mesh2_face_y()
-        Mesh2_face_center_x = self.get_Mesh2_face_center_x()
-        Mesh2_face_center_y = self.get_Mesh2_face_center_y()
-        Mesh2_face_area = self.get_Mesh2_face_area()
-        def find_max_indixes():
-            max_i_n = 0
-            max_i_e = 0
-            max_i_f = 0
-            for ne in xrange(nMesh2_edge):
-                for i in xrange(2):
-                    if Mesh2_edge_nodes[ne, i] > max_i_n:
-                        max_i_n = int(Mesh2_edge_nodes[ne, i])
-                    if Mesh2_edge_faces[ne, i] > max_i_f:
-                        max_i_f = int(Mesh2_edge_faces[ne, i])
-            for nf in xrange(nMesh2_face):
-                for nfn in xrange(nMaxMesh2_face_nodes):
-                    if Mesh2_face_nodes[nf, nfn] > max_i_n:
-                        max_i_n = int(Mesh2_face_nodes[nf, nfn])
-                    if Mesh2_face_edges[nf, nfn] > max_i_e:
-                        max_i_e = int(Mesh2_face_edges[nf, nfn])
-            print 'maximum indexes of Nodes, Edges, Faces:', max_i_n, max_i_e, max_i_f
-
-        if log:
-            print '-'*50
-            # find maximum indexes used
-            find_max_indixes()
-
-        for ne in xrange(nMesh2_edge):
-            for i in xrange(2):
-                if Mesh2_edge_nodes[ne, i] != -999:
-                    Mesh2_edge_nodes[ne, i] += -1
-                if Mesh2_edge_faces[ne, i] != -999:
-                    Mesh2_edge_faces[ne, i] += -1
-
-        for nf in xrange(nMesh2_face):
-            for nfn in xrange(nMaxMesh2_face_nodes):
-                if Mesh2_face_nodes[nf, nfn] != -999:
-                    Mesh2_face_nodes[nf, nfn] += -1
-                if Mesh2_face_edges[nf, nfn] != -999:
-                    Mesh2_face_edges[nf, nfn] += -1
-
-        if log:
-            # find maximum indexes used
-            print '\t indexes have been reworked'
-            find_max_indixes()
-            print '-'*50
-
     def update(self):
         pass
     
@@ -1078,17 +998,15 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
 
 
     def get_Mesh2_edge_faces(self):
-        #
-        #
         # initializing
         self._Mesh2_edge_faces = np.zeros((self._nEdges, 2))
         self._Mesh2_edge_faces[:] = -1
 
         for j in xrange(self._ny):
             for i in xrange(self._nx):
-                if self._faceMap[i, j]:
+                if self._faceMap[j, i]:
                     #print 'found_valid polygon'
-                    # if at i,j there is a valid cell
+                    # if at j,i there is a valid cell
                     #
                     #
                     #
@@ -1100,7 +1018,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                     # here the index of an enge correspondes to its position in list, thus we can use
                     #    >>> self._Mesh2_edge_faces[ind_e_t-1, 0]
 
-                    face = self.get_face_by_index(self._faceMap[i, j])
+                    face = self.get_face_by_index(self._faceMap[j, i])
                     ind_e_l, ind_e_b, ind_e_r, ind_e_t = face.get_edges_indexes()
 
                     if 0 < i < self._nx-1 and 0 < j < self._ny-1:
@@ -1109,7 +1027,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         # MAIN BODY
 
                         # if top has neighbour
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[ j-1, i]:
                             #print "\t polygon has top neigbour"
                             pass  # already included
 
@@ -1119,7 +1037,7 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                             self._Mesh2_edge_faces[ind_e_t-1, 1] = -999
                         
                         # if left has neighbour
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[ j, i-1]:
                             #print "\t polygon has left neigbour"
                             pass  # already included
                         else:
@@ -1128,20 +1046,20 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                             self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
 
                         # if bottom has neighbour
-                        if self._faceMap[i, j+1]:
+                        if self._faceMap[ j+1, i]:
                             #print "\t polygon has bottom neigbour"
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[i, j+1]).get_index()
+                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[ j+1, i]).get_index()
                         else:
                             #print "\t polygon has no bottom neigbour"
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
 
                         # if right has neighbour
-                        if self._faceMap[i+1, j]:
+                        if self._faceMap[ j, i+1]:
                             #print "\t polygon has right neigbour"
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[i+1, j]).get_index()
+                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[ j, i+1]).get_index()
                         else:
                             #print "\t polygon has no right neigbour"
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
@@ -1155,17 +1073,17 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
                         
                         # if bottom has neighbour
-                        if self._faceMap[i, j+1]:
+                        if self._faceMap[ j+1, i]:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[i, j+1]).get_index()
+                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[ j+1, i]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
 
                         # if right has neighbour
-                        if self._faceMap[i+1, j]:
+                        if self._faceMap[ j, i+1]:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[i+1, j]).get_index()
+                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[ j, i+1]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_r-1, 1] = -999
@@ -1175,22 +1093,22 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
 
                         # if bottom has neighbour
-                        if self._faceMap[i, j+1]:
+                        if self._faceMap[ j+1, i]:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[i, j+1]).get_index()
+                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[ j+1, i]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
 
                         # if right has neighbour
-                        if self._faceMap[i+1, j]:
+                        if self._faceMap[ j, i+1]:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[i+1, j]).get_index()
+                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[ j, i+1]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_r-1, 1] = -999
                         # if top has neighbour
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[ j-1, i]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_t-1, 0] = face.get_index()
@@ -1203,14 +1121,14 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                         self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
                         # if right has neighbour
-                        if self._faceMap[i+1, j]:
+                        if self._faceMap[ j, i+1]:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[i+1, j]).get_index()
+                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[ j, i+1]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_r-1, 1] = -999
                         # if top has neighbour
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[ j-1, i]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_t-1, 0] = face.get_index()
@@ -1221,24 +1139,24 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_t-1, 1] = -999
 
                         # if left has neighbour
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[ j, i-1]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_l-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
 
                         # if bottom has neighbour
-                        if self._faceMap[i, j+1]:
+                        if self._faceMap[ j+1, i]:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[i, j+1]).get_index()
+                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[ j+1, i]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
 
                         # if right has neighbour
-                        if self._faceMap[i+1, j]:
+                        if self._faceMap[ j, i+1]:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[i+1, j]).get_index()
+                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[ j, i+1]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_r-1, 1] = -999
@@ -1248,23 +1166,23 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
 
                         # if top has neighbour
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[ j-1, i]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_t-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_t-1, 1] = -999
                         
                         # if left has neighbour
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[ j, i-1]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_l-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
 
                         # if right has neighbour
-                        if self._faceMap[i+1, j]:
+                        if self._faceMap[ j, i+1]:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[i+1, j]).get_index()
+                            self._Mesh2_edge_faces[ind_e_r-1, 1] = self.get_face_by_index(self._faceMap[ j, i+1]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_r-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_r-1, 1] = -999
@@ -1277,16 +1195,16 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_t-1, 1] = -999
 
                         # if left has neighbour
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[ j, i-1]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_l-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
 
                         # if bottom has neighbour
-                        if self._faceMap[i, j+1]:
+                        if self._faceMap[ j+1, i]:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[i, j+1]).get_index()
+                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[ j+1, i]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
@@ -1296,23 +1214,23 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_r-1, 1] = -999
 
                         # if top has neighbour
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[ j-1, i]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_t-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_t-1, 1] = -999
                         
                         # if left has neighbour
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[ j, i-1]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_l-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_l-1, 1] = -999
 
                         # if bottom has neighbour
-                        if self._faceMap[i, j+1]:
+                        if self._faceMap[ j+1, i]:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
-                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[i, j+1]).get_index()
+                            self._Mesh2_edge_faces[ind_e_b-1, 1] = self.get_face_by_index(self._faceMap[ j+1, i]).get_index()
                         else:
                             self._Mesh2_edge_faces[ind_e_b-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
@@ -1325,14 +1243,14 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
                         self._Mesh2_edge_faces[ind_e_b-1, 1] = -999
 
                         # if top has neighbour
-                        if self._faceMap[i, j-1]:
+                        if self._faceMap[ j-1, i]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_t-1, 0] = face.get_index()
                             self._Mesh2_edge_faces[ind_e_t-1, 1] = -999
                         
                         # if left has neighbour
-                        if self._faceMap[i-1, j]:
+                        if self._faceMap[ j, i-1]:
                             pass  # already included
                         else:
                             self._Mesh2_edge_faces[ind_e_l-1, 0] = face.get_index()

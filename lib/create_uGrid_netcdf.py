@@ -110,7 +110,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     start_index = 0
     print 'Generating uGrid... (be patient, this may take a while)'
     dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_qudratic_grid_or_curvilinear(coords['x'], coords['y'],
-                                                data_location=meta['x']['points_location'], mask=m.T, log=log, startingindex=start_index)
+                                                data_location=meta['x']['points_location'], mask=m, log=log, startingindex=start_index)
 
     nMesh2_node = dims[0]
     nMesh2_edge = dims[1]
@@ -210,44 +210,34 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         source = varExt.get_source_metadata()
 
         # -----------------------------------------------------------------------------------------------
-        # -- 8.2.1) add basic info
-        # -----------------------------------------------------------------------------------------------
-        var_to_add = dict()
-        var_to_add['vname'] = varExt.get_parent().get_name()
-        var_to_add['dtype'] = varExt.get_parent().get_dtype(syntax="python-netcdf")
-        var_to_add['dims']  = varExt.get_parent().get_dims()
-        var_to_add['_FillValue'] = source['fillvalue']
-        var_to_add['attributes'] = varExt.get_parent().get_attrs()
-
-        # -----------------------------------------------------------------------------------------------
         # 8.2.4) add data
         # -----------------------------------------------------------------------------------------------
 
         if source['nNonOneDims'] == 0:
-            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_0d(source['fname'], source['name'], log=log)
+            var_data = process_mossco_netcdf.read_mossco_nc_0d(source['fname'], source['name'], log=log)
         
         elif source['nNonOneDims'] == 1:
-            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_1d(source['fname'], source['name'], log=log)
+            var_data = process_mossco_netcdf.read_mossco_nc_1d(source['fname'], source['name'], log=log)
         
         elif source['nNonOneDims'] == 2:
-            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_2d(source['fname'], source['name'], flatten=True, mask=m, log=log)
+            var_data = process_mossco_netcdf.read_mossco_nc_2d(source['fname'], source['name'], flatten=True, mask=m, log=log)
         
         elif source['nNonOneDims'] == 3:
-            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_3d(source['fname'], source['name'], flatten=True, mask=m, log=log)
+            var_data = process_mossco_netcdf.read_mossco_nc_3d(source['fname'], source['name'], flatten=True, mask=m, log=log)
 
         elif source['nNonOneDims'] == 4:
-            var_to_add['data'] = process_mossco_netcdf.read_mossco_nc_4d(source['fname'], source['name'], flatten=True, mask=m, log=log)
+            var_data = process_mossco_netcdf.read_mossco_nc_4d(source['fname'], source['name'], flatten=True, mask=m, log=log)
 
         else:
             raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
-                        varExt.get_name(), source['dims'], source['shape']), source['nNonOneDims'])
+                        source['name'], source['dims'], source['shape']), source['nNonOneDims'])
             break
 
 
         # -----------------------------------------------------------------------------------------------
         # 8.2.6) append data variable to nc_out...
         # -----------------------------------------------------------------------------------------------
-        process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var_to_add, log=log)
+        process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var, var_data, fv=source['fillvalue'],  log=log)
         if log: print '-'*100
         del varExt
     
