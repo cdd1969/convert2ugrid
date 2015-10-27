@@ -464,22 +464,12 @@ class Grid2D(object):  #Mesh2_node, Mesh2_edge, Mesh2_face, object):
             
             for i, x in enumerate(x_coord[2:]):
                 if abs(abs(x_coord[i]-x_coord[i+1])-abs(x_coord[i+1]-x)) > tolerance:
-                    errmsg = 'Coordinates to generate grid are passed as two 1D arrays at T_points. Grid must be uniform in this case.\
-                              Therefore the distance between grid cells should be equal:\n\tabs( abs(x[i]-x[i+1])-abs(x[i+1]-x[i+2]) ) < tolerance\n\
-                              But the passed x_coordinate array does not comply:\n\tabs( abs(x[{0}]-x[{1}])-abs(x[{1}]-x[{2}]) ) > tolerance\n\
-                              \tabs( abs({3} - {4}) - abs({4} - {5}) ) > {6}\n\
-                              You can try following to fix the problem:\n\
-                              \t a) increase tolerance\n\t b) pass coordinates of X_points'.format(i, i+1, i, x_coord[i], x_coord[i+1], x, tolerance)
+                    errmsg = 'Coordinates to generate grid are passed as two 1D arrays at T_points. Grid must be uniform in this case. Therefore the distance between grid cells should be equal:\n\tabs( abs(x[i]-x[i+1])-abs(x[i+1]-x[i+2]) ) < tolerance\nBut the passed x_coordinate array does not comply:\n\tabs( abs(x[{0}]-x[{1}])-abs(x[{1}]-x[{2}]) ) > tolerance\n\tabs( abs({3} - {4}) - abs({4} - {5}) ) > {6}\nYou can try following to fix the problem:\n\t a) increase tolerance\n\t b) pass coordinates of X_points'.format(i, i+1, i+2, x_coord[i], x_coord[i+1], x, tolerance)
                     raise ValueError(errmsg)
             
             for i, y in enumerate(y_coord[2:]):
                 if abs(abs(y_coord[i]-y_coord[i+1])-abs(y_coord[i+1]-y)) > tolerance:
-                    errmsg = 'Coordinates to generate grid are passed as two 1D arrays at T_points. Grid must be uniform in this case.\
-                              Therefore the distance between grid cells should be equal:\n\tabs( abs(y[i]-y[i+1])-abs(y[i+1]-y[i+2]) ) < tolerance\n\
-                              But the passed y_coordinate array does not comply:\n\tabs( abs(y[{0}]-y[{1}])-abs(y[{1}]-y[{2}]) ) > tolerance\n\
-                              \tabs( abs({3} - {4}) - abs({4} - {5}) ) > {6}\n\
-                              You can try following to fix the problem:\n\
-                              \t a) increase tolerance\n\t b) pass coordinates of X_points'.format(i, i+1, i, y_coord[i], y_coord[i+1], y, tolerance)
+                    errmsg = 'Coordinates to generate grid are passed as two 1D arrays at T_points. Grid must be uniform in this case. Therefore the distance between grid cells should be equal:\n\tabs( abs(x[i]-x[i+1])-abs(x[i+1]-x[i+2]) ) < tolerance\nBut the passed x_coordinate array does not comply:\n\tabs( abs(x[{0}]-x[{1}])-abs(x[{1}]-x[{2}]) ) > tolerance\n\tabs( abs({3} - {4}) - abs({4} - {5}) ) > {6}\nYou can try following to fix the problem:\n\t a) increase tolerance\n\t b) pass coordinates of X_points'.format(i, i+1, i+2, x_coord[i], x_coord[i+1], x, tolerance)
                     raise ValueError(errmsg)
             
             # Since cells are uniform it doesnot make sence to find <dx> and <dy> for each cell within the loop,

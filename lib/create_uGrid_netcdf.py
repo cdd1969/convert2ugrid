@@ -215,25 +215,12 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         # 8.2.4) add data
         # -----------------------------------------------------------------------------------------------
 
-        if source['nNonOneDims'] == 0:
-            var_data = process_mossco_netcdf.read_mossco_nc_0d(source['fname'], source['name'], log=log)
-        
-        elif source['nNonOneDims'] == 1:
-            var_data = process_mossco_netcdf.read_mossco_nc_1d(source['fname'], source['name'], log=log)
-        
-        elif source['nNonOneDims'] == 2:
-            var_data = process_mossco_netcdf.read_mossco_nc_2d(source['fname'], source['name'], flatten=True, mask=m, log=log)
-        
-        elif source['nNonOneDims'] == 3:
-            var_data = process_mossco_netcdf.read_mossco_nc_3d(source['fname'], source['name'], flatten=True, mask=m, log=log)
-
-        elif source['nNonOneDims'] == 4:
-            var_data = process_mossco_netcdf.read_mossco_nc_4d(source['fname'], source['name'], flatten=True, mask=m, log=log)
-
-        else:
+        if source['nNonOneDims'] not in [0, 1, 2, 3, 4]:
             raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
                         source['name'], source['dims'], source['shape']), source['nNonOneDims'])
             break
+        raw_data = process_mossco_netcdf.read_mossco_nc_rawvar(source['fname'], var.get_name())
+        var_data = process_mixed_data.flatten_xy_data(raw_data, mask=m)
 
 
         # -----------------------------------------------------------------------------------------------

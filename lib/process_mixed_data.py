@@ -1,4 +1,4 @@
-#!/usr/bin/python
+                                                                                                                                        #!/usr/bin/python
 #-*- coding: utf-8 -*-
 # Copyright (C) 2015, Nikolai Chernikov <nikolai.chernikov.ru@gmail.com>
 #
@@ -23,7 +23,7 @@ class netcdfVariableReader(object):
     
     def __init__(self):
         pass
-    
+
     def check_dtype(self, _object, dtype, raise_error=True):
         """Compares type(_object) to "dtype" """
         if isinstance(_object, dtype):
@@ -641,8 +641,9 @@ class containerForGridGeneration(netcdfVariableReader):
         
         if location == 'X_points':
             # create new face map ( 2D array of T_points), it will have one less index in each dimension
-
             mask_out = np.zeros(tuple([array.shape[0]-1, array.shape[1]-1]), dtype=bool)  # by default all cells are valid (mask=False)
+            print _n, "mask out shaoe: ", mask_out.shape
+            print _n, "mask in shaoe: ", mask_in.shape
             # loop over all face-indexes. If any of the surrounding nodes is invalid (mask=True)
             # then the whole face is considered to be invalid as well
             for j in xrange(mask_out.shape[0]):
@@ -651,9 +652,9 @@ class containerForGridGeneration(netcdfVariableReader):
                     tr = mask_in[j  , i+1]  #topright node
                     br = mask_in[j+1, i+1]  #bottomright node
                     bl = mask_in[j+1, i  ]  #bottomleft node
-                    if any(node is True for node in [tl, tr, br, bl]):
+                    nodes = [tl, tr, br, bl]
+                    if any(node for node in nodes):  # cannot write here <if any(node is True...)> since it may be of type <numpy.bool_> and not <bool>
                         mask_out[j, i] = True
-
         elif location == 'T_points' :  # location == 'T_points'
             # from numpy docs: "We must keep in mind that a True entry in the mask indicates an invalid data"
                 mask_out = mask_in
@@ -837,8 +838,10 @@ def create_sigma_coords_of_layer_center(sigma_border):
 
 
 
-def flatten_xy_data(data, mask=None):
+def flatten_xy_data(data, mask=None, transpose=False):
     data = np.squeeze(data)
+    if transpose:
+        data = data.T
     if mask is None:
         
         dims = list(data.shape[:-2])
