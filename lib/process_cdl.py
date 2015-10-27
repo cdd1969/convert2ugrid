@@ -134,6 +134,9 @@ class cdlVariable(object):
     def set_attr(self, name, val):
         # name - string, val - any type
         self.check_dtype(name, str)
+
+        if hasattr(val, '__iter__') and len(val) == 1:  # if 1n length list - treat without list
+            val = val[0]
         if name in self.get_attrs().keys():
             del self.__attrs[name]
         if name == '_FillValue' and val != self.get_fillvalue():

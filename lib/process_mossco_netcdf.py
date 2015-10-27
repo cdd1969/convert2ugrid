@@ -62,12 +62,12 @@ def read_mossco_nc_2d(filename, varname, flatten=False, mask=None, log=False):
         raise ValueError('read_mossco_nc_2d(): Invalid data or mask shape. Should be equal. Received data shape(squeezed) - {0}, mask - {1}'.format(a.shape, mask.shape))
 
     if mask is None and flatten:
-        a = a.T.flatten(order='F')
+        a = a.flatten(order='F')
 
     elif mask is not None:
         a = np.ma.array(a, mask=mask)
         if flatten:
-            a = a.T.flatten(order='F').compressed()
+            a = a.flatten(order='F').compressed()
 
     nc.close()
     del nc
@@ -93,7 +93,7 @@ def read_mossco_nc_3d(filename, varname, flatten=False, mask=None, log=False):
     if mask is None and flatten:
         a = np.zeros(tuple([vs.shape[0], vs.shape[1]*vs.shape[2]]))
         for i in xrange(v.shape[0]):
-            a[i, :] = vs[i, ...].T.flatten(1)
+            a[i, :] = vs[i, ...].flatten(1)
 
     elif mask is not None:  # IF MASKED ARRAY
         n_valid_2d = np.sum(np.invert(mask))  #number of valid elements in 2d grid. invert - because True(True=1) is an invalid element
@@ -104,7 +104,7 @@ def read_mossco_nc_3d(filename, varname, flatten=False, mask=None, log=False):
         for i in xrange(vs.shape[0]):
             var_masked = np.ma.array(vs[i, ...], mask=mask)
             if flatten:
-                var_masked = var_masked.T.flatten(order='F').compressed()
+                var_masked = var_masked.flatten(order='F').compressed()
                 #print _n+'var_masked shape {0}'.format(var_masked.shape)
             a[i, ...] = var_masked
     nc.close()
@@ -132,7 +132,7 @@ def read_mossco_nc_4d(filename, varname, flatten=False, mask=None, log=False):
         a = np.zeros(tuple([vs.shape[0], vs.shape[1], vs.shape[2]*vs.shape[3]]))
         for t in xrange(vs.shape[0]):
             for z in xrange(vs.shape[1]):
-                a[t, z, :] = vs[t, z, ...].T.flatten(1)
+                a[t, z, :] = vs[t, z, ...].flatten(1)
 
 
     elif mask is not None:  # IF MASKED ARRAY
@@ -143,7 +143,7 @@ def read_mossco_nc_4d(filename, varname, flatten=False, mask=None, log=False):
             for z in xrange(v.shape[1]):
                 var_masked = np.ma.array(v[t, z, ...], mask=mask)
                 if flatten:
-                    var_masked = var_masked.T.flatten(order='F').compressed()
+                    var_masked = var_masked.flatten(order='F').compressed()
                 a[t, z, :] = var_masked
 
     nc.close()

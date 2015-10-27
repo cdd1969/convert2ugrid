@@ -754,6 +754,8 @@ def create_magnitude_variable_from_x_y_component(VARS, varname, varval, mask=Non
     return magnitude
 
 
+
+
 def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, mask=None, log=False):
     '''
     create elevations <z> with respect to MSL of passed sigma-coordinates.
@@ -771,8 +773,8 @@ def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, m
     flatten - if True, x,y dimensions of the array will be compressed into one single
     mask    - boolean 2d mask to ignore elements during flattening. see <process_mossco_netcdf.make_mask_array_from_mossco_bathymetry()>
     '''
+    _name = 'create_layer_elevation_from_sigma_coords():'
     if log:
-        _name = 'create_layer_elevation_from_sigma_coords():'
         print _name, 'Shapes of the inputs...'
         print _name, 'eta: <{0}>, sigma: <{1}>, depth: <{2}>'.format(eta.shape, sigma.shape, depth.shape)
     
@@ -834,6 +836,7 @@ def create_sigma_coords_of_layer_center(sigma_border):
 
 
 def flatten_xy_data(data, mask=None):
+    data = np.squeeze(data)
     if mask is None:
         
         dims = list(data.shape[:-2])
@@ -843,12 +846,12 @@ def flatten_xy_data(data, mask=None):
         if len(dims) == 3:
             for t in xrange(data.shape[0]):
                 for z in xrange(data.shape[1]):
-                    a[t, z, :] = data[t, z, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+                    a[t, z, :] = data[t, z, ...].flatten(order='F')
         elif len(dims) == 2:
             for t in xrange(data.shape[0]):
-                a[t, :] = data[t, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+                a[t, :] = data[t, ...].flatten(order='F')
         elif len(dims) == 1:
-            a[:] = data[...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+            a[:] = data[...].flatten(order='F')
 
         elif len(dims) == 4 and dims[0] == 2:  # if we have boundary var (i.e. Mesh2_face_bnd(two, t, z, face))
             del a
@@ -858,7 +861,7 @@ def flatten_xy_data(data, mask=None):
             for t in xrange(data.shape[1]):
                 for z in xrange(data.shape[2]):
                     for bnd in xrange(data.shape[0]):
-                        a[t, z, :, bnd] = data[bnd, t, z, ...].T.flatten(1)  # why not <.flatten(order='F')> ??? what is the difference?
+                        a[t, z, :, bnd] = data[bnd, t, z, ...].flatten(order='F')
         else:
             raise ValueError('Number of array dimensions <{0}> is not supported.'.format(len(dims)))
     else:
@@ -872,16 +875,16 @@ def flatten_xy_data(data, mask=None):
         if len(dims) == 3:
             for t in xrange(data.shape[0]):
                 for z in xrange(data.shape[1]):
-                    var_masked = np.ma.array(data[t, z, ...], mask=mask.T).T
+                    var_masked = np.ma.array(data[t, z, ...], mask=mask)
                     var_masked = var_masked.flatten(order='F').compressed()
                     a[t, z, :] = var_masked
         elif len(dims) == 2:
             for t in xrange(data.shape[0]):
-                var_masked = np.ma.array(data[t, ...], mask=mask.T).T
+                var_masked = np.ma.array(data[t, ...], mask=mask)
                 var_masked = var_masked.flatten(order='F').compressed()
                 a[t, :] = var_masked
-        elif len(dims) == 2:
-            var_masked = np.ma.array(data[...], mask=mask.T).T
+        elif len(dims) == 1:
+            var_masked = np.ma.array(data[...], mask=mask)
             var_masked = var_masked.flatten(order='F').compressed()
             a[:] = var_masked
         elif len(dims) == 4 and dims[0] == 2:  # if we have boundary var (i.e. Mesh2_face_bnd(two, t, z, face))
@@ -891,7 +894,7 @@ def flatten_xy_data(data, mask=None):
             for t in xrange(data.shape[1]):
                 for z in xrange(data.shape[2]):
                     for bnd in xrange(data.shape[0]):
-                        var_masked = np.ma.array(data[bnd, t, z, ...], mask=mask.T).T
+                        var_masked = np.ma.array(data[bnd, t, z, ...], mask=mask)
                         var_masked = var_masked.flatten(order='F').compressed()
                         a[t, z, :, bnd] = var_masked
         else:
