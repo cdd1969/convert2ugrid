@@ -1,11 +1,16 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
+# Copyright (C) 2015, Nikolai Chernikov <nikolai.chernikov.ru@gmail.com>
 #
-# This file is part of "convert2ugrid" tool
-#
-# Author: Nikolai Chernikov, nikolai.chernikov.ru@gmail.com
-#
-# version = 0.3
+# "convert2ugrid" is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License v3+. "convert2ugrid" is distributed in the
+# hope that it will be useful, but WITHOUT ANY WARRANTY.  Consult the file
+# LICENSE.GPL or www.gnu.org/licenses/gpl-3.0.txt for the full license terms.
+
+__author__  = 'Nikolai Chernikov'
+__contact__ = 'nikolai.chernikov.ru@gmail.com'
+__version__ = '0.3.1'
+
 
 
 import os
