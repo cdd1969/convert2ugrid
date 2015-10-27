@@ -17,6 +17,8 @@ import time
 import process_mossco_netcdf
 import process_mixed_data
 import process_cdl
+import ui
+
 
 def create_uGrid_ncdf(filename,
                         nMesh2_node, nMesh2_edge, nMesh2_face, nMaxMesh2_face_nodes,
@@ -682,7 +684,7 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
 
     
 
-    if log: print _n, 'Appending variable <{0}> of shape {1}'.format(meta.get_name(), var_data.shape)
+    if log: print _n, 'Now try to append variable <{0}> of shape {1}'.format(meta.get_name(), var_data.shape)
     # --------------------------------------------------
     #                   Appending ncdf
     # --------------------------------------------------
@@ -694,7 +696,45 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
         nc.close()
         return
 
+    # now compare shape of the array allocated within netcdf and shape of passed data
+    nc_var_shape = tuple([nc.dimensions[d].__len__() for d in meta.get_dims()])
+    # first check data shape
+    if var_data is not None:
+        if nc_var_shape != var_data.shape:
+            # what could have gone wrong?
+            # 1) unlimited dimension has not been yet initialized!
+            #    (t, y, x) where <t> is UNLIMITED and NO data has been specified yet: (0, ny, nx) where <ny> and <nx> - integers.
+            #    And lets imagine we try to pass array of shape (3, ny, nx) with 3 timesteps written... This error will trigger
+            #    Let's get through!
+            if len(nc_var_shape) != len(var_data.shape):
+                # here can be something like.... (1, 2) and (2, )
+                squeezed_ncvarshape = tuple([d for d in nc_var_shape if d != 1])
+                squeezed_vdatashape = tuple([d for d in var_data.shape   if d != 1])
+                if len(squeezed_ncvarshape) != len(squeezed_vdatashape):
+                    print _n, 'Invalid data shape. Declared shape of the variable in netcdf file {0} (neither original, nor squeezed {2}\
+                        ) does not match to shape of the passed data array {1} (neither original, nor squeezed {3}'.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape)
+                    raw_input(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()))
+                    nc.close()
+                    return
+                else:
+                    print (_n+' WARNING! Declared shape of the variable in netcdf file {0} does not match to shape of the passed data array {1}. But if squeezed, shapes are equal (nc_var.shape = data.shape): {2} = {3}. This could happen, when we have fiction dimension such as <nMesh2_time=1> or <nMesh_layer_2d=1>. The dimension of variable <{4}> are {5}. '.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape, meta.get_name(), meta.get_dims()) +
+                            'Since the logic for checking such cases has not been implemented yet, now you have to decide whether to proceed appending this variable to netcdf file or skip it. If you choose "yes" I will continue and try store passed data array of shape {0} into defined(or allocated) array within netcdf of shape {1}'.format(var_data.shape, nc_var_shape) )
+                    if not ui.promtYesNo(_n+' Continue appending variable <{0}> ("yes") or skip it ("no")?'.format(meta.get_name())):
+                        nc.close()
+                        return
 
+            else:  # if shape is equal
+                for i, dim_length_nc, dim_length_data in zip(xrange(len(nc_var_shape)), nc_var_shape, var_data.shape):
+                    if (dim_length_nc != dim_length_data and dim_length_nc == 0 and nc.dimensions[meta.get_dims()[i]].isunlimited()):
+                        # no error, since unlimited dimension of undefined length
+                        pass
+                    else:
+                        print _n, 'Invalid data shape. Declared shape of the variable in netcdf file {0} does not match to shape of the passed data array {1}'.format(nc_var_shape, var_data.shape)
+                        raw_input(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()))
+                        nc.close()
+                        return
+
+    # at this point all the tests have been passed.....
 
     # now create Variable
     nc_var = nc.createVariable(meta.get_name(), meta.get_dtype(syntax='python-netcdf'), dimensions=meta.get_dims(), fill_value=fv)
@@ -717,41 +757,7 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
                 nc_var.setncattr(attr_name, attr_value)
     
     # fill data
-    if var_data is not None:
-
-        #print 'NC  before', nc_var.shape
-        #print 'DAT before', var_data.shape
-        if nc_var.shape != var_data.shape:
-            # what could have gone wrong?
-            # 1) unlimited dimension has not been yet initialized!
-            #    (t, y, x) where <t> is UNLIMITED and NO data has been specified yet: (0, ny, nx) where <ny> and <nx> - integers.
-            #    And lets imagine we try to pass array of shape (3, ny, nx) with 3 timesteps written... This error will trigger
-            #    Let's get through!
-            if len(nc_var.shape) != len(var_data.shape):
-                # here can be something like.... (1, 2) and (2, )
-                squeezed_ncvarshape = tuple([d for d in nc_var.shape   if d != 1])
-                squeezed_vdatashape = tuple([d for d in var_data.shape if d != 1])
-                if len(squeezed_ncvarshape) != len(squeezed_vdatashape):
-                    print _n, 'Invalid data shape. Declared shape of the array in netcdf file {0} (neither original, nor squeezed {2}\
-                        ) does not match to shape of the passed data array {1}(neither original, nor squeezed {3}'.format(nc_var.shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape)
-                    raw_input(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()))
-                    nc.close()
-                    return
-            for i, dim_length_nc, dim_length_data in zip(xrange(len(nc_var.shape)), nc_var.shape, var_data.shape):
-                if (dim_length_nc != dim_length_data and dim_length_nc == 0 and nc.dimensions[meta.get_dims()[i]].isunlimited()):
-                    # no error, since unlimited dimension of undefined length
-                    pass
-                elif 
-                else:
-                    print _n, 'Invalid data shape. Declared shape of the array in netcdf file {0} does not match to shape of the passed data array {1}'.format(nc_var.shape, var_data.shape)
-                    raw_input(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()))
-                    nc.close()
-                    return
-        
-
-        nc_var[:] = var_data
-
-        
+    nc_var[:] = var_data
 
     if log: print _n, 'output datashape:', nc_var.shape
     if log: print _n, 'Variable appended succesfully: %s' % (meta.get_name())
