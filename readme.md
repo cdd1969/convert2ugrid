@@ -32,7 +32,7 @@ This will produce three files in your current working directory:
 
 To get description of possible command-line options:
 ```sh
-$ python convert2ugrid.py -h
+$ python convert2ugrid.py --help
 ```    
 
 ## Examples (for BAW internal)
