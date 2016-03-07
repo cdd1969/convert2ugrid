@@ -220,7 +220,7 @@ def create_uGrid_ncdf(filename,
         #                  2) Georaphical coordinates
         #
         # *********************************************************************************************************************************************
-        ncVar_Mesh2_crs = root_grp.createVariable('Mesh2_crs', 'int', (), fill_value=False)
+        ncVar_Mesh2_crs = root_grp.createVariable('Mesh2_crs', 'i', (), fill_value=False)
         ncVar_Mesh2_crs[:] = 4326
         ncVar_Mesh2_crs.epsg_code = "EPSG:4326"
         ncVar_Mesh2_crs.comment = "LON, LAT : WGS84, EPSG:4326"
