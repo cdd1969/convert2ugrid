@@ -7,24 +7,21 @@
 # hope that it will be useful, but WITHOUT ANY WARRANTY.  Consult the file
 # LICENSE.GPL or www.gnu.org/licenses/gpl-3.0.txt for the full license terms.
 
-
 from __future__ import division
 import numpy as np
 import numpy.ma as ma
 
 
 def gridhelp():
-        errmsg = 'Currently limited grid-types are implemented:\n\
-                  \t a) <x_coord> and <y_coord> are 1D, at T-points, 2D <bathymetry> at T_points => Rectengular uniform\n\
-                  \t b) <x_coord> and <y_coord> are 1D, at X-points, 2D <bathymetry> at T_points => Rectengular (uniform/non-uniform)\n\
-                  \t c) <x_coord> and <y_coord> are 2D, at X-points, 2D <bathymetry> at T_points => Curvilinear'
-        return errmsg
+    errmsg = 'Currently limited grid-types are implemented:\n\
+              \t a) <x_coord> and <y_coord> are 1D, at T-points, 2D <bathymetry> at T_points => Rectengular uniform\n\
+              \t b) <x_coord> and <y_coord> are 1D, at X-points, 2D <bathymetry> at T_points => Rectengular (uniform/non-uniform)\n\
+              \t c) <x_coord> and <y_coord> are 2D, at X-points, 2D <bathymetry> at T_points => Curvilinear'
+    return errmsg
 
 
 class Mesh2_node(object):
-    """
-    class describing a Point (Node) on a 2D plane
-    """
+    """ Class describes a Point (Node) on a 2D plane"""
     def __init__(self, x, y, index):
         # ------------------
         # <x, y>  - floats, describing cartesian coordinates of a point
@@ -75,9 +72,7 @@ class Mesh2_node(object):
 
 
 class Mesh2_edge(object):
-    """
-    class describing an Edge connecting two Nodes (vertexes) on a 2D plane
-    """
+    """ Class describing an Edge connecting two Nodes (vertexes) on a 2D plane """
     def __init__(self, node1, node2, index):
         # ------------------
         # <node1, node2> - ire objects of type <Mesh2_node>
@@ -142,9 +137,7 @@ class Mesh2_edge(object):
 
 
 class Mesh2_face(object):
-    '''
-    #class describing a Face (Polygon) - Triangle or Rectangular (!!!) shape for 2D unstructured grid
-    '''
+    ''' Class describing a Face (Polygon) - Triangle or Rectangular (!!!) shape for 2D unstructured grid '''
     def __init__(self, nodes, index):
         # ------------------
         # <nodes>  - is a list of objects of type <Mesh2_node>
@@ -222,10 +215,7 @@ class Mesh2_face(object):
                 error_margin = 1.e-5  # error margin for determining orthogonallity
                 #if product != 0:
                 if abs(product)-error_margin > 0:
-                    err_msg = 'Mesh2_face: index={2}\n\tdot product of Edge1,Edge2 = {5} (if=0 => orthogonal)\n\t{0} >>> {3}\n\t{1} >>> {4}\nVectors (calculated in <Mesh2_face> object)'\
-                                'formed from element nodes are not orthogonal.\nPolygon is not a rectangle'.format(
-                                edge1, edge2, self.get_index(), [edge1.get_node1(), edge1.get_node2()], [edge2.get_node1(), edge2.get_node2()],
-                                product )
+                    err_msg = ('Mesh2_face: index={2}\n\tdot product of Edge1,Edge2 = {5} (if=0 => orthogonal)\n\t{0} >>> {3}\n\t{1} >>> {4}\nVectors (calculated in <Mesh2_face> object) formed from element nodes are not orthogonal.\nPolygon is not a rectangle'.format(edge1, edge2, self.get_index(), [edge1.get_node1(), edge1.get_node2()], [edge2.get_node1(), edge2.get_node2()], product ))
                     #raise ValueError(err_msg)
                     #print err_msg
     

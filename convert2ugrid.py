@@ -7,10 +7,8 @@
 # hope that it will be useful, but WITHOUT ANY WARRANTY.  Consult the file
 # LICENSE.GPL or www.gnu.org/licenses/gpl-3.0.txt for the full license terms.
 
-__author__  = 'Nikolai Chernikov'
-__contact__ = 'nikolai.chernikov.ru@gmail.com'
+__author__  = 'Nikolai Chernikov <nikolai.chernikov.ru@gmail.com>'
 __version__ = '0.3.1'
-
 
 
 import os
@@ -40,13 +38,20 @@ if __name__ == '__main__':
         The inputs hard-coded here will only be used if you run the script with (variant 1), otherwise
         they will be ignored
 
-
-        topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
-        nc_out                  - string, path to netcdf to be created
-        dict1                   - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
-        dict2                   - string, path to txt file after scanning variables
-        dict3                   - string, path to cdl file with standard variables
-        dict4                   - string, path to cdl file to be created
+    Args:
+    -----
+        topo_nc (str):
+            path to netcdf file with x,y vectors and "bathymetry" variable for mask
+        nc_out (str):
+            path to netcdf to be created
+        dict1 (str):
+            path to txt file with dictionary to suggest standart mossco-baw variable name correlation
+        dict2 (str):
+            path to txt file after scanning variables
+        dict3 (str):
+            path to cdl file with standard variables
+        dict4 (str):
+            path to cdl file to be created
 
 
         parameter in function create_davit_friendly_netcdf():

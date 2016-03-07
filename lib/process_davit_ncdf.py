@@ -452,16 +452,17 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, nx=0, ny=0,
     if log: print 'running: append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd()'
     
     # get dimensions....
-    # ----------------------------------------------------------------------------   
-    __nc = Dataset(fname_davit, mode='r')
+    # ----------------------------------------------------------------------------
+    _nc = Dataset(fname_davit, mode='r')
     try:
-        nt = __nc.dimensions['nMesh2_data_time'].__len__()
+        nt = _nc.dimensions['nMesh2_data_time'].__len__()
     except:
-        nt = __nc.dimensions['nMesh2_time'].__len__()
-    nz     = __nc.dimensions['nMesh2_layer_3d'].__len__()
-    nFaces = __nc.dimensions['nMesh2_face'].__len__()
-    nEdges = __nc.dimensions['nMesh2_edge'].__len__()
-    __nc.close()
+        nt = _nc.dimensions['nMesh2_time'].__len__()
+    
+    nz     = _nc.dimensions['nMesh2_layer_3d'].__len__()
+    nFaces = _nc.dimensions['nMesh2_face'].__len__()
+    nEdges = _nc.dimensions['nMesh2_edge'].__len__()
+    _nc.close()
 
     if log:
         print 'nZ, nY, nX =', nz, ny, nx
@@ -496,12 +497,8 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, nx=0, ny=0,
 
     # FACE bounds values...
     # ----------------------------------------------------------------------------
-    if log:
-        print '+'*50
-        print '+'*50
-        print 'Bounds'
-        print '+'*50
-        print '+'*50
+    if log: print '{0}{0}{1}\n{0}{0}'.format('+'*50+'\n', 'Face Bounds')
+
     var = process_cdl.cdlVariable()
     var.set_name('Mesh2_face_z_face_bnd_3d')
     var.set_dtype('float')
@@ -522,12 +519,8 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, nx=0, ny=0,
     del var
 
 
-    if log:
-        print '+'*50
-        print '+'*50
-        print 'EDGE'
-        print '+'*50
-        print '+'*50
+    if log: print '{0}{0}{1}\n{0}{0}'.format('+'*50+'\n', 'EDGE')
+
     # EDGE middle values.....
     # ----------------------------------------------------------------------------
     var = process_cdl.cdlVariable()
@@ -554,12 +547,8 @@ def append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(fname_davit, nx=0, ny=0,
 
     # EDGE bounds values...
     # ----------------------------------------------------------------------------
-    if log:
-        print '+'*50
-        print '+'*50
-        print 'EDGE Bounds'
-        print '+'*50
-        print '+'*50
+    if log: print '{0}{0}{1}\n{0}{0}'.format('+'*50+'\n', 'EDGE Bounds')
+
     var = process_cdl.cdlVariable()
     var.set_name('Mesh2_edge_z_edge_bnd_3d')
     var.set_dtype('float')
@@ -589,11 +578,11 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_v
         # --------------------------------------------------
         if dummy_values is False:
 
-            __nc = Dataset(fname_mossconc, mode='r')
-            time_var_units = __nc.variables[time_var_name].units
-            max_t          = __nc.variables[time_var_name][:].max()
-            min_t          = __nc.variables[time_var_name][:].min()
-            __nc.close()
+            _nc = Dataset(fname_mossconc, mode='r')
+            time_var_units = _nc.variables[time_var_name].units
+            max_t          = _nc.variables[time_var_name][:].max()
+            min_t          = _nc.variables[time_var_name][:].min()
+            _nc.close()
         else:
             time_var_units = 'seconds since 2000-01-01 00:00:00'
             max_t = 60*60*24
@@ -711,19 +700,19 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
             if len(nc_var_shape) != len(var_data.shape):
                 # here can be something like.... (1, 2) and (2, )
                 squeezed_ncvarshape = tuple([d for d in nc_var_shape if d != 1])
-                squeezed_vdatashape = tuple([d for d in var_data.shape   if d != 1])
+                squeezed_vdatashape = tuple([d for d in var_data.shape if d != 1])
                 if len(squeezed_ncvarshape) != len(squeezed_vdatashape):
-                    print _n, 'Invalid data shape. Declared shape of the variable in netcdf file {0} (neither original, nor squeezed {2}\
-                        ) does not match to shape of the passed data array {1} (neither original, nor squeezed {3}'.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape)
+                    print _n, 'Invalid data shape. Declared shape of the variable `{4}` in netcdf file {0} (neither original, nor squeezed {2}\
+                        ) does not match to shape of the passed data array {1} (neither original, nor squeezed {3}'.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape, meta.get_name())
                     raw_input(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()))
                     nc.close()
                     return
                 else:
-                    print (_n+' WARNING! Declared shape of the variable in netcdf file {0} does not match to shape of the passed data array {1}. But if squeezed, shapes are equal (nc_var.shape = data.shape): {2} = {3}. This could happen, when we have fiction dimension such as <nMesh2_time=1> or <nMesh_layer_2d=1>. The dimension of variable <{4}> are {5}. '.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape, meta.get_name(), meta.get_dims()) +
+                    print (_n+' WARNING! Declared shape of the variable `{4}` in netcdf file {0} does not match to shape of the passed data array {1}. But if squeezed, shapes are equal (nc_var.shape = data.shape): {2} = {3}. This could happen, when we have fiction dimension such as <nMesh2_time=1> or <nMesh_layer_2d=1>. The dimension of variable `{4}` are {5}. '.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape, meta.get_name(), meta.get_dims()) +
                             'Since the logic for checking such cases has not been implemented yet, now you have to decide whether to proceed appending this variable to netcdf file or skip it. If you choose "yes" I will continue and try store passed data array of shape {0} into defined(or allocated) array within netcdf of shape {1}'.format(var_data.shape, nc_var_shape) )
-                    if not ui.promtYesNo(_n+' Continue appending variable <{0}> ("yes") or skip it ("no")?'.format(meta.get_name())):
-                        nc.close()
-                        return
+                    #if not ui.promtYesNo(_n+' Continue appending variable `{0}` ("yes") or skip it ("no")?'.format(meta.get_name())):
+                    #    nc.close()
+                    #    return
 
             else:  # if shape is equal
                 for i, dim_length_nc, dim_length_data in zip(xrange(len(nc_var_shape)), nc_var_shape, var_data.shape):
@@ -736,7 +725,7 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
                         nc.close()
                         return
 
-    # at this point all the tests have been passed.....
+    # at this point all tests have been passed.....
 
     # now create Variable
     nc_var = nc.createVariable(meta.get_name(), meta.get_dtype(syntax='python-netcdf'), dimensions=meta.get_dims(), fill_value=fv)
@@ -768,86 +757,40 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
 
 
 
-
-
-
-
-
-
-
-
-
-def fill_bound_variable(Mesh2_var_x_bnd, Mesh2_var_y_bnd, Mesh2_face_nodes=None, Mesh2_node_lat=None, Mesh2_node_lon=None, log=False):
-    """
-    WARNING; THIS FUNCTION IS DEPRECATED! ALREADY BUILT IN MESH2 !!!
-
-    Function calculates bounds for the elements. Based on indxing
-    
-    !!! WARNING: this routine will work only if starting index is 0 !!!
-    !!! these lines >>> Mesh2_node_lon[dataIndexes_i[j]]            !!!
-    !!! these lines >>> Mesh2_node_lat[dataIndexes_i[j]]            !!!
-
-
-    int Mesh2_var_x_bnd (nMesh2_data, number_of_elements_in_data)
-    int Mesh2_var_y_bnd (nMesh2_data, number_of_elements_in_data)
-        example:
-            int Mesh2_face_x_bnd (nMesh2_face, nMaxMesh2_face_nodes)
-            int Mesh2_face_y_bnd (nMesh2_face, nMaxMesh2_face_nodes)
-            int Mesh2_edge_x_bnd (nMesh2_edge, two)
-            int Mesh2_edge_y_bnd (nMesh2_edge, two)
-    """
-    print 'filling bound variable'
-    nData = Mesh2_var_x_bnd.shape[0]
-    nElem = Mesh2_var_x_bnd.shape[1]
-
-
-
-    if Mesh2_face_nodes is not None:
-        print 'Filling  face bounds...'
-        pass
-    if Mesh2_node_lat is not None and Mesh2_node_lon is not None:
-        print 'Filling  Mesh2_face_lon_bnd, Mesh2_face_lat_bnd'
-        for i in xrange(nData):  #cycle over data(faces/edges)....
-            # i is the index of face/edge...
-            dataIndexes_i  = Mesh2_face_nodes[i, :]
-            lon_elements_i = np.zeros(nElem)  # arrays with coordinates
-            lat_elements_i = np.zeros(nElem)  # arrays with coordinates
-
-            for j in xrange(nElem):
-                lon_elements_i[j] = Mesh2_node_lon[dataIndexes_i[j]]
-                lat_elements_i[j] = Mesh2_node_lat[dataIndexes_i[j]]
-            if log:
-                print '\t face =', i
-                print '\t face_nodes[{0}] ='.format(i), dataIndexes_i
-                print '\t face_x_bnd[{0}] ='.format(i), lon_elements_i
-                print '\t face_y_bnd[{0}] ='.format(i), lat_elements_i
-            Mesh2_var_x_bnd[i, :] = lon_elements_i
-            Mesh2_var_y_bnd[i, :] = lat_elements_i
-    print 'bounds have been filled'
-
-
-
-
-
-
-
-
-
-
-
-
-
-def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add_eta=False, add_depth=False, mask=None, log=False):
-    '''
-        function will append following variables to passed file...
-            - Mesh2_sigma_layers
-            - Mesh2_face_Wasserstand_2d (optional)  - added if <add_eta>=True
-            - Mesh2_face_depth_2d (optional)  - added if <add_depth>=True
+def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, nc_out_fname, add_eta=False, add_depth=False, mask=None, sigma_varname='level', log=False):
+    ''' Appends variables that define vertical position of layers...
+            - nMesh2_layer_3d
+            - Mesh2_face_z_face_3d
+            - Mesh2_face_z_face_3d_bnd
+            - (optionaly) Mesh2_face_Wasserstand_2d
+            - (optionaly) Mesh2_face_depth_2d
+        ... to passed `nc_out_fname` netcdf file
         
 
-        add_eta, add_depth = False , it means that these vars won't be created
-        why?
-        because, most likely they are already appended or will be appended to file based on DICTIONARY4
+
+    Args:
+    -----
+        list_with_filenames (list of str):
+            list with names of netcdf files. The var `sigma_varname` will be searched within this files
+        nLayers (int):
+            number of vertical layers
+        nc_out_fname (str):
+            filename of the output netcdf file
+        add_eta (bool):
+            flag to add variable "Mesh2_face_Wasserstand_2d" to file `nc_out_fname`.
+            This is useful because, most likely this var is already appended or will be
+            appended to file based on DICTIONARY4
+        add_depth (bool):
+            flag to add variable "Mesh2_face_depth_2d" to file `nc_out_fname`
+            This is useful because, most likely this var is already appended or will be
+            appended to file based on DICTIONARY4
+        mask (2D array of bool):
+            2d array of (y, x) dimensions with boolean mask (to treat NaN cells)
+        sigma_varname (str):
+            name of the varable to get sigma-layer info from
+        log (bool):
+            flag to print output
+        
     '''
     if log:
         print '-'*25+'\n appending sigma_vertical coordinates ...'
@@ -866,14 +809,14 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
     var.set_attr('positive', 'up')
     var.set_attr('formula_terms', 'sigma: nMesh2_layer_3d eta: Mesh2_face_Wasserstand_2d depth: Mesh2_face_depth_2d')
 
-    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname='level')
+    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname=sigma_varname)
     if sigma_type == 'center':
         pass
     elif sigma_type == 'border':
         sigma = process_mixed_data.create_sigma_coords_of_layer_center(sigma)
 
     var_data = sigma
-    append_VariableData_to_netcdf(filename, var, var_data, fv=var.get_fillvalue(), log=log)
+    append_VariableData_to_netcdf(nc_out_fname, var, var_data, fv=var.get_fillvalue(), log=log)
     del var
 
     # ----------------------------------------
@@ -923,7 +866,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
                             water_depth_at_soil_surface=water_depth_at_soil_surface, bathymetry=bathymetry,
                             log=log)
         var_data = process_mixed_data.flatten_xy_data(water_level, mask=mask)
-        append_VariableData_to_netcdf(filename, var, var_data, fv=var.get_fillvalue(), log=log)
+        append_VariableData_to_netcdf(nc_out_fname, var, var_data, fv=var.get_fillvalue(), log=log)
         del var
 
     # ----------------------------------------
@@ -950,7 +893,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
         var.set_attr('location', 'face')
 
         var_data = process_mixed_data.flatten_xy_data(bathymetry, mask=mask)
-        append_VariableData_to_netcdf(filename, var, var_data, fv=var.get_fillvalue(), log=log)
+        append_VariableData_to_netcdf(nc_out_fname, var, var_data, fv=var.get_fillvalue(), log=log)
         del var
 
 
@@ -990,8 +933,8 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, filename, add
     var_data1  = process_mixed_data.flatten_xy_data(elev, mask=mask)
     var_data2 = process_mixed_data.flatten_xy_data(elev_borders, mask=mask)
     
-    append_VariableData_to_netcdf(filename, var1, var_data1, fv=var1.get_fillvalue(), log=log)
-    append_VariableData_to_netcdf(filename, var2, var_data2, fv=var2.get_fillvalue(), log=log)
+    append_VariableData_to_netcdf(nc_out_fname, var1, var_data1, fv=var1.get_fillvalue(), log=log)
+    append_VariableData_to_netcdf(nc_out_fname, var2, var_data2, fv=var2.get_fillvalue(), log=log)
     del var1, var2
 
     if log:

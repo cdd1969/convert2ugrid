@@ -38,11 +38,8 @@ def step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=False):
     OUTPUT
         dictionary_2          - string, path to ASCII file after scanning variables
     '''
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*10+'  STEP 1  '+'+'*10
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*30
+    if log: print '{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 1  '+'+'*10+'\n')
+
     if log: print 'Script is going to scan following NC files:\n{0}\n'.format(list_with_synoptic_nc)
     process_cdl.create_txt_mossco_baw(list_with_synoptic_nc, dictionary_2, dictionary_1, log=log)
     if log: print 'Following file has been created:\n{0}\nIt shows the relation between MOSSCO and DAVIT variable names.'.format(dictionary_2)
@@ -60,33 +57,35 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     OUTPUT
         dictionary_4          - string, path to CDL file to be created
     '''
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*10+'  STEP 2  '+'+'*10
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*30
+    if log: print '{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 2  '+'+'*10+'\n')
     process_cdl.create_dictionary4(dictionary_3, dictionary_2, dictionary_4, log=log)
     if log: print 'Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4)
 
 
 def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=True, log=False):
-    '''
-    INPUT
-        topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
-        list_with_synoptic_nc   - list of strings, paths to netcdf with synoptic data. At first position should be the main data-file
-        dictionary_1            - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
-        dictionary_2            - string, path to txt file after scanning variables
-        dictionary_3            - string, path to cdl file with standard variables
-        dictionary_4            - string, path to cdl file to be created
+    ''' Procedure creates unstructured grid NetCDF file under `nc_out` fname.
 
-    OUTPUT
-        nc_out                  - string, path to netcdf to be created
+    Args:
+    -----
+        topo_nc (str):
+            path to netcdf file with x,y vectors and "bathymetry" variable for mask
+        list_with_synoptic_nc (list(str)):
+            paths to netcdf with synoptic data. At first position should be the main data-file
+        dictionary_1 (str):
+            path to txt file with dictionary to suggest standart mossco-baw variable name correlation
+        dictionary_2 (str):
+            path to txt file after scanning variables
+        dictionary_3 (str):
+            path to cdl file with standard variables
+        dictionary_4 (str):
+            path to cdl file to be created
+
+    Return:
+    -------
+        nc_out (str):
+            path to netcdf to be created
     '''
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*10+'  STEP 3  '+'+'*10
-    if log: print ' '*20+'+'*30
-    if log: print ' '*20+'+'*30
+    if log: print '{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 3  '+'+'*10+'\n')
     
     # --------------------------------------------------
     # 1) Read, x any y vectors from the netcdf
@@ -219,7 +218,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
             raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
                         source['name'], source['dims'], source['shape']), source['nNonOneDims'])
             break
-        raw_data = process_mossco_netcdf.read_mossco_nc_rawvar(source['fname'], var.get_name())
+        raw_data = process_mossco_netcdf.read_mossco_nc_rawvar(source['fname'], source['name'])
         var_data = process_mixed_data.flatten_xy_data(raw_data, mask=m)
 
 
@@ -251,6 +250,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 if 'Mesh2_face_depth_2d' in VARS.keys():
                     add_depth = False
                 process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
+            else:
+                raise NotImplementedError()
         except Exception as err:
             try:
                 print err
@@ -293,16 +294,27 @@ def create_davit_friendly_netcdf(topo_nc=None, list_with_synoptic_nc=[None], nc_
                                             start_from_step=1, dictionary_2=None, dictionary_4=None,
                                             create_davit_netcdf=True, log=False, overwrite=False):
     """
-        topo_nc                 - string, path to netcdf file with x,y vectors and "bathymetry" variable for mask
-        list_with_synoptic_nc   - list of strings, paths to netcdf with synoptic data
-        nc_out                  - string, path to netcdf to be created
-        dictionary_3            - string, path to cdl file with standard variables
-        dictionary_4            - string, path to cdl file to be created, NOW CREATED AUTOMATICALLY
-        dictionary_2            - string, path to txt file after scanning variables, NOW CREATED AUTOMATICALLY
-        dictionary_1            - string, path to txt file with dictionary to suggest standart mossco-baw variable name correlation
+    Args:
+    -----
+        topo_nc (str):
+            path to netcdf file with x,y vectors and "bathymetry" variable for mask
+        list_with_synoptic_nc (list(str)):
+            paths to netcdf with synoptic data
+        nc_out (str):
+            path to netcdf to be created
+        dictionary_3 (str):
+            path to cdl file with standard variables
+        dictionary_4 (str):
+            path to cdl file to be created, NOW CREATED AUTOMATICALLY
+        dictionary_2 (str):
+            path to txt file after scanning variables, NOW CREATED AUTOMATICALLY
+        dictionary_1 (str):
+            path to txt file with dictionary to suggest standart mossco-baw variable name correlation
 
-        start_from_step         - integer, (1,2,3) to indicate from which step to start
-        overwrite               - True/False , flag to use force overwrite existing files
+        start_from_step (int (1|2|3)):
+            (1,2,3) to indicate from which step to start
+        overwrite (bool):
+            flag to use force overwrite existing files
     """
     
     # It can happen that the user will specify as output parameter an input dictionary

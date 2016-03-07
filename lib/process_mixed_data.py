@@ -203,7 +203,7 @@ class cdlVariableExt(netcdfVariableReader):
             parent  - instance of type "cdlVariable".
 
         This object, in contrast to its parent, can process netcdf data-file and read
-        meta-data from them. This is exactly hat is being done: gathering meta-info from
+        meta-data from them. This is exactly what is being done: gathering meta-info from
         the source netcdf-variable of the passed parent"""
     
     def __init__(self, parent):
@@ -761,7 +761,10 @@ def create_magnitude_variable_from_x_y_component(VARS, varname, varval, mask=Non
 
 def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, mask=None, log=False):
     '''
-    create elevations <z> with respect to MSL of passed sigma-coordinates.
+    Generate elevation information of layers (cell center and borders) based on passed
+        - water-level
+        - bathymetry
+        - sigma-coordinates of layers
 
     Calculations are performed in accordance with CF-conventions (CF 1.6)
     for variable "Ocean Sigma Coordinate" as...
@@ -773,8 +776,33 @@ def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, m
             k   - integer, layers
             j,i - integer, y,x indices
 
-    flatten - if True, x,y dimensions of the array will be compressed into one single
-    mask    - boolean 2d mask to ignore elements during flattening. see <process_mossco_netcdf.make_mask_array_from_mossco_bathymetry()>
+    Args:
+    -----
+        eta (3D-array of floats):
+            3d array of (time, y, x) dimensions of water-level data with respect to MSL.
+            Down negative
+        sigma (1D-array of floats):
+            1d array of (z) dimension of sigma coordinates of layer centers.
+            Down negative (bottom = -1, surface = 0)
+        depth (2D-array of floats):
+            2d array of (y, x) dimensions of bathymetry data with respect to MSL.
+            Down positive (MSL = 0, bottom > 0)
+        flatten (bool):
+            if True, x,y dimensions of the array will be compressed into one single dimension of length x*y
+        mask (2D-array of bool)
+            boolean 2d mask of (y, x) dimensions. Is used to ignore elements during flattening.
+            See <process_mossco_netcdf.make_mask_array_from_mossco_bathymetry()>
+        log (bool):
+            flag to print additional info
+
+    Return:
+    -------
+        elev (4D-array of floats):
+            4d array of (time, z, y, x) dimensions with elevation of the layer center with respect
+            to the MSL. Down negative
+        elev_borders (5D array of floats):
+            5d array of (2, time, z, y, x) dimensions with elevation of layer borders with respect to MSL.
+            Down negative. Note: elev_borders[1, t, k, j, i] == elev_borders[0, t, k+1, j, i]
     '''
     _name = 'create_layer_elevation_from_sigma_coords():'
     if log:
