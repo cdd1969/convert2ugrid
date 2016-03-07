@@ -23,7 +23,7 @@ Download source-code from this page. Make sure all the dependencies are installe
 
 To run the tool:
 ```sh
-$ python convert2ugrid.py -t my\_topo.nc my\_model_results.nc
+$ python convert2ugrid.py -t my_topo.nc my_model_results.nc
 ```
 This will produce three files in your current working directory:
 * dictionary_2
@@ -91,6 +91,8 @@ Now *ugrid.nc* has additionaly one dummy-variable and can be viewed in *DAVIT*.
 #
 ---
 ## TODO LIST
+
+- [ ]: test ui2
 
 - [ ]: test bathymetry at X_points
 
