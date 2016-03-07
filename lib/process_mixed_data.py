@@ -263,8 +263,7 @@ class cdlVariableExt(netcdfVariableReader):
 
 
 class containerForGridGeneration(netcdfVariableReader):
-    """this class is a container for information, required to generate
-        grid."""
+    """Class is a container for information, required to generate grid."""
     
     def __init__(self, topofile, log=False):
         super(containerForGridGeneration, self).__init__()

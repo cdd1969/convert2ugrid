@@ -11,9 +11,6 @@
 import os
 import sys
 import inspect
-import getopt
-import process_davit_ncdf
-import process_mossco_netcdf
 import Mesh2
 
 # use this if you want to include modules from a subfolder

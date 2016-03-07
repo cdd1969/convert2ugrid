@@ -12,17 +12,14 @@ __version__ = '0.3.1'
 
 
 import os
-import sys
-import inspect
+#try:
+#    import click
+#    import lib.ui2 as ui
+#except:
+#    import lib.ui as ui
+import lib.ui as ui  # this line should be deleted after ui2 will be tested (see imports above)
+import lib.create_uGrid_netcdf
 
-# use this if you want to include modules from a subfolder
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
-                    inspect.getfile( inspect.currentframe() ))[0], "lib")))
-if cmd_subfolder not in sys.path:
-    sys.path.insert(0, cmd_subfolder)
-
-import create_uGrid_netcdf
-import ui
 
 if __name__ == '__main__':
     """
@@ -60,8 +57,6 @@ if __name__ == '__main__':
                                 # start_from_step=2   => start from the second step, will create dict4 and nc_out. Dict2 should be given
                                 # start_from_step=3   => start from the third step, will create only nc_out. Dict2 and dict4 should be given
     """
-    
-
     # ---------------------
     #     USER SETTINGS
     #  (only for variant1)
@@ -88,19 +83,16 @@ if __name__ == '__main__':
     #  (only for variant1)
     # ---------------------
 
-
-
     # read command line args, and set defaults
-    params = ui.commandline_support(log=True)
-
+    params = ui.commandline_support()
 
 
     # running script...
     if params['use_code_inputs']:
-        create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
+        lib.create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=topo_nc, list_with_synoptic_nc=list_with_synoptic_nc, nc_out=nc_out,
                     dictionary_1=dict1, dictionary_2=dict2, dictionary_3=dict3, dictionary_4=dict4,
                     start_from_step=start_from_step, create_davit_netcdf=True, log=show_more_logs)
     else:
-        create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=params['nc_in'][0], list_with_synoptic_nc=params['nc_in'], nc_out=params['nc_out'],
+        lib.create_uGrid_netcdf.create_davit_friendly_netcdf(topo_nc=params['nc_in'][0], list_with_synoptic_nc=params['nc_in'], nc_out=params['nc_out'],
                     dictionary_1=params['dict1'], dictionary_3=params['dict3'], dictionary_2=params['dict2'], dictionary_4=params['dict4'],
                     start_from_step=params['step'], create_davit_netcdf=True, log=params['log'], overwrite=params['overwrite'])

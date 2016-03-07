@@ -18,11 +18,6 @@ from netCDF4 import Dataset
 import numpy as np
 import sys
 
-import ui
-from Mesh2 import gridhelp
-
-
-
 
 def read_mossco_nc_0d(filename, varname, log=False):
     nc = Dataset(filename, mode='r')

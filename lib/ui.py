@@ -144,7 +144,7 @@ def check_inputs(params):
         # now we know all the files exist!
 
 
-def commandline_support(log=False):
+def commandline_support(log=True):
     P = dict()
     
     # defaults....
