@@ -61,7 +61,7 @@ export NC1=/net/widar/home/ak2stud/Nick/python_scripts/convert2ugrid/examples/1_
 ```
 Jump to desired directory and run the script:
 ```sh
-cd <desired directory>
+cd foobar
 convert2ugrid -t $TOPO $NC1
 ```
 
@@ -79,7 +79,7 @@ export TOPO=/net/widar/home/ak2stud/Nick/python_scripts/convert2ugrid/examples/2
 ```
 Jump to desired directory and run the script:
 ```sh
-cd <desired directory>
+cd foobar
 convert2ugrid -t $TOPO
 ```
 **NOTE:** now the file *ugrid.nc* has been produced, and is readable with *QUICKPLOT*, but not with *DAVIT* (due to some limitations). In order to overcome them we will include time-dependent dummy variable.
