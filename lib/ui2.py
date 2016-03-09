@@ -3,8 +3,11 @@ import os
 import sys
 import netCDF4
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-@click.command()
+
+@click.command(context_settings=CONTEXT_SETTINGS)
+#@click.group(chain=True, invoke_without_command=True)
 @click.argument('nc_in', nargs=-1
     )
 @click.option('--nc_out', '-o', type=click.Path(exists=False, dir_okay=False), default='ugrid.nc',
@@ -34,17 +37,15 @@ import netCDF4
 @click.option('--mute', '-m', is_flag=True, default=False,
     help='Flag to run in silent mode; minimum logs. Default: False'
     )
-@click.option('--hardcoded', '-c', is_flag=True, default=False,
-    help='Flag to use input params hard-coded in file `convert2ugrid.py`. Toggling this flag will IGNORE ALL other command-line inputs. Default: False'
-    )
-def commandline_support(nc_in, nc_out, topo, step, d1, d2, d3, d4, force, mute, hardcoded):
-    '''\nconvert2ugrid'
-    Script can convert structured grid netcdf files to unstructured grid format. Output files then can be viewed with DAVIT, QUICKPLOT or NCVIEW'
-    Example usage:'
-     (variant 1)$python convert2ugrid.py -c'
-     (variant 1) >>> will use input parameters hard-coded in the file <convert2ugrid.py>\n'
-     (variant 2)$python convert2ugrid.py [-s n] [--dict1 s] [--dict2 s] [--dict3 s] [--dict4 s] [-t s] [-o s] [-f] [-m] [-h] nc_in1 nc_in2'
-     (variant 2) >>> see description below'
+
+def commandline_support(nc_in, nc_out, topo, step, d1, d2, d3, d4, force, mute):
+    '''\nconvert2ugrid
+    Script can convert structured grid netcdf files to unstructured grid format. Output files then can be viewed with DAVIT, QUICKPLOT or NCVIEW
+    
+    \b
+    Example usage:
+      $ python convert2ugrid.py [-s n] [--dict1 s] [--dict2 s] [--dict3 s] [--dict4 s] [-t s] [-o s] [-f] [-m] nc_in1 nc_in2
+       >>> see description below'
     '''
     try:
         nc = netCDF4.Dataset(topo , mode='r')
@@ -76,10 +77,9 @@ def commandline_support(nc_in, nc_out, topo, step, d1, d2, d3, d4, force, mute, 
     P['dict3']  = d3
     P['dict4']  = d4
     P['nc_out'] = nc_out
-    P['use_code_inputs'] = hardcoded
 
     print 'P', P
-    return P
+    return click.echo(P)
 
 
 def promtYesNo(question='', quitonno=False):
@@ -97,6 +97,16 @@ def promtYesNo(question='', quitonno=False):
     answer = click.confirm(click.style(question, fg='yellow'), abort=quitonno)
     return answer
 
+
+def promt(*args, **kwargs):
+    if 'pause' in kwargs and kwargs['pause'] is True:
+        click.pause()
+        return
+    if 'color' in kwargs:
+        color = kwargs.pop('color')
+        return click.prompt(click.style(args[0], fg=color), args[1::], **kwargs)
+    else:
+        return click.prompt(*args, **kwargs)
 
 if __name__ == '__main__':
     commandline_support()

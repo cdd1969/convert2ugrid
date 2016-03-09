@@ -241,3 +241,7 @@ def promtYesNo(question='', quitonno=False):
                 print 'Aborting... Good bye'
                 sys.exit(2)
             return False
+
+
+def promt(*args, **kwargs):
+    return raw_input(args[0])

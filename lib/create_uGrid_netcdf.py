@@ -19,7 +19,7 @@ import process_davit_ncdf
 import process_mossco_netcdf
 import process_cdl
 import process_mixed_data
-import ui
+from . import ui, CLICK_IS_HERE
 
 
 
@@ -215,8 +215,8 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         # -----------------------------------------------------------------------------------------------
 
         if source['nNonOneDims'] not in [0, 1, 2, 3, 4]:
-            raw_input('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
-                        source['name'], source['dims'], source['shape']), source['nNonOneDims'])
+            ui.promt('WARNING! Skipping variable: <{0}> with dimensions <{1}> of shape <{2}>. It has <{3}> non-one dimensions. Currently <=4 is supported. Press ENTER to continue'.format(
+                        source['name'], source['dims'], source['shape']), source['nNonOneDims'], color='yellow', pause=True)
             break
         raw_data = process_mossco_netcdf.read_mossco_nc_rawvar(source['fname'], source['name'])
         var_data = process_mixed_data.flatten_xy_data(raw_data, mask=m)
@@ -255,14 +255,14 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         except Exception as err:
             try:
                 print err
-                raw_input('Now i will try to add dummy vertical data. Press ENTER to see info about these values')
+                ui.promt('Now i will try to add dummy vertical data. Press ENTER to see info about these values', pause=True)
                 print process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__
                 if ui.promtYesNo('Do you want to proceed?', quitonno=True):
                     process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, nx=meta['b']['shape'][-1],
                                     ny=meta['b']['shape'][-2], mask=m, log=log)
             except Exception as err:
                 print err
-                raw_input('Failed to find any vertical-layer information. Will proceed without any. Press ENTER')
+                ui.promt('Failed to find any vertical-layer information. Will proceed without any. Press ENTER', color='yellow', pause=True)
                 pass
 
                 
