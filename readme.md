@@ -42,9 +42,10 @@ python convert2ugrid.py --help
 ```    
 
 ## Examples (for BAW internal)
-Before you continue set up the relevant path for the ***convert2ugrid*** script:
+We will start from the very beginning. Download the script and set an alias for a convinient use:
 ```sh
-alias convert2ugrid='python /net/themis/system/akprog/python/qad/convert2ugrid/convert2ugrid.py'
+git clone https://github.com/cdd1969/convert2ugrid.git
+alias convert2ugrid='python $(realpath convert2ugrid/convert2ugrid.py)'
 ```
 ### example 1 - *NSBS*
 This example covers North and Baltic sea with a coarse grid. File */topo.nc* contains bathymetry defined at T points and lats/lons of grid cell centers. File */netcdf_reference_3d.nc* contains *MOSSCO* simulation output. Vertical layers are defined through sigma coordinates.
