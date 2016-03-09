@@ -17,7 +17,7 @@ from __future__ import division
 from netCDF4 import Dataset
 import numpy as np
 import sys
-
+import traceback
 
 def read_mossco_nc_0d(filename, varname, log=False):
     nc = Dataset(filename, mode='r')
@@ -256,7 +256,7 @@ def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm
 
 
 
-def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=False):
+def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=False, **kwargs):
     '''
     get sigma coordinates information. Information is read from the given variable,
     and compared first to the number of layers.
@@ -270,6 +270,7 @@ def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=Fal
                     and the values describes the border coords. In this case output will look like...
     Output:
         [[-1., -0.75, -0.5, -0.25, 0.], 'border']
+        [[-0.875, -0.625, -0.375, -0.125], 'center']
 
     '''
     _n = 'get_sigma_coordinates():'
@@ -303,7 +304,29 @@ def get_sigma_coordinates(list_with_filenames, nLayers, varname='level', log=Fal
         print _n, 'Number of layers <{0}>; Number of sigma coords found <{1}>'.format(nLayers, sigma.__len__())
         return [sigma, sigma_type]
     else:
-        raise ValueError('Sigma coordinates not found. Variable <{0}> not found in files: {1}'.format(varname, list_with_filenames))
+        print _n, 'Sigma coordinates not found. Variable <{0}> not found in files: {1}'.format(varname, list_with_filenames)
+        raw_input(_n+' Now i will try calculating relative layer thickness based on variables:\n{0}\nPress Enter to continue'.format(kwargs))
+        sigma = None
+        for nc_file in list_with_filenames:
+            if log: print _n, 'calculating sigma layers from file:', nc_file
+            try:
+                sigma = get_mossco_relative_layer_thickness(nc_file, **kwargs)
+            except Exception, err:
+                print err
+                traceback.print_exc()
+                continue
+            if sigma:
+                sigma_found = True
+                sigma_type = 'center'
+                break
+
+        if sigma_found:
+            print _n, 'Calculated sigma-coords:', sigma, '\n From variables:\n{0})'.format(kwargs)
+            print _n, 'Values represent coordinates of layer <{0}>'.format(sigma_type)
+            print _n, 'Number of layers <{0}>; Number of sigma coords <{1}>'.format(nLayers, sigma.__len__())
+            return [sigma, sigma_type]
+        else:
+            raise ValueError('Sigma coordinates neither found (1) nor calculated (2).\n1): Variable <{0}> not found in files: {1}\n\n2): Sigma was not calculated based on variables {2}'.format(varname, list_with_filenames, kwargs))
 
 
 
@@ -361,3 +384,85 @@ def get_water_level(list_with_filenames, varname='water_level', water_depth_at_s
   
     return water_level
     
+
+def caclulate_relative_layer_thickness(layer_depth, water_depth, include_time=False):
+    '''Calculate relative layer thickness for mutlidimensional array
+    (t, z, y, x) at timestep t=0 at cell center
+    Assumptions:
+        1) z=0 is the closest to soil-surface layer, where `z` is the index
+           of the vertical dimension of the matrix
+        2) relative layer thickness is not time dependent !!!
+    Args:
+    -----
+        layer_depth (3D numpy array):
+            3D-Array with (z, y, x) dimensions; represents layer depth below
+            water surface (0, level) at center of each z,y,x cell.
+            Units are shared with `water_depth` array. Always negative.
+        
+        water_depth (3D numpy array):
+            3D-Array with (time, y, x) dimensions; represents water depth at soil
+            surface. Units are shared with `layer_depth` array. Always positive.
+        include_time (Optional[bool]):
+            Flag to control the shape of the output array. It does not affect the data
+            that is stored in output array: it is completely identical.
+            ---
+            If `True` - the shape will be (time, z, y, x)
+            If `False` - the shape will be (z, y, x)  (DEFAULT)
+    Return:
+    -------
+        layer_relthickness (3D|4D numpy array):
+            3D|4D-Array with (z, y, x)|(t, z, y, x) dimensions; represents relative layer thickness.
+            Is dimensionless and is constant within simulation period. Values are at cell center
+    '''
+    # >>> Get dimensions
+    z, y, x = layer_depth.shape
+    t, y, x = water_depth.shape
+
+    # >>> Get optional mask
+    if isinstance(layer_depth, np.ma.MaskedArray):
+        mask = layer_depth.mask
+        # >>> Allocate memory for `layear_thickness` array, initialize it. This array represents layer thickness at timestep t=0. Values are always positive
+        layer_thickness = np.ma.array(np.empty((z, y, x), dtype=float), mask=mask)
+        # >>> Allocate memory for `relative_thcikness` array, initialize it. This array represents relaitve layer thickness at timestep t=0 with respect to total water-depth. Values are always positive, dimensionless
+        layer_relthickness = np.ma.array(np.empty((z, y, x), dtype=float), mask=mask)
+    else:
+        layer_thickness = np.empty((z, y, x), dtype=float)
+        layer_relthickness = np.empty((z, y, x), dtype=float)
+    
+
+
+    # >>> Layer thickness of the near-bottom layer
+    layer_thickness[0, :, :] = (water_depth[0, :, :] - (-layer_depth[0, :, :]) ) * 2.0
+    # >>> Layer thickness of the rest layers
+    for k in xrange(1, z):
+        #layer_thickness[k, :, :] = (water_depth[0, :, :] - (-layer_depth[k, :, :]) - layer_thickness[k-1, :, :]) * 2.0
+        layer_thickness[k, :, :] = (water_depth[0, :, :] - (-layer_depth[k, :, :]) - np.sum(layer_thickness[0:k, :, :], axis=0)) * 2.0
+    # >>> Now calculate relative layer thickness
+    for k in xrange(z):
+        layer_relthickness[k, :, :] = abs(layer_thickness[k, :, :] / water_depth[0, :, :])
+    # >>> Finally return the result
+    if include_time is False:
+        return layer_relthickness
+    else:
+        # add new axis at 0-index position
+        # and repeat the array (z,y,x) `t` times along 0-index position axis
+        return layer_relthickness.reshape(1, z, y, x).repeat(t, 0)
+
+
+
+def get_mossco_relative_layer_thickness(nc_in,
+        waterdepth_varname='water_depth_at_soil_surface',
+        layerdepth_varname='getmGrid3D_getm_layer'
+        ):
+    ''' Function return 1D array with relative layer thickness (sigma-layers) of cell centers.
+        See doc string of function `caclulate_relative_layer_thickness()`
+    '''
+    nc = Dataset(nc_in , mode='r')
+    
+    #>>> Now get the relative layer thickness
+    layer_relthickness = caclulate_relative_layer_thickness(nc.variables[layerdepth_varname][:], nc.variables[waterdepth_varname][:], include_time=False)
+    nc.close()
+
+    valid_cell_ji = (layer_relthickness[0, :, :].nonzero()[0][0], layer_relthickness[0, :, :].nonzero()[1][0])  # see ISSUE #2
+    rel_thick_1D = layer_relthickness[:, valid_cell_ji[0], valid_cell_ji[1]]  # see ISSUE #1 , #2
+    return rel_thick_1D

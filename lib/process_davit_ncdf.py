@@ -809,7 +809,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, nc_out_fname,
     var.set_attr('positive', 'up')
     var.set_attr('formula_terms', 'sigma: nMesh2_layer_3d eta: Mesh2_face_Wasserstand_2d depth: Mesh2_face_depth_2d')
 
-    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname=sigma_varname)
+    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname=sigma_varname, waterdepth_varname='water_depth_at_soil_surface', layerdepth_varname='getmGrid3D_getm_layer',)
     if sigma_type == 'center':
         pass
     elif sigma_type == 'border':
