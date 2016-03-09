@@ -8,14 +8,15 @@ This script is able to process data stored in netcdf files. It can convert struc
 ## Requirements
 
 * OS
-    * Linux SUSE/Ubuntu (has not been tested on other systems yet)
-* Python related:
-    * [python 2](https://www.python.org/) >= v2.7.6
-    * [netcdf4-python](https://github.com/Unidata/netcdf4-python) >= v1.0.8
-    * [numpy](http://www.numpy.org/) >= v1.8.0
+    * Linux SUSE/Ubuntu (has not been tested on other systems)
 * General:
     * [HDF5](https://www.hdfgroup.org/HDF5/) >= v1.8.11
     * [NetCDF C](https://github.com/Unidata/netcdf-c) >= v4.3.0
+* Python related:
+    * [python 2.7](https://www.python.org/) >= v2.7.6
+    * [netcdf4-python](https://github.com/Unidata/netcdf4-python) >= v1.0.8
+    * [numpy](http://www.numpy.org/) >= v1.8.0
+    * [click](http://click.pocoo.org/6/)
 
 
 ## Quick start
@@ -101,8 +102,6 @@ Now *ugrid.nc* has additionaly one dummy-variable and can be viewed in *DAVIT*.
 
 - [ ]: test bathymetry at X_points
 
-- [ ]: update documentation from v0.2 to v0.3
-
-- [ ]: add more flexible support to choose *depth\_variable*, since it my vary and the name is not only limited to *GETM\_grid\_3D* or *levels*
+- [ ]: add more flexible support to choose *depth_variable*, since it my vary and the name is not only limited to *GETM_grid_3D* or *levels*
 
 - [ ]: check more usage of new classes ```cdlVariable()``` and ```cdlVariableExt()```
