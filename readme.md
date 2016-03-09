@@ -56,8 +56,8 @@ key info:
 
 Now let's convert it! First define paths to data-files:
 ```sh
-export TOPO=/net/widar/home/ak2stud/Nick/python_scripts/convert2ugrid/examples/1_nsbs/data/topo.nc
-export NC1=/net/widar/home/ak2stud/Nick/python_scripts/convert2ugrid/examples/1_nsbs/data/netcdf_reference_3d.nc
+export TOPO=/net/widar/data/uebergabe/Nick/01_py/tools/python_scripts/convert2ugrid/examples/1_nsbs/data/topo.nc
+export NC1=/net/widar/data/uebergabe/Nick/01_py/tools/python_scripts/convert2ugrid/examples/1_nsbs/data/netcdf_reference_3d.nc
 ```
 Jump to desired directory and run the script:
 ```sh
@@ -75,7 +75,7 @@ key info:
 
 First define paths to data-files:
 ```sh
-export TOPO=/net/widar/home/ak2stud/Nick/python_scripts/convert2ugrid/examples/2_sns/data/topo_extended.nc
+export TOPO=/net/widar/data/uebergabe/Nick/01_py/tools/python_scripts/convert2ugrid/examples/2_sns/data/topo_extended.nc
 ```
 Jump to desired directory and run the script:
 ```sh
@@ -86,7 +86,7 @@ convert2ugrid -t $TOPO
 
 To do that, we will use predefined *dictionary_2* (you may compare it to the *dictionary_2* you have just generated), and start the script from step 2 (see documentation).
 ```sh
-export DICT=/net/widar/home/ak2stud/Nick/python_scripts/convert2ugrid/examples/2_sns/data/dictionary_2
+export DICT=/net/widar/data/uebergabe/Nick/01_py/tools/python_scripts/convert2ugrid/examples/2_sns/data/dictionary_2
 ```
 ```sh
 convert2ugrid -s 2 --dict2=$DICT -t $TOPO
