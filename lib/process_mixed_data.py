@@ -11,7 +11,7 @@ import numpy as np
 import os.path
 import netCDF4
 
-import ui
+from . import ui
 import process_cdl
 import process_mossco_netcdf
 from Mesh2 import gridhelp
@@ -79,7 +79,7 @@ class netcdfVariableReader(object):
         return found
 
 
-    def promtVariableNameInput(self, ncname, promtInputMessage='Type the name of the variable to pick:', printAvailableVarNames=True):
+    def promtVariableNameInput(self, ncname, promtInputMessage='Type the name of the variable to pick:', printAvailableVarNames=True, dtype=str):
         """ Method asks user to choose variable from file
         Inputs:
             ncname      -   string, name of the netcdf datafile
@@ -100,7 +100,7 @@ class netcdfVariableReader(object):
             #print 'Select variable from file <{0}>'.format(ncname)
         varname = None
         while varname not in nc.variables.keys():
-            varname = raw_input(promtInputMessage)
+            varname = ui.promt(promtInputMessage, color='yellow', type=dtype, show_default=False)
         nc.close()
         del nc
         return varname
@@ -350,8 +350,8 @@ class containerForGridGeneration(netcdfVariableReader):
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         if bathymetry_vname and not self.variableIsFound(ncname, bathymetry_vname) :
-            raw_input('Bathymetry: User-defined bathymetry-variable name <{0}> not found in file <{1}>. I will try to match default names. Press Enter to continue'.format(
-                            bathymetry_vname, ncname))
+            ui.promt('Bathymetry: User-defined bathymetry-variable name <{0}> not found in file <{1}>. I will try to match default names. Press Enter to continue'.format(
+                            bathymetry_vname, ncname), pause=True)
         
         if not bathymetry_vname:
             if log: print 'Bathymetry: Will try to match bathymetry-name from default list...'
@@ -363,7 +363,8 @@ class containerForGridGeneration(netcdfVariableReader):
             if not found:  # we cycled through whole loop and havent found any var
                 print 'Bathymetry: Bathymetry not found: No variable with name from default namelist found.'
                 print 'Bathymetry: Default bathymetry namelist: {0}'.format(self.get_constants()['bathymetry_vnames'])
-                if long_var_list_not_shot: raw_input('Bathymetry: Choose manually. Press Enter to list all available variables in current file')
+                if long_var_list_not_shot:
+                    ui.promt('Bathymetry: Choose manually. Press Enter to list all available variables in current file', pause=True)
                 ndim = -1
                 while ndim != 2:
                     bathymetry_vname = self.promtVariableNameInput(ncname, promtInputMessage='Bathymetry: Type the name of the bathymetry-variable to pick (should be 2D):', printAvailableVarNames=long_var_list_not_shot)
@@ -401,7 +402,7 @@ class containerForGridGeneration(netcdfVariableReader):
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         if x_vname and not self.variableIsFound(ncname, x_vname):
-                raw_input('X coords: User-defined X-coord-variable name <{0}> not found in file <{1}>. Press Enter to continue auto-search'.format(x_vname, ncname))
+                ui.promt('X coords: User-defined X-coord-variable name <{0}> not found in file <{1}>. Press Enter to continue auto-search'.format(x_vname, ncname), pause=True)
 
         if not x_vname:
             dim_bath = self.__bathymetry['meta']['dims']
@@ -419,7 +420,8 @@ class containerForGridGeneration(netcdfVariableReader):
                 # X case (1)
                 if len(x_found) == 0:  # nothing found, ask user to type name
                     print 'X coords: Nothing found. Choose manually.'
-                    if long_var_list_not_shot: raw_input('X coords: Press Enter to list all available variables in current file')
+                    if long_var_list_not_shot:
+                        ui.promt('X coords: Press Enter to list all available variables in current file', pause=True)
                     ndim = -1
                     while ndim not in [1, 2]:
                         x_vname = self.promtVariableNameInput(ncname, promtInputMessage='X coords: Type the name of the X-coords-variable to pick (should be 1D or 2D):', printAvailableVarNames=long_var_list_not_shot)
@@ -452,7 +454,7 @@ class containerForGridGeneration(netcdfVariableReader):
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
         if y_vname and not self.variableIsFound(ncname, y_vname):
-                raw_input('Y coords: User-defined Y-coord-variable name <{0}> not found in file <{1}>. Press Enter to continue auto-search'.format(y_vname, ncname))
+                ui.promt('Y coords: User-defined Y-coord-variable name <{0}> not found in file <{1}>. Press Enter to continue auto-search'.format(y_vname, ncname), pause=True)
 
         if not y_vname:
             dim_bath = self.__bathymetry['meta']['dims']
@@ -470,7 +472,8 @@ class containerForGridGeneration(netcdfVariableReader):
                 # Y case (1)
                 if len(y_found) == 0:  # nothing found, ask user to type name
                     print 'Y coords: Nothing found. Choose manually.'
-                    if long_var_list_not_shot: raw_input('Y coords: Press Enter to list all available variables in current file')
+                    if long_var_list_not_shot:
+                        ui.promt('Y coords: Press Enter to list all available variables in current file', pause=True)
                     ndim = -1
                     while ndim not in [1, 2]:
                         y_vname = self.promtVariableNameInput(ncname, promtInputMessage='Y coords: Type the name of the Y-coords-variable to pick (should be 1D or 2D):', printAvailableVarNames=long_var_list_not_shot)
@@ -527,7 +530,7 @@ class containerForGridGeneration(netcdfVariableReader):
         print 'Data location: Bathymetry variable: <{0}> , dimensions {1}, shape {2}'.format(self.__bathymetry['meta']['name'], self.__bathymetry['meta']['dims'], self.__bathymetry['meta']['shape'])
         xy_location = None
         while xy_location not in ['x', 'X', 't', 'T']:
-            xy_location = raw_input('Data location: select whether origin XY-COORDS data is located at nodes(X_points) or at cell centers(T_points) [X/T]:')
+            xy_location = ui.promt('Data location: select whether origin XY-COORDS data is located at nodes(X_points) or at cell centers(T_points) [X/T]:', color='yellow', show_default=False, type=str)
         
         if xy_location in ['x', 'X']:
             self.__x_coords['meta']['points_location'] = 'X_points'
@@ -538,7 +541,7 @@ class containerForGridGeneration(netcdfVariableReader):
         
         bt_location = None
         while bt_location not in ['x', 'X', 't', 'T']:
-            bt_location = raw_input('Data location: select whether origin BATHYMETRY data is located at nodes(X_points) or at cell centers(T_points) [X/T]:')
+            bt_location = ui.promt('Data location: select whether origin BATHYMETRY data is located at nodes(X_points) or at cell centers(T_points) [X/T]:', color='yellow', show_default=False, type=str)
         if bt_location in ['x', 'X']:
             self.__bathymetry['meta']['points_location'] = 'X_points'
         else:
@@ -558,7 +561,7 @@ class containerForGridGeneration(netcdfVariableReader):
             print 'Coords type: Y-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self.__y_coords['meta']['name'], self.__y_coords['meta']['dims'], self.__y_coords['meta']['shape'])
             coord_mode = None
             while coord_mode not in ['c', 'g']:
-                coord_mode = raw_input('Coords type: coord-type not understood. Choose cartesian or geographic. Type [c/g]:' )
+                coord_mode = ui.promt('Coords type: coord-type not understood. Choose cartesian or geographic. Type [c/g]:', color='yellow', show_default=False, type=str)
             if coord_mode == 'c':
                 self.__x_coords['meta']['coordinate_type'] = 'cartesian'
                 self.__y_coords['meta']['coordinate_type'] = 'cartesian'
@@ -629,8 +632,8 @@ class containerForGridGeneration(netcdfVariableReader):
                         break
                 # if nothing found in <for> , here maskvalue=None
                 if not maskvalue:
-                    raw_input(_n+'Current virable does not have any of the following attributes {0}. I will continue without mask. Press ENTER to continue'.format(
-                                self.get_constants()['fv_attr_namelist']))
+                    ui.promt(_n+'Current virable does not have any of the following attributes {0}. I will continue without mask. Press ENTER to continue'.format(
+                                self.get_constants()['fv_attr_namelist']), color='yellow', pause=True)
                     return None
             masked_arr = np.ma.masked_values(array, float(maskvalue))
             mask_in = np.ma.getmaskarray(masked_arr)

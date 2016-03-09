@@ -7,17 +7,7 @@
 # hope that it will be useful, but WITHOUT ANY WARRANTY.  Consult the file
 # LICENSE.GPL or www.gnu.org/licenses/gpl-3.0.txt for the full license terms.
 
-
-import os
-import sys
-import inspect
 import Mesh2
-
-# use this if you want to include modules from a subfolder
-cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0], "lib")))
-if cmd_subfolder not in sys.path:
-    sys.path.insert(0, cmd_subfolder)
-    
 
 
 def make_2d_qudratic_grid_or_curvilinear(x, y, mask=None, log=True, startingindex=1, data_location='T_points'):

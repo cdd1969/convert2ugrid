@@ -17,6 +17,7 @@ from __future__ import division
 from netCDF4 import Dataset
 import numpy as np
 import sys
+from . import ui
 
 
 def read_mossco_nc_0d(filename, varname, log=False):
@@ -182,7 +183,7 @@ def get_number_of_depth_layer_from_mossco(list_with_filenames, dimname='getmGrid
         print _n, 'Vertical layers not recognized. Dimension <{0}> not found in files: {1}'.format(dimname, list_with_filenames)
         nLayers = -1
         while (nLayers < 1):
-            user_input = raw_input(_n+' Set number of vertical layers manually. To continue with 2D, set 1 (nLayers integer >=1):')
+            user_input = ui.promt(_n+' Set number of vertical layers manually. To continue with 2D, set 1 (nLayers integer >=1):', color='yellow', type=int, show_default=False)
             try:
                 nLayers = int(user_input)
             except:
