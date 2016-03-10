@@ -646,23 +646,24 @@ def append_Time_andDatetime_to_netcdf(fname_davitnc, fname_mossconc=None, time_v
 
 
 
-def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
-    '''
-    Function appends data to a NETCDF4 file created by function "create_uGrid_ncdf()". Check description there.
-    Data is stored in accordance with BAW convention for 2D Unstructured Grid
-    (http://www.baw.de/methoden/index.php5/NetCDF_Unstrukturiertes_Gitter)
-    
-    input:
-        filename - string, containing filename of netcdf file to be created.
+def append_VariableData_to_netcdf(nc_out_fname, var, var_data, fv=None, log=True):
+    ''' Procedure appends variable (meta+data) to a `nc_out_fname` netCDF file.
+    Args:
+    -----
+        nc_out_fname (str):
+            filename of a netcdf file to which variable `var` will be appended
 
-        variables - dictionary with data...
-            var.set_name( = strin'Mesh2_node_depth')
-            var.set_dtype(string, 'double' or 'float' or 'i')
-            var.set_dims(tuple of strings, ('time', 'nMesh2_node'))
-            var.set_fillvalue(False)
-            variable['attributes'] = dictionary with attributes
+        var (process_cdl.cdlVariable|process_mixed_data.cdlVariableExt):
+            meta information of the variable which will be appended
 
-            variable['data'] = numpy array of dimensions specified in variable['dims'] or None.
+        var_data (nd-array):
+            n-dimensional numpy array with variable data. It should has shape,
+            that corresponds with dimensions of netcdf file `nc_out_fname` declared
+            with `var.get_dims()`
+
+        fv (None or float|int):
+            fill value. Default: None
+
     '''
     _n = 'append_VariableData_to_netcdf():'
     if isinstance(var, process_cdl.cdlVariable):
@@ -670,20 +671,17 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
     elif isinstance(var, process_mixed_data.cdlVariableExt):
         meta = var.get_parent()
     else:
-        raise TypeError(_n+'Invalid datatype. Var is of type {0}. Should be <cdlVariable> or <cdlVariableExt>'.format(type(var)))
+        raise TypeError(_n+'Invalid datatype. Passed argument `var` is of type {0}. Should be <cdlVariable> or <cdlVariableExt>'.format(type(var)))
 
-
-    
-
-    if log: print _n, 'Now try to append variable <{0}> of shape {1}'.format(meta.get_name(), var_data.shape)
+    if log: print _n, 'Now try to append variable <{0}>'.format(meta.get_name())
     # --------------------------------------------------
     #                   Appending ncdf
     # --------------------------------------------------
-    nc = Dataset(filename, mode='a')
+    nc = Dataset(nc_out_fname, mode='a')
 
     # check if this variable already exists!
     if meta.get_name() in nc.variables.keys():
-        if log: print _n, 'Variable <{0}> skipped. Already exists in file <{1}>'.format(meta.get_name(), filename)
+        if log: print _n, 'Variable <{0}> skipped. Already exists in file <{1}>'.format(meta.get_name(), nc_out_fname)
         nc.close()
         return
 
@@ -698,21 +696,23 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
             #    And lets imagine we try to pass array of shape (3, ny, nx) with 3 timesteps written... This error will trigger
             #    Let's get through!
             if len(nc_var_shape) != len(var_data.shape):
+                msg = _n+' Invalid dimensions. Passed metadata {0} declares following dimension names {1} for variable {2}. NetCDF file {3} has following lengths of previously mentioned dimensions {4}. Therefore exacly this shape {4} will be allocated for an array within NetCDF file. However passed data-array has shape {5} and cannot be fit into allocated shape'.format(type(var), meta.get_dims(), meta.get_name(), nc_out_fname, nc_var_shape, var_data.shape)
+                msg2 = _n+' Now I will squeeze (see numpy.squeeze()) passed data-array and try to fit it into allocated array within NetCDF file once again'
+                print msg
+                print msg2
                 # here can be something like.... (1, 2) and (2, )
                 squeezed_ncvarshape = tuple([d for d in nc_var_shape if d != 1])
                 squeezed_vdatashape = tuple([d for d in var_data.shape if d != 1])
                 if len(squeezed_ncvarshape) != len(squeezed_vdatashape):
-                    print _n, 'Invalid data shape. Declared shape of the variable `{4}` in netcdf file {0} (neither original, nor squeezed {2}\
-                        ) does not match to shape of the passed data array {1} (neither original, nor squeezed {3}'.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape, meta.get_name())
-                    ui.promt(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()), color='yellow', pause=True)
+                    print _n, _n+' Squeezed arrays do not match each other (allocated squeezed shape {0} != data-array squeezed shape {1}). Proceeding...'.format(squeezed_ncvarshape, squeezed_vdatashape)
+                    ui.promt(_n+' Press Enter to skip appending variable <{0}>'.format(meta.get_name()), color='yellow', pause=True)
                     nc.close()
                     return
                 else:
-                    print (_n+' WARNING! Declared shape of the variable `{4}` in netcdf file {0} does not match to shape of the passed data array {1}. But if squeezed, shapes are equal (nc_var.shape = data.shape): {2} = {3}. This could happen, when we have fiction dimension such as <nMesh2_time=1> or <nMesh_layer_2d=1>. The dimension of variable `{4}` are {5}. '.format(nc_var_shape, var_data.shape, squeezed_ncvarshape, squeezed_vdatashape, meta.get_name(), meta.get_dims()) +
-                            'Since the logic for checking such cases has not been implemented yet, now you have to decide whether to proceed appending this variable to netcdf file or skip it. If you choose "yes" I will continue and try store passed data array of shape {0} into defined(or allocated) array within netcdf of shape {1}'.format(var_data.shape, nc_var_shape) )
-                    if not ui.promtYesNo(_n+' Continue appending variable `{0}` ("yes") or skip it ("no")?'.format(meta.get_name())):
-                        nc.close()
-                        return
+                    print _n+' Squeezed arrays match each other (allocated squeezed shape {0} = data-array squeezed shape {1}). Proceeding...'.format(squeezed_ncvarshape, squeezed_vdatashape)
+                    #if not ui.promtYesNo(_n+' Continue appending variable `{0}` ("yes") or skip it ("no")?'.format(meta.get_name())):
+                    #    nc.close()
+                    #    return
 
             else:  # if shape is equal
                 for i, dim_length_nc, dim_length_data in zip(xrange(len(nc_var_shape)), nc_var_shape, var_data.shape):
@@ -720,8 +720,8 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
                         # no error, since unlimited dimension of undefined length
                         pass
                     else:
-                        print _n, 'Invalid data shape. Declared shape of the variable in netcdf file {0} does not match to shape of the passed data array {1}'.format(nc_var_shape, var_data.shape)
-                        ui.promt(_n+' Press Enter to skip this variable <{0}>'.format(meta.get_name()), color='yellow', pause=True)
+                        print msg
+                        ui.promt(_n+' Press Enter to skip appending variable <{0}>'.format(meta.get_name()), color='yellow', pause=True)
                         nc.close()
                         return
 
@@ -759,15 +759,13 @@ def append_VariableData_to_netcdf(filename, var, var_data, fv=None, log=True):
 
 def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, nc_out_fname, add_eta=False, add_depth=False, mask=None, sigma_varname='level', log=False):
     ''' Appends variables that define vertical position of layers...
-            - nMesh2_layer_3d
-            - Mesh2_face_z_face_3d
-            - Mesh2_face_z_face_3d_bnd
-            - (optionaly) Mesh2_face_Wasserstand_2d
-            - (optionaly) Mesh2_face_depth_2d
+            - nMesh2_layer_3d                       >>> 1d sigma coords of cell center
+            - Mesh2_face_z_face_3d                  >>> elevation cell center values
+            - Mesh2_face_z_face_3d_bnd              >>> elevation cell border values
+            - (optionaly) Mesh2_face_Wasserstand_2d >>> water level
+            - (optionaly) Mesh2_face_depth_2d       >>> bottom depth
         ... to passed `nc_out_fname` netcdf file
         
-
-
     Args:
     -----
         list_with_filenames (list of str):
@@ -809,14 +807,13 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, nc_out_fname,
     var.set_attr('positive', 'up')
     var.set_attr('formula_terms', 'sigma: nMesh2_layer_3d eta: Mesh2_face_Wasserstand_2d depth: Mesh2_face_depth_2d')
 
-    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, varname=sigma_varname, waterdepth_varname='water_depth_at_soil_surface', layerdepth_varname='getmGrid3D_getm_layer',)
+    sigma, sigma_type = process_mossco_netcdf.get_sigma_coordinates(list_with_filenames, nLayers, sigma_varname=sigma_varname, waterdepth_varname='water_depth_at_soil_surface', layerdepth_varname='getmGrid3D_getm_layer',)
     if sigma_type == 'center':
         pass
     elif sigma_type == 'border':
         sigma = process_mixed_data.create_sigma_coords_of_layer_center(sigma)
 
-    var_data = sigma
-    append_VariableData_to_netcdf(nc_out_fname, var, var_data, fv=var.get_fillvalue(), log=log)
+    append_VariableData_to_netcdf(nc_out_fname, var, sigma, fv=var.get_fillvalue(), log=log)
     del var
 
     # ----------------------------------------
@@ -905,7 +902,7 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, nc_out_fname,
     # ----------------------------------------
     
     # ----------------------------------------
-    # FACE middle values.....
+    # FACE cell center values.....
     # ----------------------------------------
     var1 = process_cdl.cdlVariable()
     var1.set_name('Mesh2_face_z_face_3d')
@@ -919,6 +916,9 @@ def append_sigma_vertical_coord_vars(list_with_filenames, nLayers, nc_out_fname,
     var1.set_attr('bounds', 'Mesh2_face_z_face_bnd_3d')
     var1.set_attr('standard_name', 'depth')
    
+    # ----------------------------------------
+    # FACE cell border values.....
+    # ----------------------------------------
     var2 = process_cdl.cdlVariable()
     var2.set_name('Mesh2_face_z_face_bnd_3d')
     var2.set_dtype('float')
