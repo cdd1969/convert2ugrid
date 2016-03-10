@@ -18,22 +18,23 @@ from Mesh2 import gridhelp
 
 
 class netcdfVariableReader(object):
-    """ This is the basic class for inheritance of other classes,
-        providing methods to access netCDF files"""
+    """ Abstract class providing useful methods for quick access to NetCDF file.
+    This class """
     
     def __init__(self):
         pass
 
     def check_dtype(self, _object, dtype, raise_error=True):
         """Compares type(_object) to "dtype" """
+        if dtype in (str, unicode):  # here we treat unicode and simple string as same objects
+            dtype = (str, unicode)
         if isinstance(_object, dtype):
             return True
         else:
-            # here we treat unicode and simple string as same objects
-            if isinstance(_object, unicode) and dtype is str:
-                return True
-            if raise_error: raise TypeError('<{0}> should be of type <{2}>. Is {1}'.format(_object, type(_object), str(dtype)))
-            else: return False
+            if raise_error:
+                raise TypeError('<{0}> should be of type <{2}>. Is {1}'.format(_object, type(_object), str(dtype)))
+            else:
+                return False
 
     def get_string_with_netcdf_varnames(self, ncname, prefix='', withdims=True):
         """ Method returns a nice string of enumerated varnames within netcdf file
@@ -138,9 +139,9 @@ class netcdfVariableReader(object):
         metadata['name']  = varname    # source
         metadata['dims']  = var.dimensions
         metadata['dtype'] = var.dtype
-        metadata['shape'] = var.shape  # will be <()> if single value
+        metadata['shape'] = var.shape  # will be empty tuple <()> if a single value
         metadata['size']  = var.size   # number of elements
-        # for some reason not working, giving "attribute 'mask' not found"
+        # for some reason not working, printing "attribute 'mask' not found"
         #metadata['mask']  = var.mask   # True/False flag
         metadata['fillvalue']    = var._FillValue if '_FillValue' in var.ncattrs() else None
         metadata['nNonOneDims'] = len(filter(lambda a: a != 1, var.shape))  # length of the array.shape excluding single dimensions, for <()> will give 0
@@ -196,54 +197,55 @@ class netcdfVariableReader(object):
 
 
 class cdlVariableExt(netcdfVariableReader):
-    """this class is an extension of class cdlVariable()
-        It is considered as an addon to already existing metadata variable.
-        
-        Inputs:
-            parent  - instance of type "cdlVariable".
+    """Class-extension of a metadata cdlVariable()
 
         This object, in contrast to its parent, can process netcdf data-file and read
         meta-data from them. This is exactly what is being done: gathering meta-info from
-        the source netcdf-variable of the passed parent"""
+        the source netcdf-variable of the passed parent
+        
+        Args:
+            parent (process_cdl.cdlVariable):
+                metadata from CDL
+    """
     
     def __init__(self, parent):
         super(cdlVariableExt, self).__init__()
         if not isinstance(parent, process_cdl.cdlVariable):
-            raise TypeError('Invalid type. Should be <cdlVariable>, received {0}'.format(type(parent)))
-        self.__parent = parent
+            raise TypeError('Invalid `parent` type. Should be <cdlVariable>, received {0}'.format(type(parent)))
+        self._parent = parent
 
         self._init_constants()
 
         # do not know if it is good idea to check at the init stage
         # whether netcdf file is valid, and var is whithin
-        self.__source = self._search_source_metadata()
+        self._source = self._search_source_metadata()
 
 
     def _init_constants(self):
         # overwriting method of parent
-        self.__source_attrs = ['_source_filename', '_source_varname']
+        self._source_attrs = ['_source_filename', '_source_varname']
 
 
     def _search_source_metadata(self):
-        parent_attrs = self.__parent.get_attrs()
-        if all(attr in parent_attrs.keys() for attr in self.__source_attrs):
+        parent_attrs = self._parent.get_attrs()
+        if all(attr in parent_attrs.keys() for attr in self._source_attrs):
             # if the file exists
-            if os.path.isfile( parent_attrs[self.__source_attrs[0]] ):
-                return self.read_netcdfVarMetadata(parent_attrs[self.__source_attrs[0]], parent_attrs[self.__source_attrs[1]])
+            if os.path.isfile( parent_attrs[self._source_attrs[0]] ):
+                return self.read_netcdfVarMetadata(parent_attrs[self._source_attrs[0]], parent_attrs[self._source_attrs[1]])
 
             else:
-                raise IOError('Special attribute <_source_filename>: No such file <{0}>'.format(parent_attrs[self.__source_attrs[0]]))
+                raise IOError('Special attribute <_source_filename>: No such file <{0}>'.format(parent_attrs[self._source_attrs[0]]))
 
         else:
-            raise ValueError('Add missing attributes to know where to search for data. Both these attributess should exist {0}'.format(self.__source_attrs))
+            raise ValueError('Add missing attributes that define data-file position within filesystem. Both these attributess should exist {0}'.format(self._source_attrs))
 
 
     def get_parent(self):
-        return self.__parent
+        return self._parent
 
     def get_source_metadata(self):
         #return self._search_source_metadata()
-        return self.__source
+        return self._source
 
 
 
@@ -266,43 +268,48 @@ class containerForGridGeneration(netcdfVariableReader):
     """Class is a container for information, required to generate grid."""
     
     def __init__(self, topofile, log=False):
+        '''
+        Args:
+            topofile (str):
+                name of the netcdf file with topology info
+        '''
         super(containerForGridGeneration, self).__init__()
         self.check_dtype(topofile, str)
-        self.__topofile = topofile
+        self._topo = topofile
         self._init_constants()
 
-        self._init_coordinates_and_bathymetry_metadata(self.__topofile, log=log)
+        self._init_coordinates_and_bathymetry_metadata(self._topo, log=log)
         if log: print self.get_string_metadata_summary()
 
     def _init_constants(self):
-        self.__bathymetry = dict()
-        self.__x_coords   = dict()
-        self.__y_coords   = dict()
-        self.__grid_info  = dict()
+        self._bathymetry = dict()
+        self._x_coords   = dict()
+        self._y_coords   = dict()
+        self._grid_info  = dict()
 
-        self.__constants = dict()
-        self.__constants['x_cartesian_vnames'] = ['x', 'xx', 'x_x' , 'xX', 'x_X', 'xt', 'x_t', 'xT', 'x_T']
-        self.__constants['x_geographi_vnames'] = ['lon', 'lonx', 'lon_x' , 'lonX', 'lon_X', 'lont', 'lon_t', 'lonT', 'lon_T']
-        self.__constants['y_cartesian_vnames'] = ['y', 'yx', 'y_x' , 'yX', 'y_X', 'yt', 'y_t', 'yT', 'y_T']
-        self.__constants['y_geographi_vnames'] = ['lat', 'latx', 'lat_x' , 'latX', 'lat_X', 'latt', 'lat_t', 'latT', 'lat_T']
-        self.__constants['bathymetry_vnames']  = ['bathymetry']
-        self.__constants['fv_attr_namelist']   = ['_FillValue', 'missing_value']
+        self._constants = dict()
+        self._constants['x_cartesian_vnames'] = ['x', 'xx', 'x_x' , 'xX', 'x_X', 'xt', 'x_t', 'xT', 'x_T']
+        self._constants['x_geographi_vnames'] = ['lon', 'lonx', 'lon_x' , 'lonX', 'lon_X', 'lont', 'lon_t', 'lonT', 'lon_T']
+        self._constants['y_cartesian_vnames'] = ['y', 'yx', 'y_x' , 'yX', 'y_X', 'yt', 'y_t', 'yT', 'y_T']
+        self._constants['y_geographi_vnames'] = ['lat', 'latx', 'lat_x' , 'latX', 'lat_X', 'latt', 'lat_t', 'latT', 'lat_T']
+        self._constants['bathymetry_vnames']  = ['bathymetry']
+        self._constants['fv_attr_namelist']   = ['_FillValue', 'missing_value']
 
 
 
     def get_constants(self):
-        return self.__constants
+        return self._constants
 
     def get_metadata(self):
-        return {'x': self.__x_coords['meta'],
-                'y': self.__y_coords['meta'],
-                'b': self.__bathymetry['meta'],
-                'grid_info': self.__grid_info}
+        return {'x': self._x_coords['meta'],
+                'y': self._y_coords['meta'],
+                'b': self._bathymetry['meta'],
+                'grid_info': self._grid_info}
     
     def get_data(self, **kwargs):
-        return {'x': self.read_netcdfVarData(self.__topofile, self.get_metadata()['x']['name'], **kwargs),
-                'y': self.read_netcdfVarData(self.__topofile, self.get_metadata()['y']['name'], **kwargs),
-                'b': self.read_netcdfVarData(self.__topofile, self.get_metadata()['b']['name'], **kwargs)}
+        return {'x': self.read_netcdfVarData(self._topo, self.get_metadata()['x']['name'], **kwargs),
+                'y': self.read_netcdfVarData(self._topo, self.get_metadata()['y']['name'], **kwargs),
+                'b': self.read_netcdfVarData(self._topo, self.get_metadata()['b']['name'], **kwargs)}
 
     def get_mask(self, transpose=True, **kwargs):
         return self._generate_mask(transpose=transpose, **kwargs)
@@ -372,9 +379,9 @@ class containerForGridGeneration(netcdfVariableReader):
                     if long_var_list_not_shot: long_var_list_not_shot ^= long_var_list_not_shot
 
         # now saving bathymetry meta-data
-        self.__bathymetry['meta'] = self.read_netcdfVarMetadata(ncname, bathymetry_vname, raise_error=True, promtInput=False)
+        self._bathymetry['meta'] = self.read_netcdfVarMetadata(ncname, bathymetry_vname, raise_error=True, promtInput=False)
         if log: print 'Bathymetry: Picking bathymetry variable: <{0}> , dimensions {1}, shape {2}'.format(
-                        self.__bathymetry['meta']['name'], self.__bathymetry['meta']['dims'], self.__bathymetry['meta']['shape'])
+                        self._bathymetry['meta']['name'], self._bathymetry['meta']['dims'], self._bathymetry['meta']['shape'])
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
 
@@ -405,7 +412,7 @@ class containerForGridGeneration(netcdfVariableReader):
                 ui.promt('X coords: User-defined X-coord-variable name <{0}> not found in file <{1}>. Press Enter to continue auto-search'.format(x_vname, ncname), pause=True)
 
         if not x_vname:
-            dim_bath = self.__bathymetry['meta']['dims']
+            dim_bath = self._bathymetry['meta']['dims']
             if log: print 'X coords: Trying to find variable based on bathymetry dimensions <{0}>. Searching for variable <{1}>'.format(dim_bath, dim_bath[-1] )
             
             if not self.variableIsFound(ncname, dim_bath[-1]):
@@ -442,9 +449,9 @@ class containerForGridGeneration(netcdfVariableReader):
             else:
                 x_vname = dim_bath[-1]
                 
-        self.__x_coords['meta'] = self.read_netcdfVarMetadata(ncname, x_vname, raise_error=True, promtInput=False)
+        self._x_coords['meta'] = self.read_netcdfVarMetadata(ncname, x_vname, raise_error=True, promtInput=False)
         if log: print 'X coords: Picking Y-coords variable: <{0}> , dimensions {1}, shape {2}'.format(
-                        self.__x_coords['meta']['name'], self.__x_coords['meta']['dims'], self.__x_coords['meta']['shape'])
+                        self._x_coords['meta']['name'], self._x_coords['meta']['dims'], self._x_coords['meta']['shape'])
         # ----------------------------------------------------------------------------------
         # ----------------------------------------------------------------------------------
 
@@ -457,7 +464,7 @@ class containerForGridGeneration(netcdfVariableReader):
                 ui.promt('Y coords: User-defined Y-coord-variable name <{0}> not found in file <{1}>. Press Enter to continue auto-search'.format(y_vname, ncname), pause=True)
 
         if not y_vname:
-            dim_bath = self.__bathymetry['meta']['dims']
+            dim_bath = self._bathymetry['meta']['dims']
             if log: print 'Y coords: Trying to find variable based on bathymetry dimensions <{0}>. Searching for variable <{1}>'.format(dim_bath, dim_bath[-2] )
             
             if not self.variableIsFound(ncname, dim_bath[-2]):
@@ -494,9 +501,9 @@ class containerForGridGeneration(netcdfVariableReader):
             else:
                 y_vname = dim_bath[-2]
                 
-        self.__y_coords['meta'] = self.read_netcdfVarMetadata(ncname, y_vname, raise_error=True, promtInput=False)
+        self._y_coords['meta'] = self.read_netcdfVarMetadata(ncname, y_vname, raise_error=True, promtInput=False)
         if log: print 'Y coords: Picking Y-coords variable: <{0}> , dimensions {1}, shape {2}'.format(
-                        self.__y_coords['meta']['name'], self.__y_coords['meta']['dims'], self.__y_coords['meta']['shape'])
+                        self._y_coords['meta']['name'], self._y_coords['meta']['dims'], self._y_coords['meta']['shape'])
         # ----------------------------------------------------------------------------------
 
         # -------------------------------------------------------
@@ -513,61 +520,61 @@ class containerForGridGeneration(netcdfVariableReader):
         # NOTE: here someone can paste rectangular grid with two 2d arrays... but it will still work
 
 
-        if   len(self.__x_coords['meta']['shape']) == 1 and len(self.__y_coords['meta']['shape']) == 1:
-            self.__grid_info['type'] = 'rectangular'
+        if   len(self._x_coords['meta']['shape']) == 1 and len(self._y_coords['meta']['shape']) == 1:
+            self._grid_info['type'] = 'rectangular'
         
-        elif len(self.__x_coords['meta']['shape']) == 2 and len(self.__y_coords['meta']['shape']) == 2:
-            self.__grid_info['type'] = 'curvilinear'
+        elif len(self._x_coords['meta']['shape']) == 2 and len(self._y_coords['meta']['shape']) == 2:
+            self._grid_info['type'] = 'curvilinear'
         else:
-            print 'GridType: Using variable for X-coords <{0}>, of shape <{1}>'.format(self.__x_coords['meta']['name'], self.__x_coords['meta']['shape'])
-            print 'GridType: Using variable for Y-coords <{0}>, of shape <{1}>'.format(self.__y_coords['meta']['name'], self.__y_coords['meta']['shape'])
+            print 'GridType: Using variable for X-coords <{0}>, of shape <{1}>'.format(self._x_coords['meta']['name'], self._x_coords['meta']['shape'])
+            print 'GridType: Using variable for Y-coords <{0}>, of shape <{1}>'.format(self._y_coords['meta']['name'], self._y_coords['meta']['shape'])
             raise ValueError('Grid type not understood. X and Y should be either two 1D arrays or two 2D arrays'+'\n'+gridhelp())
 
 
         # now determine if coords are at T (cell center) or X (cell nodes) points...GridType:
-        print 'Data location: X-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self.__x_coords['meta']['name'], self.__x_coords['meta']['dims'], self.__x_coords['meta']['shape'])
-        print 'Data location: Y-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self.__y_coords['meta']['name'], self.__y_coords['meta']['dims'], self.__y_coords['meta']['shape'])
-        print 'Data location: Bathymetry variable: <{0}> , dimensions {1}, shape {2}'.format(self.__bathymetry['meta']['name'], self.__bathymetry['meta']['dims'], self.__bathymetry['meta']['shape'])
+        print 'Data location: X-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self._x_coords['meta']['name'], self._x_coords['meta']['dims'], self._x_coords['meta']['shape'])
+        print 'Data location: Y-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self._y_coords['meta']['name'], self._y_coords['meta']['dims'], self._y_coords['meta']['shape'])
+        print 'Data location: Bathymetry variable: <{0}> , dimensions {1}, shape {2}'.format(self._bathymetry['meta']['name'], self._bathymetry['meta']['dims'], self._bathymetry['meta']['shape'])
         xy_location = None
         while xy_location not in ['x', 'X', 't', 'T']:
             xy_location = ui.promt('Data location: select whether origin XY-COORDS data is located at nodes(X_points) or at cell centers(T_points) [X/T]:', color='yellow', show_default=False, type=str)
         
         if xy_location in ['x', 'X']:
-            self.__x_coords['meta']['points_location'] = 'X_points'
-            self.__y_coords['meta']['points_location'] = 'X_points'
+            self._x_coords['meta']['points_location'] = 'X_points'
+            self._y_coords['meta']['points_location'] = 'X_points'
         else:
-            self.__x_coords['meta']['points_location'] = 'T_points'
-            self.__y_coords['meta']['points_location'] = 'T_points'
+            self._x_coords['meta']['points_location'] = 'T_points'
+            self._y_coords['meta']['points_location'] = 'T_points'
         
         bt_location = None
         while bt_location not in ['x', 'X', 't', 'T']:
             bt_location = ui.promt('Data location: select whether origin BATHYMETRY data is located at nodes(X_points) or at cell centers(T_points) [X/T]:', color='yellow', show_default=False, type=str)
         if bt_location in ['x', 'X']:
-            self.__bathymetry['meta']['points_location'] = 'X_points'
+            self._bathymetry['meta']['points_location'] = 'X_points'
         else:
-            self.__bathymetry['meta']['points_location'] = 'T_points'
+            self._bathymetry['meta']['points_location'] = 'T_points'
 
         
         # determine mode.... (Geographic or Cartesian)
-        if   self.__x_coords['meta']['name'] in self.get_constants()['x_cartesian_vnames'] and self.__y_coords['meta']['name'] in self.get_constants()['y_cartesian_vnames']:
-            self.__x_coords['meta']['coordinate_type'] = 'cartesian'
-            self.__y_coords['meta']['coordinate_type'] = 'cartesian'
-        elif self.__x_coords['meta']['name'] in self.get_constants()['x_geographi_vnames'] and self.__y_coords['meta']['name'] in self.get_constants()['y_geographi_vnames']:
-            self.__x_coords['meta']['coordinate_type'] = 'geographic'
-            self.__y_coords['meta']['coordinate_type'] = 'geographic'
+        if   self._x_coords['meta']['name'] in self.get_constants()['x_cartesian_vnames'] and self._y_coords['meta']['name'] in self.get_constants()['y_cartesian_vnames']:
+            self._x_coords['meta']['coordinate_type'] = 'cartesian'
+            self._y_coords['meta']['coordinate_type'] = 'cartesian'
+        elif self._x_coords['meta']['name'] in self.get_constants()['x_geographi_vnames'] and self._y_coords['meta']['name'] in self.get_constants()['y_geographi_vnames']:
+            self._x_coords['meta']['coordinate_type'] = 'geographic'
+            self._y_coords['meta']['coordinate_type'] = 'geographic'
         else:
             # now show user found vars
-            print 'Coords type: X-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self.__x_coords['meta']['name'], self.__x_coords['meta']['dims'], self.__x_coords['meta']['shape'])
-            print 'Coords type: Y-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self.__y_coords['meta']['name'], self.__y_coords['meta']['dims'], self.__y_coords['meta']['shape'])
+            print 'Coords type: X-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self._x_coords['meta']['name'], self._x_coords['meta']['dims'], self._x_coords['meta']['shape'])
+            print 'Coords type: Y-coords   variable: <{0}> , dimensions {1}, shape {2}'.format(self._y_coords['meta']['name'], self._y_coords['meta']['dims'], self._y_coords['meta']['shape'])
             coord_mode = None
             while coord_mode not in ['c', 'g']:
                 coord_mode = ui.promt('Coords type: coord-type not understood. Choose cartesian or geographic. Type [c/g]:', color='yellow', show_default=False, type=str)
             if coord_mode == 'c':
-                self.__x_coords['meta']['coordinate_type'] = 'cartesian'
-                self.__y_coords['meta']['coordinate_type'] = 'cartesian'
+                self._x_coords['meta']['coordinate_type'] = 'cartesian'
+                self._y_coords['meta']['coordinate_type'] = 'cartesian'
             if coord_mode == 'g':
-                self.__x_coords['meta']['coordinate_type'] = 'geographic'
-                self.__y_coords['meta']['coordinate_type'] = 'geographic'
+                self._x_coords['meta']['coordinate_type'] = 'geographic'
+                self._y_coords['meta']['coordinate_type'] = 'geographic'
 
 
 

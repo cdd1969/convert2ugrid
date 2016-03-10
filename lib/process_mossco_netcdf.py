@@ -358,7 +358,7 @@ def get_sigma_coordinates(list_with_filenames, nLayers, sigma_varname='level', w
             name of the variable that represents water depth at soil surface.
             Units must be shared with `layerdepth_varname`. Always positive.
             3D-Array with (time, y, x) dimensions;
-            By default will use "water_depth_at_soil_surface"
+            Default: "water_depth_at_soil_surface"
         
         layerdepth_varname (str):
             ONLY NEEDED FOR APPROACH #2
@@ -366,7 +366,7 @@ def get_sigma_coordinates(list_with_filenames, nLayers, sigma_varname='level', w
             layer depth below water surface at the element center. Units
             must be shared with `waterdepth_varname`. Always negative.
             3D-Array with (z, y, x) dimensions;
-            By default will use "getmGrid3D_getm_layer"
+            Default: "getmGrid3D_getm_layer"
 
         log (bool):
             flag to print additional output
@@ -376,8 +376,8 @@ def get_sigma_coordinates(list_with_filenames, nLayers, sigma_varname='level', w
         sigma (1D-array):
             1D array that represents sigma coordinates at cell centers/borders. Therefore it can
             has length of <nLayers> or <nLayers+1>.
-        sigma_type ('center'|'borders'):
-            position of sigma coordinates: 'center' or 'borders'
+        sigma_type ('center'|'border'):
+            position of sigma coordinates: 'center' or 'border'
     
     Example:
     --------
