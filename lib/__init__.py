@@ -25,6 +25,7 @@ def sprint(*args, **kwargs):
     log = kwargs.get('log', True)
     mode = kwargs.get('mode', False)
     indent = kwargs.get('indent', False)
+    newline = kwargs.get('newline', True)
     
     if not log:
         return
@@ -41,10 +42,15 @@ def sprint(*args, **kwargs):
         message = '\033[92m' + message + '\033[0m'
     elif mode in ['BOLD', 'Bold', 'bold']:
         message = '\033[1m' + message + '\033[0m'
+    elif mode in ['Blue', 'BLUE', 'blue']:
+        message = '\033[94m' + message + '\033[0m'
+    elif mode in ['MAGENTA', 'Magenta', 'magenta']:
+        message = '\033[35m' + message + '\033[0m'
+
     else:
         pass
 
     if indent is not False:
         message = indent + message
 
-    print (message)
+    print (message, end='' if not newline else '\n')

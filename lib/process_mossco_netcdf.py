@@ -230,23 +230,25 @@ def get_davit_friendly_variables(filename, tdim=['time'], zdim=['getmGrid3D_getm
     root_grp = Dataset(filename, mode='r')
     for var_name, var in root_grp.variables.iteritems():
         dims = [str(d) for d in var.dimensions]
-        if log: sys.stdout.write('\tScanning variable : '+var_name+' '+str(dims))
+        sprint('Found: ', log=log, newline=False, indent='\t')
+        sprint(var_name+' ', log=log, newline=False, mode='warning')
+        sprint(str(dims)+' >>> ', log=log, newline=False)
         
         if (len(var.shape) == 1) and (dims[0] in tdim):
             _1D.append(var_name)
-            if log: sys.stdout.write(' >>> added\n')
+            sprint('added', log=log, mode='ok')
         if (len(var.shape) == 2) and (dims[0] in ydim) and (dims[1] in xdim):
             _2D.append(var_name)
-            if log: sys.stdout.write(' >>> added\n')
+            sprint('added', log=log, mode='ok')
         elif (len(var.shape) == 3) and (dims[0] in tdim) and (dims[1] in ydim) and (dims[2] in xdim):
             _3D.append(var_name)
-            if log: sys.stdout.write(' >>> added\n')
+            sprint('added', log=log, mode='ok')
         elif (len(var.shape) == 4) and (dims[0] in tdim) and (dims[1] in zdim) and (dims[2] in ydim) and (dims[3] in xdim):
             _4D.append(var_name)
-            if log: sys.stdout.write(' >>> added\n')
+            sprint('added', log=log, mode='ok')
         else:
-            if log: sys.stdout.write(' >>> skipped\n')
-            pass
+            sprint('skipped', log=log, mode='fail')
+
     root_grp.close()
     FRIENDLY_VAR_DICT['1D'] = _1D
     FRIENDLY_VAR_DICT['2D'] = _2D

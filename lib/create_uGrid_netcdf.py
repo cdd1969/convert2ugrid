@@ -42,7 +42,7 @@ def step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=False):
 
     sprint('Script is going to scan following NC files:\n{0}\n'.format(list_with_synoptic_nc), log=log)
     process_cdl.create_txt_mossco_baw(list_with_synoptic_nc, dictionary_2, dictionary_1, log=log)
-    sprint('Following file has been created:\n{0}\nIt shows the relation between MOSSCO and DAVIT variable names.'.format(dictionary_2), log=log)
+    sprint('Following file has been created:\n{0}\nIt shows the relation between MOSSCO and DAVIT variable names.'.format(os.path.abspath(dictionary_2)), log=log)
     
 
 def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
@@ -59,7 +59,7 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     '''
     sprint('{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 2  '+'+'*10+'\n'), log=log)
     process_cdl.create_dictionary4(dictionary_3, dictionary_2, dictionary_4, log=log)
-    sprint('Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4), log=log)
+    sprint('Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(os.path.abspath(dictionary_4)), log=log)
 
 
 def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=True, log=False):
@@ -237,7 +237,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     sprint('-'*100, log=log)
     sprint('Now adding vertical layer information', log=log)
     sprint('-'*100, log=log)
-    
+
     vertical_coord_mode = 'sigma'
 
     if nLayers > 1:  #if a real 3d is here
@@ -246,7 +246,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
             add_eta = 'Mesh2_face_Wasserstand_2d' in VARS.keys()
             add_depth = 'Mesh2_face_depth_2d' in VARS.keys()
             try:
-                process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
+                process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=log)
                 LAYERS_ADDED = True
             except Exception as exp:
                 sprint(exp, mode='fail')

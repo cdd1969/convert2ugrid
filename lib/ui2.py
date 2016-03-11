@@ -1,5 +1,6 @@
 import click
 
+
 def promtYesNo(question='', quitonno=False):
     '''Promt a yes-no question in console and catch answer
 
@@ -18,11 +19,13 @@ def promtYesNo(question='', quitonno=False):
 
 def promt(*args, **kwargs):
     if 'pause' in kwargs and kwargs['pause'] is True:
-        click.pause(args[0])
+        if 'color' in kwargs:
+            click.pause(click.style(args[0], fg=kwargs.pop('color')))
+        else:
+            click.pause(args[0])
         return
     if 'color' in kwargs:
         color = kwargs.pop('color')
         return click.prompt(click.style(args[0], fg=color), args[1::], **kwargs)
     else:
         return click.prompt(*args, **kwargs)
-
