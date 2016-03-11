@@ -19,6 +19,7 @@ import os
 import re
 
 import process_mossco_netcdf
+from . import sprint
 
 
 class cdlVariable(object):
@@ -370,24 +371,24 @@ def read_file_with_only_variables(content_in_lines, log=False):
                                     try:
                                         item = np.float32(re.sub('f', '', item))
                                     except Exception as err2:
-                                        print 'WARNING! : line <{0}> not understood. Could not convert <{1}> to float()'.format(line, item)
-                                        print 'WARNING! : therefore I tried deleting "f" symbols. Still cannot convert <{1}> to float()'.format(re.sub('f', '', item))
+                                        sprint('WARNING! : line <{0}> not understood. Could not convert <{1}> to float()'.format(line, item), mode='fail')
+                                        sprint('WARNING! : therefore I tried deleting "f" symbols. Still cannot convert <{1}> to float()'.format(re.sub('f', '', item)), mode='fail')
                                         raise err2
                                 else:
-                                    print 'WARNING! : line <{0}> not understood. Cannot convert <{1}> to float()'.format(line, item)
+                                    sprint('WARNING! : line <{0}> not understood. Cannot convert <{1}> to float()'.format(line, item), mode='fail')
                                     raise err1
                         else:
                             try:
                                 item = int(item)
                             except Exception as err:
-                                print 'WARNING! : line <{0}> not understood. Cannot convert <{1}> to int()'.format(line, item)
+                                sprint('WARNING! : line <{0}> not understood. Cannot convert <{1}> to int()'.format(line, item), mode='fail')
                                 raise err
                         attr_val_proper_type.append(item)
 
                 buffer_var.set_attr(attr_name, attr_val_proper_type)
 
             elif line not in ['\n', '']:
-                raise IOError('{1}\n{2}\nline below not understood (should either start with <{3}> or <datatype_name(i.e float, double)>):\n{0}\n{2}\n'.format(line, _n, '-'*50, buffer_var['name']))
+                raise IOError('{1}\n{2}\nline below not understood (should start either with <{3}> or <datatype_name(i.e float, double)>):\n{0}\n{2}\n'.format(line, _n, '-'*50, buffer_var['name']))
 
         #add last variable
         if line is content_in_lines[-1]:  #if we have finished proceeding the last line
@@ -482,17 +483,20 @@ def read_txt_mossco_baw(txt_mossco_baw, log=False):
     VARS = dict()
     f = read_file_delete_comments(txt_mossco_baw, comments='//')
     for i, l in enumerate(f):
-        if log: print l
         try:
             baw_vn = l.split('>>>')[1].strip()
+            mossco_vn = re.sub('[\"\']', '', l.split(',')[1].split(">>>")[0].strip())
+            mossco_nc = re.sub('[\"\']', '', l.split(',')[0].strip())
             if baw_vn != 'NOT_INCLUDED':
                 baw_vn = re.sub('[\"\']', '', baw_vn)
-                mossco_vn = re.sub('[\"\']', '', l.split(',')[1].split(">>>")[0].strip())
-                mossco_nc = re.sub('[\"\']', '', l.split(',')[0].strip())
                 VARS[baw_vn] = [mossco_nc, mossco_vn]
+            sprint(os.path.basename(mossco_nc)+': ', log=log, newline=False)
+            sprint(mossco_vn, log=log, newline=False, mode='warning')
+            sprint(' >>> ', log=log, newline=False, )
+            sprint(baw_vn, log=log, mode='fail' if baw_vn == 'NOT_INCLUDED' else 'ok')
         except Exception, err:
-            print 'Error reading line <{0}>: {1}'.format(i, l)
-            print(sys.exc_info())
+            sprint('Error reading line <{0}>: {1}'.format(i, l), mode='fail')
+            sprint(sys.exc_info(), mode='fail')
             raise err
     return VARS
 
