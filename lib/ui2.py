@@ -18,7 +18,7 @@ def promtYesNo(question='', quitonno=False):
 
 def promt(*args, **kwargs):
     if 'pause' in kwargs and kwargs['pause'] is True:
-        click.pause()
+        click.pause(args[0])
         return
     if 'color' in kwargs:
         color = kwargs.pop('color')

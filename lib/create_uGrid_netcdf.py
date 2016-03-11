@@ -13,13 +13,13 @@ import os
 import sys
 import re
 
-
+import traceback
 import make_grid
 import process_davit_ncdf
 import process_mossco_netcdf
 import process_cdl
 import process_mixed_data
-from . import ui, CLICK_IS_HERE
+from . import ui, CLICK_IS_HERE, sprint
 
 
 
@@ -38,11 +38,11 @@ def step_1(list_with_synoptic_nc, dictionary_1, dictionary_2, log=False):
     OUTPUT
         dictionary_2          - string, path to ASCII file after scanning variables
     '''
-    if log: print '{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 1  '+'+'*10+'\n')
+    sprint('{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 1  '+'+'*10+'\n'), log=log)
 
-    if log: print 'Script is going to scan following NC files:\n{0}\n'.format(list_with_synoptic_nc)
+    sprint('Script is going to scan following NC files:\n{0}\n'.format(list_with_synoptic_nc), log=log)
     process_cdl.create_txt_mossco_baw(list_with_synoptic_nc, dictionary_2, dictionary_1, log=log)
-    if log: print 'Following file has been created:\n{0}\nIt shows the relation between MOSSCO and DAVIT variable names.'.format(dictionary_2)
+    sprint('Following file has been created:\n{0}\nIt shows the relation between MOSSCO and DAVIT variable names.'.format(dictionary_2), log=log)
     
 
 def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
@@ -57,9 +57,9 @@ def step_2(dictionary_2, dictionary_3, dictionary_4, log=False):
     OUTPUT
         dictionary_4          - string, path to CDL file to be created
     '''
-    if log: print '{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 2  '+'+'*10+'\n')
+    sprint('{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 2  '+'+'*10+'\n'), log=log)
     process_cdl.create_dictionary4(dictionary_3, dictionary_2, dictionary_4, log=log)
-    if log: print 'Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4)
+    sprint('Following file has been created:\n{0}\nIt shows the synoptic data which will be added to NetCDF.'.format(dictionary_4), log=log)
 
 
 def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_netcdf=True, log=False):
@@ -85,12 +85,12 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         nc_out (str):
             path to netcdf to be created
     '''
-    if log: print '{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 3  '+'+'*10+'\n')
+    sprint('{0}{0}{1}{0}{0}'.format(' '*20+'+'*30+'\n', ' '*20+'+'*10+'  STEP 3  '+'+'*10+'\n'), log=log)
     
     # --------------------------------------------------
     # 1) Read, x any y vectors from the netcdf
     # --------------------------------------------------
-    if log: print 'searching x, y, bathymetry ...'
+    sprint('searching x, y, bathymetry ...', log=log)
     #coords = process_mossco_netcdf.find_coordinate_vars(topo_nc, log=log)
     structGrid = process_mixed_data.containerForGridGeneration(topo_nc, log=log)
     coords = structGrid.get_data()
@@ -99,7 +99,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # --------------------------------------------------
     # 2) Create mask
     # --------------------------------------------------
-    if log: print 'creating mask...'
+    sprint('creating mask...', log=log)
     #m = process_mossco_netcdf.make_mask_array_from_mossco_bathymetry(topo_nc, varname=coords['bName'], fillvalue=None, transpose=True, log=log)
     m = structGrid.get_mask(transpose=False, log=log)
 
@@ -109,7 +109,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # 3) Create grid, and unpack values
     # --------------------------------------------------
     start_index = 0
-    print 'Generating uGrid... (be patient, this may take a while)'
+    sprint('Generating uGrid... (be patient, this may take a while)')
     dims, topo, nodes, edges, faces, bounds = make_grid.make_2d_qudratic_grid_or_curvilinear(coords['x'], coords['y'],
                                                 data_location=meta['x']['points_location'], mask=m, log=log, startingindex=start_index)
 
@@ -206,7 +206,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -- 8.2) cycle through found variables
     # -----------------------------------------------------------------------------------------------
     for var_name, var in VARS.iteritems():
-        if log: print 'Variable read from Dictionary 4:', var.get_name()
+        sprint('Variable read from Dictionary 4:', var.get_name(), log=log)
         varExt = process_mixed_data.cdlVariableExt(var)  #var is an instance of type <cdlVariable>
         source = varExt.get_source_metadata()
 
@@ -226,7 +226,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         # 8.2.6) append data variable to nc_out...
         # -----------------------------------------------------------------------------------------------
         process_davit_ncdf.append_VariableData_to_netcdf(nc_out, var, var_data, fv=source['fillvalue'],  log=log)
-        if log: print '-'*100
+        sprint('\n', log=log)
         del varExt
     
 
@@ -234,36 +234,37 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
     # -----------------------------------------------------------------------------------------------
     # 9) Layer thickness
     # -----------------------------------------------------------------------------------------------
-    if log: print '-'*100
-    if log: print 'Now adding vertical layer information'
-    if log: print '-'*100
+    sprint('-'*100, log=log)
+    sprint('Now adding vertical layer information', log=log)
+    sprint('-'*100, log=log)
+    
     vertical_coord_mode = 'sigma'
 
     if nLayers > 1:  #if a real 3d is here
-        try:
-            if vertical_coord_mode == 'sigma':
-                add_eta   = True
-                add_depth = True
-
-                if 'Mesh2_face_Wasserstand_2d' in VARS.keys():
-                    add_eta = False
-                if 'Mesh2_face_depth_2d' in VARS.keys():
-                    add_depth = False
-                process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
-            else:
-                raise NotImplementedError()
-        except Exception as err:
+        LAYERS_ADDED = False
+        if vertical_coord_mode == 'sigma':
+            add_eta = 'Mesh2_face_Wasserstand_2d' in VARS.keys()
+            add_depth = 'Mesh2_face_depth_2d' in VARS.keys()
             try:
-                print err
-                ui.promt('Now i will try to add dummy vertical data. Press ENTER to see info about these values', pause=True)
-                print process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__
-                if ui.promtYesNo('Do you want to proceed?', quitonno=True):
+                process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=True)
+                LAYERS_ADDED = True
+            except Exception as exp:
+                sprint(exp, mode='fail')
+                traceback.print_exc(file=sys.stderr)
+        else:
+            raise NotImplementedError()
+        if not LAYERS_ADDED:
+            ui.promt('Now i will try to add dummy vertical data. Press ENTER to see info about these values', pause=True)
+            sprint(process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__)
+            if ui.promtYesNo('Do you want to proceed?', quitonno=True):
+                try:
                     process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd(nc_out, nx=meta['b']['shape'][-1],
                                     ny=meta['b']['shape'][-2], mask=m, log=log)
-            except Exception as err:
-                print err
-                ui.promt('Failed to find any vertical-layer information. Will proceed without any. Press ENTER', color='yellow', pause=True)
-                pass
+                except Exception as exp:
+                    sprint(exp, mode='fail')
+                    traceback.print_exc(file=sys.stderr)
+                    ui.promt('Failed to find any vertical-layer information. Will proceed without any. Press ENTER', color='yellow', pause=True)
+
 
                 
     if log: print '-'*100

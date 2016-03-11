@@ -11,7 +11,7 @@ import numpy as np
 import os.path
 import netCDF4
 
-from . import ui
+from . import ui, sprint
 import process_cdl
 import process_mossco_netcdf
 from Mesh2 import gridhelp
@@ -768,7 +768,7 @@ def create_magnitude_variable_from_x_y_component(VARS, varname, varval, mask=Non
 
 
 
-def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, mask=None, log=False):
+def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, mask=None, log=False, indent=''):
     '''
     Generate elevation information of layers (cell center and borders) based on passed
         - water-level
@@ -813,10 +813,11 @@ def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, m
             5d array of (2, time, z, y, x) dimensions with elevation of layer borders with respect to MSL.
             Down negative. Note: elev_borders[1, t, k, j, i] == elev_borders[0, t, k+1, j, i]
     '''
-    _name = 'create_layer_elevation_from_sigma_coords():'
-    if log:
-        print _name, 'Shapes of the inputs...'
-        print _name, 'eta: <{0}>, sigma: <{1}>, depth: <{2}>'.format(eta.shape, sigma.shape, depth.shape)
+    _i = indent+'\t'
+    _n = 'create_layer_elevation_from_sigma_coords():'
+    sprint(_n, log=log, indent=indent, mode='bold')
+    sprint('Shapes of the inputs...', log=log, indent=_i)
+    sprint('eta: <{0}>, sigma: <{1}>, depth: <{2}>'.format(eta.shape, sigma.shape, depth.shape), log=log, indent=_i)
     
     elev         = np.zeros((eta.shape[0], len(sigma), eta.shape[1], eta.shape[2]))
     elev_borders = np.zeros((2, eta.shape[0], len(sigma), eta.shape[1], eta.shape[2]))
@@ -829,14 +830,14 @@ def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, m
     
 
     if abs(sigma_borders[-1]) > 0.005:
-        print _name, 'sigma layer centers', sigma
-        print _name, 'sigma layer borders', sigma_borders
+        sprint('sigma layer centers', sigma, indent=_i, mode='fail')
+        sprint('sigma layer borders', sigma_borders, indent=_i, mode='fail')
         raise ValueError('Sigma values for layer-borders calculated not correctly')
     else:
         sigma_borders[-1] = 0.  # corrdinate of the very top
 
-    if log: print _name, 'sigma layer centers', sigma
-    if log: print _name, 'sigma layer borders', sigma_borders
+    sprint('sigma layer centers', sigma, log=log, indent=_i)
+    sprint('sigma layer borders', sigma_borders, log=log, indent=_i)
     
 
 
@@ -852,8 +853,8 @@ def create_layer_elevation_from_sigma_coords(eta, sigma, depth, flatten=False, m
 
 
 
-    if log: print _name, 'Elevation array created of shape <{0}>'.format(elev.shape)
-    if log: print _name, 'Elevation border array created of shape <{0}>'.format(elev_borders.shape)
+    sprint('Elevation array created of shape <{0}>'.format(elev.shape), log=log, indent=_i)
+    sprint('Elevation border array created of shape <{0}>'.format(elev_borders.shape), log=log, indent=_i)
     return elev, elev_borders
 
 
