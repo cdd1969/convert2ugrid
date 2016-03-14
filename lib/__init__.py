@@ -9,6 +9,11 @@ except:
     import ui
 
 
+class FONT:
+    FAIL = '\033[91m'
+    EMPTY = '\033[91m'
+
+
 def sprint(*args, **kwargs):
     ''' Smart print with:
         * indenting

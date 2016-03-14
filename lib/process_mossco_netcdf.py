@@ -18,6 +18,7 @@ from netCDF4 import Dataset
 import numpy as np
 import sys
 from . import ui, sprint
+from . import FONT
 import traceback
 
 
@@ -458,7 +459,8 @@ def get_sigma_coordinates(list_with_filenames, nLayers, sigma_varname='level', w
             return [sigma, sigma_type]
         else:
             traceback.print_exc()
-            raise ValueError('Sigma coordinates neither found (1) nor calculated (2).\n1): Variable <{0}> not found in files: {1}\n\n2): Sigma was not calculated based on variables {2}'.format(sigma_varname, list_with_filenames, kwargs))
+            msg = FONT.FAIL+'Sigma coordinates neither found (1) nor calculated (2).\n1): Variable <{0}> not found in files: {1}\n2): Sigma was not calculated based on variables {2}'.format(sigma_varname, list_with_filenames, kwargs)+FONT.EMPTY
+            raise ValueError(msg)
 
 
 def get_mossco_sigma_coords(nc_in,
@@ -484,12 +486,9 @@ def get_mossco_sigma_coords(nc_in,
     print indent+'>>> waterdepth  ', nc.variables[waterdepth_varname][0, valid_cell_ji[0], valid_cell_ji[1]]
     print indent+'>>> sigma', sigma_coords_1D
 
-    if sigma_coords_1D[0] < -1.:
-        sprint('Sigma coordinates calculated not correctly. Must be in range [-1.0 : 0.0]. sigma_coords_1D[0] = {0}'.format(sigma_coords_1D[0]), mode='fail')
-        raise ValueError()
-    if sigma_coords_1D[-1] > 0.:
-        sprint('Sigma coordinates calculated not correctly. Must be in range [-1.0 : 0.0]. sigma_coords_1D[-1] = {0}'.format(sigma_coords_1D[-1]), mode='fail')
-        raise ValueError()
+    for i, v in enumerate(sigma_coords_1D):
+        if v > 0. or v < -1.:
+            raise ValueError(FONT.FAIL+'Sigma coordinates calculated not correctly. Must be in range [-1.0 : 0.0]. sigma_coords_1D[{0}] = {1}'.format(i, sigma_coords_1D[i])+FONT.EMPTY)
     nc.close()
     return sigma_coords_1D
     

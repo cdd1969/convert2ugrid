@@ -8,8 +8,6 @@
 # LICENSE.GPL or www.gnu.org/licenses/gpl-3.0.txt for the full license terms.
 
 __author__  = 'Nikolai Chernikov <nikolai.chernikov.ru@gmail.com>'
-__version__ = '0.3.1'
-
 
 import os
 import sys

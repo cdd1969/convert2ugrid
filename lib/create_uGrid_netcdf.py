@@ -249,8 +249,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
                 process_davit_ncdf.append_sigma_vertical_coord_vars(list_with_synoptic_nc, nLayers, nc_out, add_eta=add_eta, add_depth=add_depth, mask=m, log=log)
                 LAYERS_ADDED = True
             except Exception as exp:
-                sprint(exp, mode='fail')
-                traceback.print_exc(file=sys.stderr)
+                sprint(traceback.print_exc(), mode='fail')
         else:
             raise NotImplementedError()
         if not LAYERS_ADDED:
