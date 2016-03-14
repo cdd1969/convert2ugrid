@@ -13,7 +13,7 @@ def sprint(*args, **kwargs):
     ''' Smart print with:
         * indenting
         * 2 print or not 2 print...
-        * mode (warning, fail, False)
+        * mode (bold, warning, fail, ok, blue, magenta, False)
     Args:
         *args (str):
             strings to print

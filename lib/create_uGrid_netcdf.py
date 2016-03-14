@@ -254,7 +254,7 @@ def step_3(topo_nc, list_with_synoptic_nc, dictionary_4, nc_out, create_davit_ne
         else:
             raise NotImplementedError()
         if not LAYERS_ADDED:
-            ui.promt('Now i will try to add dummy vertical data. Press ENTER to see info about these values', pause=True)
+            ui.promt('Now i will try to add dummy vertical data. Press ENTER to see info about these values', pause=True, color='yellow')
             sprint(process_davit_ncdf.append_test_Mesh2_face_z_3d_and_Mesh2_face_z_3d_bnd.__doc__)
             if ui.promtYesNo('Do you want to proceed?', quitonno=True):
                 try:
